@@ -1,0 +1,11 @@
+includes:
+  - ./vendor/larastan/larastan/extension.neon
+parameters:
+  paths:
+    - app
+    - bootstrap
+    - config
+  level: 5
+  ignoreErrors:
+  checkMissingIterableValueType: false
+  checkGenericClassInNonGenericObjectType: false
