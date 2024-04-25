@@ -20,14 +20,14 @@
         "nunomaduro/laravel-desktop-notifier": "^2.8",
         "saloonphp/saloon": "^3.0",
         "spatie/dns": "^2.6",
-        "nunomaduro/termwind": "^2.0.1"
+        "laravel-zero/framework": "^11.0.1"
     },
     "require-dev": {
         "larastan/larastan": "^2.9",
-        "laravel-zero/framework": "^11.0",
         "laravel/pint": "^1.15.2",
         "mockery/mockery": "^1.6",
         "pestphp/pest": "^2.22",
+        "nunomaduro/termwind": "^2.0.1",
         "saloonphp/laravel-plugin": "^3.0"
     },
     "autoload": {
