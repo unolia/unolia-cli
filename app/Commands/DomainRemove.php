@@ -9,7 +9,7 @@ use LaravelZero\Framework\Commands\Command;
 
 class DomainRemove extends Command implements PromptsForMissingInput
 {
-    protected $signature = 'domain:remove {domain} {record_id}';
+    protected $signature = 'domain:remove {record_id}';
 
     protected $description = 'Remove a record from a domain';
 
@@ -18,7 +18,6 @@ class DomainRemove extends Command implements PromptsForMissingInput
         $connector = Helpers::connector();
 
         $response = $connector->send(new DomainsRecordsDelete(
-            domain: $this->argument('domain'),
             record: $this->argument('record_id'))
         );
 
@@ -32,10 +31,6 @@ class DomainRemove extends Command implements PromptsForMissingInput
     protected function promptForMissingArgumentsUsing(): array
     {
         return [
-            'domain' => [
-                'Enter the domain name',
-                'example.com',
-            ],
             'record_id' => [
                 'Enter the record id',
                 'Ex: 1',

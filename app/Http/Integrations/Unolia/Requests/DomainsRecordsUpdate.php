@@ -14,10 +14,8 @@ class DomainsRecordsUpdate extends Request implements HasBody
     protected Method $method = Method::PUT;
 
     public function __construct(
-        protected readonly string $domain,
         protected readonly int $record,
         protected readonly string $name,
-        protected readonly string $type, // TODO: make this an enum
         protected readonly string $value,
         protected readonly ?int $ttl = null,
     ) {
@@ -27,7 +25,6 @@ class DomainsRecordsUpdate extends Request implements HasBody
     {
         return array_filter([
             'name' => $this->name,
-            'type' => $this->type,
             'value' => $this->value,
             'ttl' => $this->ttl,
         ]);
@@ -35,6 +32,6 @@ class DomainsRecordsUpdate extends Request implements HasBody
 
     public function resolveEndpoint(): string
     {
-        return 'domains/'.$this->domain.'/records/'.$this->record;
+        return 'domains/records/'.$this->record;
     }
 }
