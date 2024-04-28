@@ -12,6 +12,6 @@ class Login extends Command
 
     public function handle()
     {
-        //
+        $this->line('Not implemented yet. Use UNOLIA_API_TOKEN environment variable.');
     }
 }

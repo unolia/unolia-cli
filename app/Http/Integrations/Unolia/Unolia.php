@@ -13,8 +13,10 @@ class Unolia extends Connector implements HasPagination
 {
     use AcceptsJson;
 
-    public function __construct(public readonly string $token)
-    {
+    public function __construct(
+        public readonly string $token,
+        public readonly ?string $api_url = null,
+    ) {
     }
 
     protected function defaultAuth(): TokenAuthenticator
@@ -22,9 +24,16 @@ class Unolia extends Connector implements HasPagination
         return new TokenAuthenticator($this->token);
     }
 
+    protected function defaultHeaders(): array
+    {
+        return [
+            // 'User-Agent' => 'IntelliJ HTTP Client/PhpStorm 2024.1.1',
+        ];
+    }
+
     public function resolveBaseUrl(): string
     {
-        return 'https://api.unolia.com/v1/';
+        return $this->api_url ?? 'https://api.unolia.com/v1/';
     }
 
     public function paginate(Request $request): UnoliaPaginator

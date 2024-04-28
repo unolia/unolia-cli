@@ -12,11 +12,11 @@ unolia login
 
 unolia dig unolia.com TXT
 
-unolia zone:list unolia.com
-unolia zone:add txt unolia.com "mytxt" --ttl=60
-unolia zone:update {ID} 
-unolia zone:remove {ID}
-unolia zone:watch {ID}
+unolia domain:list unolia.com
+unolia domain:add txt unolia.com "mytxt" --ttl=60
+unolia domain:update {ID} 
+unolia domain:remove {ID}
+unolia domain:watch {ID}
 
 unolia logout
 ```
