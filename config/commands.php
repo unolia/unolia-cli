@@ -63,6 +63,13 @@ return [
         Illuminate\Console\Scheduling\ScheduleFinishCommand::class,
         Illuminate\Foundation\Console\VendorPublishCommand::class,
         LaravelZero\Framework\Commands\StubPublishCommand::class,
+
+        // \Saloon\Laravel\Console\Commands\MakeAuthenticator::class,
+        // \Saloon\Laravel\Console\Commands\MakeConnector::class,
+        // \Saloon\Laravel\Console\Commands\MakePlugin::class,
+        // \Saloon\Laravel\Console\Commands\MakeRequest::class,
+        // \Saloon\Laravel\Console\Commands\MakeResponse::class,
+        // \Saloon\Laravel\Console\Commands\ListCommand::class,
     ],
 
     /*
@@ -77,11 +84,5 @@ return [
     */
 
     'remove' => [
-        \Saloon\Laravel\Console\Commands\MakeAuthenticator::class,
-        \Saloon\Laravel\Console\Commands\MakeConnector::class,
-        \Saloon\Laravel\Console\Commands\MakePlugin::class,
-        \Saloon\Laravel\Console\Commands\MakeRequest::class,
-        \Saloon\Laravel\Console\Commands\MakeResponse::class,
-        \Saloon\Laravel\Console\Commands\ListCommand::class,
     ],
 ];

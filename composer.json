@@ -16,18 +16,19 @@
     ],
     "require": {
         "php": "^8.2",
+        "laravel-zero/framework": "^11.0.1",
         "laravel-zero/phar-updater": "^1.3",
         "nunomaduro/laravel-desktop-notifier": "^2.8",
+        "saloonphp/pagination-plugin": "^2.0",
         "saloonphp/saloon": "^3.0",
-        "spatie/dns": "^2.6",
-        "laravel-zero/framework": "^11.0.1"
+        "spatie/dns": "^2.6"
     },
     "require-dev": {
         "larastan/larastan": "^2.9",
-        "laravel/pint": "^1.15.2",
+        "laravel/pint": "^1.15",
         "mockery/mockery": "^1.6",
-        "pestphp/pest": "^2.22",
         "nunomaduro/termwind": "^2.0.1",
+        "pestphp/pest": "^2.22",
         "saloonphp/laravel-plugin": "^3.0"
     },
     "autoload": {

@@ -3,6 +3,6 @@
 it('can add a record to a domain', function () {
 
 })->with([
-    'dddd'
+    'dddd',
     // commands for A, AAA, CNAME, DNAME, MX, NS, SRV
 ]);
