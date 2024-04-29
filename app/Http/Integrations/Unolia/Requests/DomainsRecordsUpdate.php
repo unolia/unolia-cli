@@ -32,6 +32,6 @@ class DomainsRecordsUpdate extends Request implements HasBody
 
     public function resolveEndpoint(): string
     {
-        return 'domains/records/'.$this->record;
+        return 'records/'.$this->record;
     }
 }

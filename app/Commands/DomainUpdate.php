@@ -7,9 +7,11 @@ use App\Http\Integrations\Unolia\Requests\DomainsRecordsShow;
 use App\Http\Integrations\Unolia\Requests\DomainsRecordsUpdate;
 use LaravelZero\Framework\Commands\Command;
 
+use function Laravel\Prompts\text;
+
 class DomainUpdate extends Command
 {
-    protected $signature = 'domain:update {domain} {record_id} {name} {value?} {--ttl=}';
+    protected $signature = 'domain:update {record_id} {name?} {value?} {--ttl=}';
 
     protected $description = 'Update a record in a domain';
 
@@ -29,10 +31,45 @@ class DomainUpdate extends Command
 
         $record = $response->json('data');
 
+        if (! $this->argument('name') && ! $this->argument('value')) {
+            $this->line(''); // Blanc line
+            $this->info('  Updating the following record: '.implode(' | ', [
+                $record['name'],
+                $record['type'],
+                $record['value'],
+            ]));
+
+            $name = text(
+                label: 'Full domain name',
+                placeholder: 'E.g. email.example.com',
+                default: $record['name'],
+                hint: 'Put the full subdomain. Use punycode for non-ASCII characters'
+            );
+
+            $hint = match ($record['type']) {
+                'A' => 'Put an IPv4 address',
+                'AAAA' => 'Put an IPv6 address',
+                'CNAME', 'DNAME', 'NS' => 'Put a fully qualified domain name ending with a dot',
+                'MX' => 'Put the mail server domain name with a priority in the format "10 mail.example.com."',
+                'TXT' => 'Put the text value',
+                default => null,
+            };
+
+            $value = text(
+                label: 'Value',
+                default: $record['value'],
+                hint: $hint,
+            );
+        }
+
+        $name = $name ?? ($this->argument('name') ?: $record['name']);
+        $value = $value ?? ($this->argument('value') ?: $record['value']);
+
         $response = $connector->send(new DomainsRecordsUpdate(
             record: $record['id'],
-            name: $this->argument('name') ?: $record['name'],
-            value: $this->argument('value') ?: $record['value'],
+            name: $name,
+            value: $value,
+            ttl: is_numeric($this->option('ttl')) ? (int) $this->option('ttl') : null
         ));
 
         if ($response->successful()) {
