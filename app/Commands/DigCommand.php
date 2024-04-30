@@ -2,11 +2,11 @@
 
 namespace App\Commands;
 
-use Amp\Dns\DnsException;
-use Amp\Dns\DnsRecord;
 use Illuminate\Contracts\Console\PromptsForMissingInput;
 use LaravelZero\Framework\Commands\Command;
-use LibDNS\Records\ResourceTypes;
+use React\Dns\Model\Message;
+use React\Dns\Query\Query;
+use React\Dns\Query\UdpTransportExecutor;
 
 use function Laravel\Prompts\select;
 
@@ -19,38 +19,52 @@ class DigCommand extends Command implements PromptsForMissingInput
     public function handle()
     {
         $domain = $this->argument('domain');
-        $type = $this->argument('type');
+        $type_string = strtoupper($this->argument('type'));
         $server = $this->option('server');
 
-        $type = match (strtoupper($type)) {
-            'A' => ResourceTypes::A,
-            'AAAA' => ResourceTypes::AAAA,
-            'CNAME' => ResourceTypes::CNAME,
-            'MX' => ResourceTypes::MX,
-            'NS' => ResourceTypes::NS,
-            'PTR' => ResourceTypes::PTR,
-            'SOA' => ResourceTypes::SOA,
-            'SRV' => ResourceTypes::SRV,
-            'TXT' => ResourceTypes::TXT,
+        // TODO : validate domain and server
+
+        $type = match ($type_string) {
+            'A' => Message::TYPE_A,
+            'AAAA' => Message::TYPE_AAAA,
+            'CNAME' => Message::TYPE_CNAME,
+            // 'DNAME' => Message::TYPE_DNAME, // Not supported for now
+            'NS' => Message::TYPE_NS,
+            'MX' => Message::TYPE_MX,
+            'PTR' => Message::TYPE_PTR,
+            'SOA' => Message::TYPE_SOA,
+            'SRV' => Message::TYPE_SRV,
+            'SSHFP' => Message::TYPE_SSHFP,
+            'TXT' => Message::TYPE_TXT,
             default => throw new \InvalidArgumentException("Invalid record type: $type"),
         };
 
+        $table = [];
         try {
-            $records = \Amp\Dns\query($domain, $type);
-        } catch (DnsException $e) {
+            $executor = new UdpTransportExecutor($server.':53');
+
+            $executor
+                ->query(
+                    new Query($domain, $type, Message::CLASS_IN)
+                )
+                ->then(function (Message $message) use (&$table, $type_string) {
+                    foreach ($message->answers as $answer) {
+                        $table[] = [
+                            'Name' => $answer->name,
+                            'Type' => $type_string,
+                            'TTL' => $answer->ttl,
+                            'Value' => is_array($answer->data) ? implode(' ', $answer->data) : $answer->data,
+                        ];
+                    }
+
+                    $this->table(['Name', 'Type', 'TTL', 'Value'], $table);
+                }, 'printf');
+
+        } catch (\Exception $e) {
             $this->error($e->getMessage());
 
             return self::FAILURE;
         }
-
-        $table = collect($records)->map(fn ($record) => [
-            'name' => $domain,
-            'type' => DnsRecord::getName($record->getType()),
-            'ttl' => $record->getTtl(),
-            'value' => $record->getValue(),
-        ])->toArray();
-
-        $this->table(['Name', 'Type', 'TTL', 'Value'], $table);
     }
 
     protected function promptForMissingArgumentsUsing(): array
@@ -62,17 +76,7 @@ class DigCommand extends Command implements PromptsForMissingInput
             ],
             'type' => fn () => select(
                 'Select the record type',
-                [
-                    'A',
-                    'AAAA',
-                    'CNAME',
-                    'MX',
-                    'NS',
-                    'PTR',
-                    'SOA',
-                    'SRV',
-                    'TXT',
-                ],
+                ['A', 'AAAA', 'CNAME', 'NS', 'MX', 'PTR', 'SOA', 'SRV', 'SSHFP', 'TXT'],
                 'A'
             ),
         ];
