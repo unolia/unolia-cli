@@ -7,7 +7,7 @@ use App\Http\Integrations\Unolia\Requests\DomainsRecordsDelete;
 use Illuminate\Contracts\Console\PromptsForMissingInput;
 use LaravelZero\Framework\Commands\Command;
 
-class DomainRemove extends Command implements PromptsForMissingInput
+class DomainRemoveCommand extends Command implements PromptsForMissingInput
 {
     protected $signature = 'domain:remove {record_id}';
 

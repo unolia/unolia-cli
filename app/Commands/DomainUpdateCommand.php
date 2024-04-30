@@ -9,7 +9,7 @@ use LaravelZero\Framework\Commands\Command;
 
 use function Laravel\Prompts\text;
 
-class DomainUpdate extends Command
+class DomainUpdateCommand extends Command
 {
     protected $signature = 'domain:update {record_id} {name?} {value?} {--ttl=}';
 

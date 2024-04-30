@@ -8,7 +8,7 @@ use Illuminate\Contracts\Console\PromptsForMissingInput;
 use Illuminate\Support\Str;
 use LaravelZero\Framework\Commands\Command;
 
-class DomainRecords extends Command implements PromptsForMissingInput
+class DomainRecordsCommand extends Command implements PromptsForMissingInput
 {
     protected $signature = 'domain:records {domain}';
 

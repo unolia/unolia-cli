@@ -4,11 +4,11 @@ namespace App\Commands;
 
 use LaravelZero\Framework\Commands\Command;
 
-class Login extends Command
+class LogoutCommand extends Command
 {
-    protected $signature = 'login {--token= : Unolia API token}';
+    protected $signature = 'logout';
 
-    protected $description = 'Authenticate with the unolia.com';
+    protected $description = 'Logout from unolia.com';
 
     public function handle()
     {

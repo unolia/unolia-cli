@@ -10,7 +10,7 @@ use LaravelZero\Framework\Commands\Command;
 use function Laravel\Prompts\select;
 use function Laravel\Prompts\text;
 
-class DomainAdd extends Command implements PromptsForMissingInput
+class DomainAddCommand extends Command implements PromptsForMissingInput
 {
     protected $signature = 'domain:add {domain} {name} {type} {value} {--ttl=}';
 

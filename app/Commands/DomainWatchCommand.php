@@ -4,7 +4,7 @@ namespace App\Commands;
 
 use LaravelZero\Framework\Commands\Command;
 
-class DomainWatch extends Command
+class DomainWatchCommand extends Command
 {
     protected $signature = 'domain:watch {record_id} {--interval=1} {--timeout=} {--once}';
 

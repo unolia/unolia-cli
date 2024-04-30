@@ -7,7 +7,7 @@ use App\Http\Integrations\Unolia\Requests\CurrentAuthenticated;
 use App\Http\Integrations\Unolia\Requests\CurrentToken;
 use LaravelZero\Framework\Commands\Command;
 
-class Me extends Command
+class MeCommand extends Command
 {
     protected $signature = 'me';
 

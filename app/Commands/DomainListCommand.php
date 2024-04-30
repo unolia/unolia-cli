@@ -7,7 +7,7 @@ use App\Http\Integrations\Unolia\Requests\Domains;
 use Carbon\Carbon;
 use LaravelZero\Framework\Commands\Command;
 
-class DomainList extends Command
+class DomainListCommand extends Command
 {
     protected $signature = 'domain:list';
 
