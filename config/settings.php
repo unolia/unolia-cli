@@ -24,6 +24,6 @@ return [
         | The base URL for the Unolia API.
         |
         */
-        'url' => env('UNOLIA_API_URL', 'https://app.unolia.com/api'),
+        'url' => env('UNOLIA_API_URL', 'https://api.unolia.com/v1/'),
     ],
 ];
