@@ -36,35 +36,29 @@ class DigCommand extends Command implements PromptsForMissingInput
             'SRV' => Message::TYPE_SRV,
             'SSHFP' => Message::TYPE_SSHFP,
             'TXT' => Message::TYPE_TXT,
-            default => throw new \InvalidArgumentException("Invalid record type: $type"),
+            default => throw new \InvalidArgumentException("Invalid record type: $type_string"),
         };
 
         $table = [];
-        try {
-            $executor = new UdpTransportExecutor($server.':53');
+        $executor = new UdpTransportExecutor($server.':53');
 
-            $executor
-                ->query(
-                    new Query($domain, $type, Message::CLASS_IN)
-                )
-                ->then(function (Message $message) use (&$table, $type_string) {
-                    foreach ($message->answers as $answer) {
-                        $table[] = [
-                            'Name' => $answer->name,
-                            'Type' => $type_string,
-                            'TTL' => $answer->ttl,
-                            'Value' => is_array($answer->data) ? implode(' ', $answer->data) : $answer->data,
-                        ];
-                    }
+        $executor
+            ->query(
+                new Query($domain, $type, Message::CLASS_IN)
+            )
+            ->then(function (Message $message) use (&$table, $type_string) {
+                foreach ($message->answers as $answer) {
+                    $table[] = [
+                        'Name' => $answer->name,
+                        'Type' => $type_string,
+                        'TTL' => $answer->ttl,
+                        'Value' => is_array($answer->data) ? implode(' ', $answer->data) : $answer->data,
+                    ];
+                }
 
-                    $this->table(['Name', 'Type', 'TTL', 'Value'], $table);
-                }, 'printf');
+                $this->table(['Name', 'Type', 'TTL', 'Value'], $table);
+            }, fn (\Throwable $e) => $this->error($e->getMessage()));
 
-        } catch (\Exception $e) {
-            $this->error($e->getMessage());
-
-            return self::FAILURE;
-        }
     }
 
     protected function promptForMissingArgumentsUsing(): array
