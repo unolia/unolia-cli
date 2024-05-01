@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Commands;
+namespace Unolia\UnoliaCLI\Commands;
 
-use App\Helpers;
-use App\Http\Integrations\Unolia\Requests\DomainsRecordsShow;
-use App\Http\Integrations\Unolia\Requests\DomainsRecordsUpdate;
 use LaravelZero\Framework\Commands\Command;
+use Unolia\UnoliaCLI\Helpers\Helpers;
+use Unolia\UnoliaCLI\Http\Integrations\Unolia\Requests\DomainsRecordsShow;
+use Unolia\UnoliaCLI\Http\Integrations\Unolia\Requests\DomainsRecordsUpdate;
 
 use function Laravel\Prompts\text;
 
@@ -17,7 +17,7 @@ class DomainUpdateCommand extends Command
 
     public function handle()
     {
-        $connector = Helpers::connector();
+        $connector = Helpers::getApiConnector();
 
         $response = $connector->send(new DomainsRecordsShow(
             record: $this->argument('record_id')

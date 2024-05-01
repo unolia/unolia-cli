@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Providers;
+namespace Unolia\UnoliaCLI\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Saloon\Laravel\SaloonServiceProvider;

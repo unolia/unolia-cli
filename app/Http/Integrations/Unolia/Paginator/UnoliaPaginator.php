@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Integrations\Unolia\Paginator;
+namespace Unolia\UnoliaCLI\Http\Integrations\Unolia\Paginator;
 
 use Saloon\Http\Request;
 use Saloon\Http\Response;

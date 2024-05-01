@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Commands;
+namespace Unolia\UnoliaCLI\Commands;
 
-use App\Helpers;
-use App\Http\Integrations\Unolia\Requests\Domains;
 use Carbon\Carbon;
 use LaravelZero\Framework\Commands\Command;
+use Unolia\UnoliaCLI\Helpers\Helpers;
+use Unolia\UnoliaCLI\Http\Integrations\Unolia\Requests\Domains;
 
 class DomainListCommand extends Command
 {
@@ -15,7 +15,7 @@ class DomainListCommand extends Command
 
     public function handle()
     {
-        $connector = Helpers::connector();
+        $connector = Helpers::getApiConnector();
 
         $response = $connector->paginate(new Domains());
 

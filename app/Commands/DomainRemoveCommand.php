@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Commands;
+namespace Unolia\UnoliaCLI\Commands;
 
-use App\Helpers;
-use App\Http\Integrations\Unolia\Requests\DomainsRecordsDelete;
 use Illuminate\Contracts\Console\PromptsForMissingInput;
 use LaravelZero\Framework\Commands\Command;
+use Unolia\UnoliaCLI\Helpers\Helpers;
+use Unolia\UnoliaCLI\Http\Integrations\Unolia\Requests\DomainsRecordsDelete;
 
 class DomainRemoveCommand extends Command implements PromptsForMissingInput
 {
@@ -15,7 +15,7 @@ class DomainRemoveCommand extends Command implements PromptsForMissingInput
 
     public function handle()
     {
-        $connector = Helpers::connector();
+        $connector = Helpers::getApiConnector();
 
         $response = $connector->send(new DomainsRecordsDelete(
             record: $this->argument('record_id'))

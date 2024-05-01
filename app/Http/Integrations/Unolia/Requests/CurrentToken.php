@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Integrations\Unolia\Requests;
+namespace Unolia\UnoliaCLI\Http\Integrations\Unolia\Requests;
 
 use Saloon\Enums\Method;
 use Saloon\Http\Request;

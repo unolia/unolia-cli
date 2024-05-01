@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Commands;
+namespace Unolia\UnoliaCLI\Commands;
 
-use App\Helpers;
-use App\Http\Integrations\Unolia\Requests\Teams;
 use LaravelZero\Framework\Commands\Command;
+use Unolia\UnoliaCLI\Helpers\Helpers;
+use Unolia\UnoliaCLI\Http\Integrations\Unolia\Requests\Teams;
 
 class TeamsCommand extends Command
 {
@@ -14,7 +14,7 @@ class TeamsCommand extends Command
 
     public function handle()
     {
-        $connector = Helpers::connector();
+        $connector = Helpers::getApiConnector();
 
         $response = $connector->send(new Teams());
 

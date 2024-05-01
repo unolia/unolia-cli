@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Commands;
+namespace Unolia\UnoliaCLI\Commands;
 
-use App\Helpers;
-use App\Http\Integrations\Unolia\Requests\CurrentAuthenticated;
-use App\Http\Integrations\Unolia\Requests\CurrentToken;
 use LaravelZero\Framework\Commands\Command;
+use Unolia\UnoliaCLI\Helpers\Helpers;
+use Unolia\UnoliaCLI\Http\Integrations\Unolia\Requests\CurrentAuthenticated;
+use Unolia\UnoliaCLI\Http\Integrations\Unolia\Requests\CurrentToken;
 
 class MeCommand extends Command
 {
@@ -15,7 +15,7 @@ class MeCommand extends Command
 
     public function handle()
     {
-        $connector = Helpers::connector();
+        $connector = Helpers::getApiConnector();
 
         $response = $connector->send(new CurrentToken());
 

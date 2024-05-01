@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Http\Integrations\Unolia;
+namespace Unolia\UnoliaCLI\Http\Integrations\Unolia;
 
-use App\Http\Integrations\Unolia\Paginator\UnoliaPaginator;
 use Saloon\Http\Auth\TokenAuthenticator;
 use Saloon\Http\Connector;
 use Saloon\Http\Request;
 use Saloon\PaginationPlugin\Contracts\HasPagination;
 use Saloon\Traits\Plugins\AcceptsJson;
+use Unolia\UnoliaCLI\Http\Integrations\Unolia\Paginator\UnoliaPaginator;
 
 class Unolia extends Connector implements HasPagination
 {

@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Commands;
+namespace Unolia\UnoliaCLI\Commands;
 
-use App\Helpers;
-use App\Http\Integrations\Unolia\Requests\DomainsRecords;
 use Illuminate\Contracts\Console\PromptsForMissingInput;
 use Illuminate\Support\Str;
 use LaravelZero\Framework\Commands\Command;
+use Unolia\UnoliaCLI\Helpers\Helpers;
+use Unolia\UnoliaCLI\Http\Integrations\Unolia\Requests\DomainsRecords;
 
 class DomainRecordsCommand extends Command implements PromptsForMissingInput
 {
@@ -16,7 +16,7 @@ class DomainRecordsCommand extends Command implements PromptsForMissingInput
 
     public function handle()
     {
-        $connector = Helpers::connector();
+        $connector = Helpers::getApiConnector();
 
         $response = $connector->paginate(new DomainsRecords($this->argument('domain')));
 

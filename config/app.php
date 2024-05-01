@@ -67,7 +67,7 @@ return [
     */
 
     'providers' => [
-        App\Providers\AppServiceProvider::class,
+        Unolia\UnoliaCLI\Providers\AppServiceProvider::class,
     ],
 
 ];

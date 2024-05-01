@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Commands;
+namespace Unolia\UnoliaCLI\Commands;
 
 use Illuminate\Contracts\Console\PromptsForMissingInput;
 use LaravelZero\Framework\Commands\Command;

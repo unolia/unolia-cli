@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Commands;
+namespace Unolia\UnoliaCLI\Commands;
 
-use App\Helpers;
-use App\Http\Integrations\Unolia\Requests\DomainsRecordsCreate;
 use Illuminate\Contracts\Console\PromptsForMissingInput;
 use LaravelZero\Framework\Commands\Command;
+use Unolia\UnoliaCLI\Helpers\Helpers;
+use Unolia\UnoliaCLI\Http\Integrations\Unolia\Requests\DomainsRecordsCreate;
 
 use function Laravel\Prompts\select;
 use function Laravel\Prompts\text;
@@ -18,7 +18,7 @@ class DomainAddCommand extends Command implements PromptsForMissingInput
 
     public function handle()
     {
-        $connector = Helpers::connector();
+        $connector = Helpers::getApiConnector();
 
         $response = $connector->send(new DomainsRecordsCreate(
             domain: $this->argument('domain'),

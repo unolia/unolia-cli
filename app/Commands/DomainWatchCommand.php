@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Commands;
+namespace Unolia\UnoliaCLI\Commands;
 
-use App\Helpers;
-use App\Http\Integrations\Unolia\Requests\DomainsRecordsShow;
 use Exception;
 use LaravelZero\Framework\Commands\Command;
 use Saloon\Exceptions\Request\RequestException;
+use Unolia\UnoliaCLI\Helpers\Helpers;
+use Unolia\UnoliaCLI\Http\Integrations\Unolia\Requests\DomainsRecordsShow;
 
 class DomainWatchCommand extends Command
 {
@@ -16,7 +16,7 @@ class DomainWatchCommand extends Command
 
     public function handle()
     {
-        $connector = Helpers::connector();
+        $connector = Helpers::getApiConnector();
 
         try {
             $response = $connector->send(new DomainsRecordsShow(
