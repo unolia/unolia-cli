@@ -31,14 +31,15 @@ class DomainWatchCommand extends Command
         $interval = intval($this->option('interval')) <= 0 ? 2 : intval($this->option('interval'));
 
         $record = $response->json('data');
-
-        $start = time();
-        $this->line(''); // Blank line
-        $this->line('  Watching the following record: '.implode(' | ', [
+        $record_string = implode(' | ', [
             $record['name'],
             $record['type'],
             $record['value'],
-        ]));
+        ]);
+
+        $start = time();
+        $this->line(''); // Blank line
+        $this->line('  Watching the following record: '.$record_string);
 
         $this->line(''); // Blank line
 
@@ -59,6 +60,7 @@ class DomainWatchCommand extends Command
 
             if ($record['state'] === 'verified') {
                 $this->info('  Record is active');
+                $this->notify('Record is active!', $record_string);
                 break;
             }
 

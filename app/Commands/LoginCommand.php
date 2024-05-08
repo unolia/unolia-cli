@@ -2,13 +2,17 @@
 
 namespace Unolia\UnoliaCLI\Commands;
 
+use Exception;
 use LaravelZero\Framework\Commands\Command;
+use Saloon\Exceptions\Request\Statuses\UnprocessableEntityException;
 use Unolia\UnoliaCLI\Helpers\Config;
 use Unolia\UnoliaCLI\Helpers\Helpers;
 use Unolia\UnoliaCLI\Http\Integrations\Unolia\Requests\CurrentAuthenticated;
 use Unolia\UnoliaCLI\Http\Integrations\Unolia\Requests\CurrentToken;
+use Unolia\UnoliaCLI\Http\Integrations\Unolia\Requests\Login;
 
 use function Laravel\Prompts\password;
+use function Laravel\Prompts\text;
 
 class LoginCommand extends Command
 {
@@ -19,18 +23,68 @@ class LoginCommand extends Command
     public function handle()
     {
         $token = Helpers::getApiToken();
+        $connector = Helpers::getApiConnector($token ?: '');
 
         if (! empty($token)) {
-            $this->line('You are already logged in.');
+            try {
+                $verify = $connector->send(new CurrentToken());
+                $verify->throw();
+
+                $this->line('You are already logged in.');
+            } catch (Exception) {
+            }
 
             return;
         }
 
-        $token = password(
-            label: 'API Token',
-            placeholder: '',
-            hint: 'You can find your API token in your unolia.com account settings',
-        );
+        $token_name = 'Token for '.get_current_user().'@'.gethostname();
+
+        $email = text('Email');
+        $password = password('Password');
+        $connector_auth = Helpers::getAuthConnector();
+
+        try {
+            $login = $connector_auth->send(new Login(
+                email: $email,
+                password: $password,
+                token_name: $token_name,
+            ));
+
+            $login->throw();
+
+        } catch (UnprocessableEntityException $e) {
+
+            $two_fa_error = $e->getResponse()->json('errors.two_factor_code');
+
+            if (! empty($two_fa_error)) {
+                $two_factor_code = text('Two factor authentication code');
+
+                $login = $connector_auth->send(new Login(
+                    email: $email, password: $password,
+                    two_factor_code: $two_factor_code,
+                    token_name: $token_name,
+                ));
+
+                try {
+                    $login->throw();
+                } catch (Exception $e) {
+                    $this->error($e->getMessage());
+
+                    return;
+                }
+            } else {
+                $this->error($e->getMessage());
+
+                return;
+            }
+
+        } catch (Exception $e) {
+            $this->error($e->getMessage());
+
+            return;
+        }
+
+        $token = $login->json('data.token');
 
         $connector = Helpers::getApiConnector($token);
         try {

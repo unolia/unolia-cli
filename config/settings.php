@@ -25,5 +25,6 @@ return [
         |
         */
         'url' => env('UNOLIA_API_URL', 'https://app.unolia.com/api/v1/'),
+        'auth_url' => env('UNOLIA_AUTH_URL', 'https://app.unolia.com/api/'),
     ],
 ];
