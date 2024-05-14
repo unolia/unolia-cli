@@ -7,5 +7,3 @@ parameters:
     - config
   level: 5
   ignoreErrors:
-  checkMissingIterableValueType: false
-  checkGenericClassInNonGenericObjectType: false

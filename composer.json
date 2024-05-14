@@ -41,6 +41,16 @@
             "Tests\\": "tests/"
         }
     },
+    "scripts": {
+        "test": "./vendor/bin/pest -p",
+        "pint": "./vendor/bin/pint",
+        "phpstan": "./vendor/bin/phpstan",
+        "qa": [
+            "@composer pint",
+            "@composer phpstan",
+            "@composer test"
+        ]
+    },
     "config": {
         "preferred-install": "dist",
         "sort-packages": true,
