@@ -11,7 +11,7 @@ use Unolia\UnoliaCLI\Http\Integrations\Unolia\Requests\CurrentAuthenticated;
 use Unolia\UnoliaCLI\Http\Integrations\Unolia\Requests\CurrentToken;
 use Unolia\UnoliaCLI\Http\Integrations\Unolia\Requests\Login;
 
-use function Laravel\Prompts\password;
+use function Laravel\Prompts\form;
 use function Laravel\Prompts\text;
 
 class LoginCommand extends Command
@@ -31,22 +31,31 @@ class LoginCommand extends Command
                 $verify->throw();
 
                 $this->line('You are already logged in.');
-            } catch (Exception) {
-            }
 
-            return;
+                return;
+            } catch (Exception $e) {
+                \Laravel\Prompts\info('A token is already set, but it is expired. Please login again.');
+            }
         }
 
         $token_name = 'Token for '.get_current_user().'@'.gethostname();
 
-        $email = text('Email');
-        $password = password('Password');
+        $host = parse_url(config('settings.api.auth_url'), PHP_URL_HOST);
+        $responses = form()
+            ->text('Email',
+                required: true,
+                hint: 'Please provide your login credentials to '.$host,
+                name: 'email'
+            )
+            ->password('Password', required: true, name: 'password')
+            ->submit();
+
         $connector_auth = Helpers::getAuthConnector();
 
         try {
             $login = $connector_auth->send(new Login(
-                email: $email,
-                password: $password,
+                email: $responses['email'],
+                password: $responses['password'],
                 token_name: $token_name,
             ));
 
@@ -60,7 +69,8 @@ class LoginCommand extends Command
                 $two_factor_code = text('Two factor authentication code');
 
                 $login = $connector_auth->send(new Login(
-                    email: $email, password: $password,
+                    email: $responses['email'],
+                    password: $responses['password'],
                     two_factor_code: $two_factor_code,
                     token_name: $token_name,
                 ));

@@ -6,6 +6,8 @@ use LaravelZero\Framework\Commands\Command;
 use Unolia\UnoliaCLI\Helpers\Helpers;
 use Unolia\UnoliaCLI\Http\Integrations\Unolia\Requests\Teams;
 
+use function Laravel\Prompts\table;
+
 class TeamsCommand extends Command
 {
     protected $signature = 'teams';
@@ -23,6 +25,6 @@ class TeamsCommand extends Command
             'Team' => $team['name'],
         ])->toArray();
 
-        $this->table(['ID', 'Team'], $table);
+        table(['ID', 'Team'], $table);
     }
 }

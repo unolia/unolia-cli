@@ -7,6 +7,8 @@ use LaravelZero\Framework\Commands\Command;
 use Unolia\UnoliaCLI\Helpers\Helpers;
 use Unolia\UnoliaCLI\Http\Integrations\Unolia\Requests\Domains;
 
+use function Laravel\Prompts\table;
+
 class DomainListCommand extends Command
 {
     protected $signature = 'domain:list';
@@ -25,6 +27,6 @@ class DomainListCommand extends Command
             'Last synced at' => $domain['synced_at'] ? Carbon::make($domain['synced_at'])->diffForHumans() : 'Never synced',
         ])->toArray();
 
-        $this->table(['Domain', 'Team', 'Last Synced At'], $table);
+        table(['Domain', 'Team', 'Last Synced At'], $table);
     }
 }

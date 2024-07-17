@@ -9,6 +9,7 @@ use React\Dns\Query\Query;
 use React\Dns\Query\UdpTransportExecutor;
 
 use function Laravel\Prompts\select;
+use function Laravel\Prompts\table;
 
 class DigCommand extends Command implements PromptsForMissingInput
 {
@@ -49,14 +50,14 @@ class DigCommand extends Command implements PromptsForMissingInput
             ->then(function (Message $message) use (&$table, $type_string) {
                 foreach ($message->answers as $answer) {
                     $table[] = [
-                        'Name' => $answer->name,
-                        'Type' => $type_string,
-                        'TTL' => $answer->ttl,
-                        'Value' => is_array($answer->data) ? implode(' ', $answer->data) : $answer->data,
+                        $answer->name,
+                        $type_string,
+                        $answer->ttl,
+                        is_array($answer->data) ? implode(' ', $answer->data) : $answer->data,
                     ];
                 }
 
-                $this->table(['Name', 'Type', 'TTL', 'Value'], $table);
+                table(['Name', 'Type', 'TTL', 'Value'], $table);
             }, fn (\Throwable $e) => $this->error($e->getMessage()));
 
     }

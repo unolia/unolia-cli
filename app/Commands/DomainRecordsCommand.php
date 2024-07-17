@@ -8,6 +8,8 @@ use LaravelZero\Framework\Commands\Command;
 use Unolia\UnoliaCLI\Helpers\Helpers;
 use Unolia\UnoliaCLI\Http\Integrations\Unolia\Requests\DomainsRecords;
 
+use function Laravel\Prompts\table;
+
 class DomainRecordsCommand extends Command implements PromptsForMissingInput
 {
     protected $signature = 'domain:records {domain}';
@@ -24,12 +26,12 @@ class DomainRecordsCommand extends Command implements PromptsForMissingInput
             '#' => $record['id'],
             'name' => $record['name'],
             'type' => $record['type'],
-            'ttl' => $record['ttl'],
+            'ttl' => $record['ttl'] ?: '---',
             'value' => Str::limit($record['value'], 20),
             'state' => $record['state'],
         ])->toArray();
 
-        $this->table(['#', 'Name', 'Type', 'TTL', 'Value', 'State'], $table);
+        table(['#', 'Name', 'Type', 'TTL', 'Value', 'State'], $table);
     }
 
     protected function promptForMissingArgumentsUsing(): array
