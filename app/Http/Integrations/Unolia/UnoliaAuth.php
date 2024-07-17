@@ -14,8 +14,7 @@ class UnoliaAuth extends Connector
     public function __construct(
         public readonly ?string $token = null,
         public readonly ?string $api_url = null,
-    ) {
-    }
+    ) {}
 
     protected function defaultAuth(): ?TokenAuthenticator
     {

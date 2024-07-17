@@ -18,8 +18,7 @@ class Login extends Request implements HasBody
         public readonly string $password,
         public readonly ?string $two_factor_code = null,
         public readonly ?string $token_name = null,
-    ) {
-    }
+    ) {}
 
     public function defaultBody(): array
     {

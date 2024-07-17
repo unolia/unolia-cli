@@ -1,5 +1,3 @@
 <?php
 
-it('can list all the domains', function () {
-
-});
+it('can list all the domains', function () {});

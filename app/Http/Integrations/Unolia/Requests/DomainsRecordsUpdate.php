@@ -18,8 +18,7 @@ class DomainsRecordsUpdate extends Request implements HasBody
         protected readonly string $name,
         protected readonly string $value,
         protected readonly ?int $ttl = null,
-    ) {
-    }
+    ) {}
 
     public function defaultBody(): array
     {

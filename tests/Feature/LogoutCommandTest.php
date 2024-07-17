@@ -1,5 +1,3 @@
 <?php
 
-it('can logout a user', function () {
-
-});
+it('can logout a user', function () {});

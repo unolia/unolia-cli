@@ -1,5 +1,3 @@
 <?php
 
-it('can remove a record from a domain', function () {
-
-});
+it('can remove a record from a domain', function () {});

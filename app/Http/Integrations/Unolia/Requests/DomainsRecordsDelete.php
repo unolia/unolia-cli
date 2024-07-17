@@ -11,8 +11,7 @@ class DomainsRecordsDelete extends Request
 
     public function __construct(
         protected readonly string $record,
-    ) {
-    }
+    ) {}
 
     public function resolveEndpoint(): string
     {

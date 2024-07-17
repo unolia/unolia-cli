@@ -17,8 +17,7 @@ class Unolia extends Connector implements HasPagination
     public function __construct(
         public readonly string $token,
         public readonly ?string $api_url = null,
-    ) {
-    }
+    ) {}
 
     protected function defaultAuth(): TokenAuthenticator
     {

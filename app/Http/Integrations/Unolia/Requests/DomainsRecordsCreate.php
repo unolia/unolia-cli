@@ -19,8 +19,7 @@ class DomainsRecordsCreate extends Request implements HasBody
         protected readonly string $type,
         protected readonly string $value,
         protected readonly ?int $ttl = null,
-    ) {
-    }
+    ) {}
 
     public function defaultBody(): array
     {

@@ -11,8 +11,7 @@ class DomainsShow extends Request
 
     public function __construct(
         protected readonly string $domain
-    ) {
-    }
+    ) {}
 
     public function resolveEndpoint(): string
     {

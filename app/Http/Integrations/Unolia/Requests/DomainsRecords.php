@@ -12,8 +12,7 @@ class DomainsRecords extends Request implements Paginatable
 
     public function __construct(
         protected readonly string $domain
-    ) {
-    }
+    ) {}
 
     public function resolveEndpoint(): string
     {
