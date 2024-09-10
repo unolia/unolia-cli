@@ -18,7 +18,7 @@ class TeamsCommand extends Command
     {
         $connector = Helpers::getApiConnector();
 
-        $response = $connector->send(new Teams());
+        $response = $connector->send(new Teams);
 
         $table = $response->collect('data')->map(fn ($team) => [
             'ID' => $team['id'],

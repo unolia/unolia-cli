@@ -24,7 +24,7 @@ class LogoutCommand extends Command
         }
 
         $connector = Helpers::getAuthConnector();
-        $logout = $connector->send(new Logout());
+        $logout = $connector->send(new Logout);
 
         if ($logout->failed() && ! $this->option('force')) {
             $this->error('Logout failed: '.$logout->json('message'));

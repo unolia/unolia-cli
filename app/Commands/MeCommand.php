@@ -17,7 +17,7 @@ class MeCommand extends Command
     {
         $connector = Helpers::getApiConnector();
 
-        $response = $connector->send(new CurrentToken());
+        $response = $connector->send(new CurrentToken);
 
         if ($response->failed()) {
             $this->error('Failed to fetch token info: '.($response->json('message') ?: 'Unknown error'));
@@ -27,7 +27,7 @@ class MeCommand extends Command
 
         $token = $response->json('data');
 
-        $response = $connector->send(new CurrentAuthenticated());
+        $response = $connector->send(new CurrentAuthenticated);
 
         if ($response->failed()) {
             $this->error('Failed to fetch user details: '.($response->json('message') ?: 'Unknown error'));

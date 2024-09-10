@@ -19,7 +19,7 @@ class DomainListCommand extends Command
     {
         $connector = Helpers::getApiConnector();
 
-        $response = $connector->paginate(new Domains());
+        $response = $connector->paginate(new Domains);
 
         $table = $response->collect()->map(fn ($domain) => [
             'Domain' => $domain['domain'],

@@ -27,7 +27,7 @@ class LoginCommand extends Command
 
         if (! empty($token)) {
             try {
-                $verify = $connector->send(new CurrentToken());
+                $verify = $connector->send(new CurrentToken);
                 $verify->throw();
 
                 $this->line('You are already logged in.');
@@ -98,7 +98,7 @@ class LoginCommand extends Command
 
         $connector = Helpers::getApiConnector($token);
         try {
-            $response = $connector->send(new CurrentToken());
+            $response = $connector->send(new CurrentToken);
             $response->throw();
         } catch (\Exception $e) {
             $this->error('Failed to authenticate with the API: '.$e->getMessage());
@@ -108,7 +108,7 @@ class LoginCommand extends Command
 
         $current_token = $response->json('data');
 
-        $response = $connector->send(new CurrentAuthenticated());
+        $response = $connector->send(new CurrentAuthenticated);
 
         if ($response->failed()) {
             $this->error('Failed to fetch user details: '.($response->json('message') ?: 'Unknown error'));
