@@ -1,6 +1,7 @@
 {
     "name": "unolia/unolia-cli",
     "description": "Cli tool to interact with the Unolia API",
+    "type": "project",
     "keywords": ["unolia", "dns", "console", "cli"],
     "homepage": "https://unolia.com",
     "license": "MIT",
