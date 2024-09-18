@@ -15,8 +15,8 @@ Currently supported providers:
 - [Gandi](https://www.gandi.net/)
 - [Ionos](https://www.ionos.fr/)
 - [OVH](https://www.ovh.com/)
+- [Porkbun](https://porkbun.com)
 - Namecheap (soon)
-- Porkbun (soon)
 - Godaddy
 
 ## Installation
