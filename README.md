@@ -54,8 +54,8 @@ unolia domain:records example.com
 ```
 Add, update and remove records
 ```bash
-unolia domain:add example.com MX mg.example.com "10 mxa.eu.mailgun.org"
-unolia domain:add example.com MX mg.example.com "10 mxb.eu.mailgun.org"
+unolia domain:add example.com mg.example.com MX "10 mxa.eu.mailgun.org"
+unolia domain:add example.com mg.example.com MX "10 mxb.eu.mailgun.org"
 unolia domain:update {ID} 
 unolia domain:remove {ID}
 ```
