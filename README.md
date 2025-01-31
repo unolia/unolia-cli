@@ -16,7 +16,7 @@ Currently supported providers:
 - [Ionos](https://www.ionos.fr/)
 - [OVH](https://www.ovh.com/)
 - [Porkbun](https://porkbun.com)
-- Namecheap (soon)
+- [Namecheap](https://www.namecheap.com/)
 - Godaddy
 
 ## Installation
