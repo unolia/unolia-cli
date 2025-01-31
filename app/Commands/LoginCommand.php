@@ -16,13 +16,12 @@ use function Laravel\Prompts\text;
 
 class LoginCommand extends Command
 {
-    protected $signature = 'login {--token= : Unolia API token}';
+    protected $signature = 'login {--token= : Authenticate with a token}';
 
     protected $description = 'Authenticate with the unolia.com';
 
     public function handle()
     {
-        // New token validation flow
         if ($tokenOption = $this->option('token')) {
             $connector = Helpers::getApiConnector($tokenOption);
 
