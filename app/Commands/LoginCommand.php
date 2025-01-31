@@ -22,6 +22,30 @@ class LoginCommand extends Command
 
     public function handle()
     {
+        // New token validation flow
+        if ($tokenOption = $this->option('token')) {
+            $connector = Helpers::getApiConnector($tokenOption);
+
+            try {
+                $tokenVerify = $connector->send(new CurrentToken);
+                $tokenVerify->throw();
+
+                $userResponse = $connector->send(new CurrentAuthenticated);
+                $userResponse->throw();
+
+                $user = $userResponse->json('data');
+                Config::set('api.token', $tokenOption);
+                $this->info('Successfully logged in with token. User: '.$user['name']);
+
+                return;
+            } catch (Exception $e) {
+                $this->error('Invalid token: '.$e->getMessage());
+
+                return;
+            }
+        }
+
+        // Existing email/password flow
         $token = Helpers::getApiToken();
         $connector = Helpers::getApiConnector($token ?: '');
 
