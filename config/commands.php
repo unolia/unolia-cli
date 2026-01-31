@@ -77,12 +77,6 @@ return [
     */
 
     'remove' => [
-
-        \Saloon\Laravel\Console\Commands\MakeAuthenticator::class,
-        \Saloon\Laravel\Console\Commands\MakeConnector::class,
-        \Saloon\Laravel\Console\Commands\MakePlugin::class,
-        \Saloon\Laravel\Console\Commands\MakeRequest::class,
-        \Saloon\Laravel\Console\Commands\MakeResponse::class,
-        \Saloon\Laravel\Console\Commands\ListCommand::class,
+        // ...
     ],
 ];
