@@ -10,11 +10,13 @@ jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest]
         php: [8.2, 8.3, 8.4, 8.5]
 
     name: Test with php ${{ matrix.php }} on ${{ matrix.os }}
+
 
     steps:
       - name: Checkout
@@ -39,7 +41,7 @@ jobs:
           restore-keys: ${{ runner.os }}-composer-
 
       - name: Install Dependencies
-        run: composer update -W -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+        run: composer update -W --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
       - name: Run tests
         run: composer test
