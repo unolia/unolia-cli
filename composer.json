@@ -29,7 +29,7 @@
         "laravel/pint": "^1.15",
         "mockery/mockery": "^1.6",
         "nunomaduro/termwind": "^2.0.1",
-        "pestphp/pest": "^2.22",
+        "pestphp/pest": "^2.22|^3.0|^4.0",
         "saloonphp/laravel-plugin": "^3.0"
     },
     "autoload": {
