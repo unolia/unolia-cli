@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "8f7c595f327ec6e46679b0df80d3667a",
+    "content-hash": "d461946e3ad4645919d870487d10b8f7",
     "packages": [
         {
             "name": "guzzlehttp/guzzle",
@@ -1003,21 +1003,21 @@
         },
         {
             "name": "saloonphp/pagination-plugin",
-            "version": "v2.2.1",
+            "version": "v2.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/saloonphp/pagination-plugin.git",
-                "reference": "d798a9937fa0596efe573622e898635120cebd2b"
+                "reference": "a61822ca93c1207008941822b00df1d8740a4096"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/saloonphp/pagination-plugin/zipball/d798a9937fa0596efe573622e898635120cebd2b",
-                "reference": "d798a9937fa0596efe573622e898635120cebd2b",
+                "url": "https://api.github.com/repos/saloonphp/pagination-plugin/zipball/a61822ca93c1207008941822b00df1d8740a4096",
+                "reference": "a61822ca93c1207008941822b00df1d8740a4096",
                 "shasum": ""
             },
             "require": {
                 "php": "^8.2",
-                "saloonphp/saloon": "^3.0"
+                "saloonphp/saloon": "^3.0 || ^4.0"
             },
             "require-dev": {
                 "friendsofphp/php-cs-fixer": "^3.5",
@@ -1050,22 +1050,22 @@
             "description": "Official Pagination Plugin For Saloon v3",
             "homepage": "https://github.com/saloonphp/pagination-plugin",
             "support": {
-                "source": "https://github.com/saloonphp/pagination-plugin/tree/v2.2.1"
+                "source": "https://github.com/saloonphp/pagination-plugin/tree/v2.3.0"
             },
-            "time": "2025-11-20T23:08:48+00:00"
+            "time": "2026-03-25T20:40:25+00:00"
         },
         {
             "name": "saloonphp/saloon",
-            "version": "v3.14.2",
+            "version": "v4.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/saloonphp/saloon.git",
-                "reference": "634be16ca5eb0b71ab01533f58dc88d174a2e28b"
+                "reference": "1307b1d72cacdd2c9c20978cdf7a0b720b4bf3bb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/saloonphp/saloon/zipball/634be16ca5eb0b71ab01533f58dc88d174a2e28b",
-                "reference": "634be16ca5eb0b71ab01533f58dc88d174a2e28b",
+                "url": "https://api.github.com/repos/saloonphp/saloon/zipball/1307b1d72cacdd2c9c20978cdf7a0b720b4bf3bb",
+                "reference": "1307b1d72cacdd2c9c20978cdf7a0b720b4bf3bb",
                 "shasum": ""
             },
             "require": {
@@ -1125,7 +1125,7 @@
             ],
             "support": {
                 "issues": "https://github.com/saloonphp/saloon/issues",
-                "source": "https://github.com/saloonphp/saloon/tree/v3.14.2"
+                "source": "https://github.com/saloonphp/saloon/tree/v4.0.0"
             },
             "funding": [
                 {
@@ -1133,7 +1133,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-11-20T21:42:32+00:00"
+            "time": "2026-03-17T22:58:33+00:00"
         },
         {
             "name": "symfony/console",

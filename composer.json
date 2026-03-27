@@ -21,7 +21,7 @@
         "laravel/prompts": "^0.1|^0.2|^0.3",
         "react/dns": "^1.12",
         "saloonphp/pagination-plugin": "^2.0",
-        "saloonphp/saloon": "^3.0"
+        "saloonphp/saloon": "^4.0"
     },
     "require-dev": {
         "laravel-zero/framework": "^11.0",
