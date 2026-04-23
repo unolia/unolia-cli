@@ -20,9 +20,12 @@ class DomainAddCommand extends Command implements PromptsForMissingInput
     {
         $connector = Helpers::getApiConnector();
 
+        $domain = $this->argument('domain');
+        $name = $this->argument('name') === '@' ? $domain : $this->argument('name');
+
         $response = $connector->send(new DomainsRecordsCreate(
-            domain: $this->argument('domain'),
-            name: $this->argument('name'),
+            domain: $domain,
+            name: $name,
             type: $this->argument('type'),
             value: $this->argument('value'),
             ttl: is_numeric($this->option('ttl')) ? (int) $this->option('ttl') : null
