@@ -123,7 +123,7 @@ class LoginCommand extends Command
         try {
             $response = $connector->send(new CurrentToken);
             $response->throw();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->error('Failed to authenticate with the API: '.$e->getMessage());
 
             return;

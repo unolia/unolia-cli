@@ -1,5 +1,7 @@
 <?php
 
+use Unolia\UnoliaCLI\Providers\AppServiceProvider;
+
 return [
 
     /*
@@ -67,7 +69,7 @@ return [
     */
 
     'providers' => [
-        Unolia\UnoliaCLI\Providers\AppServiceProvider::class,
+        AppServiceProvider::class,
     ],
 
 ];
