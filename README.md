@@ -25,6 +25,11 @@ Current installation requires you to have PHP and Composer installed on your com
 composer global require unolia/unolia-cli
 ```
 
+Or run it without installing globally via [cpx](https://github.com/laravel/cpx):
+```bash
+cpx unolia/unolia-cli
+```
+
 ## Connect your accounts
 If it's the first time you are using Unolia, [add your first providers](https://app.unolia.com/providers).
 

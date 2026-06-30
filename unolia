@@ -1,6 +1,10 @@
 #!/usr/bin/env php
 <?php
 
+use Illuminate\Contracts\Console\Kernel;
+use Symfony\Component\Console\Input\ArgvInput;
+use Symfony\Component\Console\Output\ConsoleOutput;
+
 define('LARAVEL_START', microtime(true));
 
 /*
@@ -15,7 +19,19 @@ define('LARAVEL_START', microtime(true));
 |
 */
 
-$autoloader = require file_exists(__DIR__.'/vendor/autoload.php') ?  __DIR__.'/vendor/autoload.php' : __DIR__.'/../../autoload.php';
+$autoloadPaths = array_filter([
+    $_composer_autoload_path ?? null,
+    __DIR__.'/vendor/autoload.php',
+    __DIR__.'/../../autoload.php',
+    __DIR__.'/../../../autoload.php',
+]);
+
+foreach ($autoloadPaths as $autoloadPath) {
+    if (is_file($autoloadPath)) {
+        $autoloader = require $autoloadPath;
+        break;
+    }
+}
 
 $app = require_once __DIR__.'/bootstrap/app.php';
 
@@ -30,11 +46,11 @@ $app = require_once __DIR__.'/bootstrap/app.php';
 |
 */
 
-$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+$kernel = $app->make(Kernel::class);
 
 $status = $kernel->handle(
-    $input = new Symfony\Component\Console\Input\ArgvInput,
-    new Symfony\Component\Console\Output\ConsoleOutput
+    $input = new ArgvInput,
+    new ConsoleOutput
 );
 
 /*
