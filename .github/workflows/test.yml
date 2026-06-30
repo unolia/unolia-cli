@@ -50,3 +50,10 @@ jobs:
 
       - name: Run tests
         run: composer test
+
+      - name: Test cpx execution
+        if: matrix.php == '8.4'
+        run: |
+          composer global require cpx/cpx --no-interaction --prefer-dist
+          export PATH="$COMPOSER_HOME/vendor/bin:$PATH"
+          cpx unolia/unolia-cli:dev-${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}} --version
