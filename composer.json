@@ -42,9 +42,9 @@
         }
     },
     "scripts": {
-        "test": "./vendor/bin/pest -p",
-        "pint": "./vendor/bin/pint",
-        "phpstan": "./vendor/bin/phpstan",
+        "test": "pest -p",
+        "pint": "pint",
+        "phpstan": "phpstan",
         "build": "@php unolia app:build",
         "qa": [
             "@composer pint",

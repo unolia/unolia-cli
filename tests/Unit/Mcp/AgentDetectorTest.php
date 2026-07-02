@@ -8,18 +8,23 @@ use Unolia\UnoliaCLI\Mcp\Paths;
 use Unolia\UnoliaCLI\Mcp\Platform;
 
 beforeEach(function () {
-    $this->dir = sys_get_temp_dir().'/unolia-cli-test-'.uniqid();
+    $this->dir = sys_get_temp_dir().'/unolia-cli-test-'.getmypid().'-'.uniqid();
     $this->home = $this->dir.'/home';
     $this->cwd = $this->dir.'/project';
     mkdir($this->home, 0755, true);
     mkdir($this->cwd, 0755, true);
 
     $this->originalHome = $_SERVER['HOME'] ?? null;
+    $this->originalXdg = $_SERVER['XDG_CONFIG_HOME'] ?? null;
     $_SERVER['HOME'] = $this->home;
+    // An empty value reads as "unset" to Paths and shadows any real
+    // XDG_CONFIG_HOME exported by the host (GitHub's ubuntu runners set one).
+    $_SERVER['XDG_CONFIG_HOME'] = '';
 });
 
 afterEach(function () {
     $_SERVER['HOME'] = $this->originalHome;
+    $_SERVER['XDG_CONFIG_HOME'] = $this->originalXdg;
     File::deleteDirectory($this->dir);
 });
 
@@ -84,7 +89,7 @@ it('expands XDG_CONFIG_HOME for ~/.config paths', function () {
 
     expect(Paths::expand('~/.config/amp/settings.json'))->toBe($this->dir.'/xdg/amp/settings.json');
 
-    unset($_SERVER['XDG_CONFIG_HOME']);
+    $_SERVER['XDG_CONFIG_HOME'] = '';
 
     expect(Paths::expand('~/.config/amp/settings.json'))->toBe($this->home.'/.config/amp/settings.json');
 });

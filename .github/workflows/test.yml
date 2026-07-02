@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
         php: [8.2, 8.3, 8.4, 8.5]
 
     name: Test with php ${{ matrix.php }} on ${{ matrix.os }}
@@ -36,6 +36,7 @@ jobs:
 
       - name: Get composer cache directory
         id: composer-cache
+        shell: bash
         run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
 
       - name: Cache dependencies
@@ -52,7 +53,7 @@ jobs:
         run: composer test
 
       - name: Test cpx execution
-        if: matrix.php == '8.4'
+        if: matrix.php == '8.4' && matrix.os == 'ubuntu-latest'
         run: |
           composer global require cpx/cpx --no-interaction --prefer-dist
           export PATH="$COMPOSER_HOME/vendor/bin:$PATH"

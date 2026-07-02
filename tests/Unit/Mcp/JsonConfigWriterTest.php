@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\File;
 use Unolia\UnoliaCLI\Mcp\Writers\JsonConfigWriter;
 
 beforeEach(function () {
-    $this->dir = sys_get_temp_dir().'/unolia-cli-test-'.uniqid();
+    $this->dir = sys_get_temp_dir().'/unolia-cli-test-'.getmypid().'-'.uniqid();
     File::makeDirectory($this->dir, recursive: true);
 });
 
