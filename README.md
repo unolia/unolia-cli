@@ -71,6 +71,26 @@ unolia dig unolia.com A
 ```
 
 
+## Connect your AI agents (MCP)
+Unolia exposes a remote MCP server so AI agents can manage your infrastructure with you. Set it up with:
+```bash
+unolia mcp setup
+```
+The command detects the agents installed on your machine (pre-selected in the prompt), lets you choose between a global install (all your projects) or a local one (current directory), and writes the connector into each agent's MCP config.
+
+Supported agents: Claude Code, Cursor, VS Code (Copilot), Codex, Gemini CLI, Junie (JetBrains), Kiro, OpenCode and Amp — plus a manual JSON snippet for any other OAuth-capable client.
+
+No login or token is needed: on first connection the agent opens your browser and you sign in to Unolia (OAuth).
+
+For scripting, skip the prompts with flags:
+```bash
+unolia mcp setup --global --agents=claude,cursor
+unolia mcp setup --local --agents=vscode
+unolia mcp setup --print   # just print the JSON snippet
+```
+
+Self-hosted or development instances can point the connector elsewhere with the `UNOLIA_MCP_URL` environment variable (default: `https://app.unolia.com/mcp/team`).
+
 ## Upgrade
 Installed with composer:
 ```bash
