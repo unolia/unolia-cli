@@ -11,7 +11,7 @@ use Unolia\UnoliaCLI\Mcp\Scope;
 const MCP_URL = 'https://unolia.test/mcp/team';
 
 beforeEach(function () {
-    $this->dir = sys_get_temp_dir().'/unolia-cli-test-'.uniqid();
+    $this->dir = sys_get_temp_dir().'/unolia-cli-test-'.getmypid().'-'.uniqid();
     $this->home = $this->dir.'/home';
     $this->cwd = $this->dir.'/project';
     File::makeDirectory($this->home, recursive: true);
@@ -19,15 +19,19 @@ beforeEach(function () {
 
     $this->originalHome = $_SERVER['HOME'] ?? null;
     $this->originalXdg = $_SERVER['XDG_CONFIG_HOME'] ?? null;
+    $this->originalAppData = $_SERVER['APPDATA'] ?? null;
     $this->originalCwd = (string) getcwd();
     $_SERVER['HOME'] = $this->home;
     $_SERVER['XDG_CONFIG_HOME'] = $this->home.'/.config';
+    // Keep %APPDATA% expansion (VS Code global on Windows) inside the fake home.
+    $_SERVER['APPDATA'] = $this->home.'/AppData';
     chdir($this->cwd);
 });
 
 afterEach(function () {
     $_SERVER['HOME'] = $this->originalHome;
     $_SERVER['XDG_CONFIG_HOME'] = $this->originalXdg;
+    $_SERVER['APPDATA'] = $this->originalAppData;
     chdir($this->originalCwd);
     File::deleteDirectory($this->dir);
 });
