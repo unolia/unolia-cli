@@ -31,6 +31,7 @@ Agreed with the owner on 2026-09-05. Do not reopen them without asking.
 | `compare local` scope | PHP, Laravel and Composer first. Database and Node appear as the API exposes them. |
 | Provider ids | Forge server and site ids go into `herd.yml` under `integrations.forge.<domain>`. The CLI never calls Forge, GitHub or Cloudflare directly. |
 | Framework | Bare Symfony Console, no Laravel Zero. |
+| MCP connector | `mcp setup` merges the server into each agent's own config file, or goes through `claude mcp add` and `code --add-mcp` for a global install. The URL is `<scheme>://<host>/mcp/team`, overridable with `--url` or `UNOLIA_MCP_URL`. Files it cannot round trip (JSONC) are left alone. |
 
 ## Non negotiables
 

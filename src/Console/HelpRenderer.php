@@ -324,6 +324,7 @@ final class HelpRenderer
         - Context: .unolia/config.json in the repo, or --team/--project/--website, or UNOLIA_* env vars.
         - Auth: UNOLIA_TOKEN env var, or unolia login --with-token < token.txt.
         - Errors with --json are one JSON object on stderr: {"error":{"code","message","hint","exit_code"}}.
+        - MCP: unolia mcp setup --local --agent <name> --yes connects an agent to the Unolia MCP server. --print shows the snippet.
         NOTES;
     }
 }

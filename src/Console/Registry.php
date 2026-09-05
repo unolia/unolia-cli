@@ -100,6 +100,7 @@ final class Registry
         'configure:env' => Command\Local\ConfigureEnvCommand::class,
         'compare:local' => Command\Local\CompareLocalCommand::class,
         'compare:versions' => Command\Local\CompareVersionsCommand::class,
+        'mcp:setup' => Command\Mcp\SetupCommand::class,
 
         'config:get' => Command\Utility\ConfigGetCommand::class,
         'config:set' => Command\Utility\ConfigSetCommand::class,

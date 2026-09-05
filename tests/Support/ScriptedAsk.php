@@ -53,6 +53,18 @@ final class ScriptedAsk extends Ask
         return (string) $this->answer($label, $flag, $default);
     }
 
+    public function multiselect(string $label, array $options, string $flag, array $default = [], string $hint = ''): array
+    {
+        if (! $this->face->interactive) {
+            return parent::multiselect($label, $options, $flag, $default, $hint);
+        }
+
+        /** @var mixed $answer */
+        $answer = $this->answer($label, $flag, $default === [] ? null : $default);
+
+        return array_values(array_map(static fn (mixed $value): string => is_scalar($value) ? (string) $value : '', is_array($answer) ? $answer : [$answer]));
+    }
+
     public function search(string $label, callable $options, string $flag, array $candidates = [], string $placeholder = ''): string
     {
         if (! $this->face->interactive) {

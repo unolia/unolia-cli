@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Unolia\Cli\Console;
 
 use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\multiselect;
 use function Laravel\Prompts\password;
 use function Laravel\Prompts\search;
 use function Laravel\Prompts\select;
@@ -51,6 +52,22 @@ class Ask
         }
 
         return (string) select(label: $label, options: $options, default: $default, hint: $hint);
+    }
+
+    /**
+     * @param  array<int|string, string>  $options
+     * @param  list<int|string>  $default
+     * @return list<string>
+     */
+    public function multiselect(string $label, array $options, string $flag, array $default = [], string $hint = ''): array
+    {
+        if (! $this->face->interactive) {
+            throw CliError::missingInput($flag, $options);
+        }
+
+        $selected = multiselect(label: $label, options: $options, default: $default, scroll: 10, required: true, hint: $hint);
+
+        return array_values(array_map(static fn (int|string $value): string => (string) $value, $selected));
     }
 
     /**
