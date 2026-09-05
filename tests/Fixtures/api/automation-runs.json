@@ -1,0 +1,87 @@
+{
+  "data": [
+    {
+      "ulid": "01J9A2K7Q4X0N1R8S3T5V6W7Y8",
+      "automation": {
+        "id": 7,
+        "name": "Update Ubuntu servers"
+      },
+      "trigger": {
+        "kind": "manual",
+        "event_class": null,
+        "subject": null,
+        "replay_of": null
+      },
+      "triggered_by": {
+        "id": 1,
+        "name": "eser"
+      },
+      "state": "completed",
+      "summary": null,
+      "error_message": null,
+      "started_at": "2026-09-05T10:00:00Z",
+      "paused_at": null,
+      "pause_expires_at": null,
+      "completed_at": "2026-09-05T10:06:00Z",
+      "failed_at": null,
+      "duration_seconds": 250,
+      "steps": [
+        {
+          "id": 901,
+          "position": 1,
+          "slug": "select-servers",
+          "label": "Select servers",
+          "state": "completed",
+          "started_at": "2026-09-05T10:00:01Z",
+          "finished_at": "2026-09-05T10:00:04Z",
+          "error_message": null,
+          "attempts": 1,
+          "output_summary": "2 servers"
+        },
+        {
+          "id": 902,
+          "position": 2,
+          "slug": "apt-upgrade",
+          "label": "apt update, apt upgrade",
+          "state": "completed",
+          "resources": [
+            {
+              "type": "managed_server",
+              "id": 61,
+              "name": "web-01",
+              "duration_seconds": 72
+            }
+          ]
+        },
+        {
+          "id": 903,
+          "position": 3,
+          "slug": "reboot-if-needed",
+          "label": "Reboot if the kernel changed",
+          "state": "completed"
+        }
+      ],
+      "resources": [
+        {
+          "role": "target",
+          "type": "managed_server",
+          "id": 61,
+          "name": "web-01"
+        }
+      ],
+      "url": "https://app.unolia.com/acme/automations/7/runs/01J9A2K7Q4X0N1R8S3T5V6W7Y8"
+    }
+  ],
+  "links": {
+    "first": null,
+    "last": null,
+    "prev": null,
+    "next": null
+  },
+  "meta": {
+    "current_page": 1,
+    "last_page": 1,
+    "per_page": 30,
+    "total": 1
+  }
+}

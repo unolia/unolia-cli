@@ -1,0 +1,14 @@
+{
+  "data": {
+    "deployment_id": 4812,
+    "status": "success",
+    "offset": 1024,
+    "next_offset": 2311,
+    "chunk": "php artisan migrate --force\nDeployment finished\n",
+    "complete": true,
+    "syncing": false
+  },
+  "meta": {
+    "poll_interval": 2
+  }
+}

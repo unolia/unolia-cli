@@ -1,0 +1,45 @@
+{
+  "data": {
+    "dry_run": true,
+    "issue": {
+      "id": "01J9P7QK3M8T5V2N4B6C8D0E1F",
+      "severity": "error",
+      "state": "open",
+      "check": "dmarc-missing",
+      "check_title": "Missing DMARC",
+      "message": "No DMARC record at _dmarc.acme.dev",
+      "project": {
+        "id": 12,
+        "name": "Marketing site"
+      },
+      "concern": {
+        "type": "zone",
+        "id": 9,
+        "name": "acme.dev"
+      },
+      "fix": {
+        "available": true,
+        "name": "Publish a DMARC record",
+        "type_slug": "dmarc-publish",
+        "blast_radius": "low",
+        "reversible": true,
+        "required_ability": "zone:write",
+        "supports_auto_fix": true
+      },
+      "first_detected_at": "2026-09-01T00:00:00Z",
+      "fixed_at": null,
+      "created_at": "2026-09-01T00:00:00Z",
+      "url": "https://app.unolia.com/acme/issues/01J9P7QK3M8T5V2N4B6C8D0E1F"
+    },
+    "fixable": true,
+    "changes": [
+      {
+        "op": "add",
+        "type": "TXT",
+        "name": "_dmarc.acme.dev",
+        "value": "v=DMARC1; p=none",
+        "ttl": 3600
+      }
+    ]
+  }
+}

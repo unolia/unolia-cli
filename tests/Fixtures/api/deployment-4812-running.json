@@ -1,0 +1,47 @@
+{
+  "data": {
+    "id": 4812,
+    "status": "running",
+    "status_label": "Running",
+    "website": {
+      "id": 118,
+      "domain": "marketing.acme.com"
+    },
+    "project": {
+      "id": 12,
+      "name": "Marketing site"
+    },
+    "commit": {
+      "hash": "3f9c2e1a9c",
+      "short": "3f9c2e1",
+      "branch": "main",
+      "author": "eser",
+      "message": "Fix newsletter form"
+    },
+    "repository": {
+      "id": 57,
+      "full_name": "acme/marketing"
+    },
+    "triggered_by": {
+      "id": 1,
+      "name": "eser"
+    },
+    "started_at": "2026-09-05T09:41:03Z",
+    "ended_at": null,
+    "duration_seconds": 12,
+    "output": {
+      "available": true,
+      "byte_length": 1024,
+      "synced_at": null
+    },
+    "provider": {
+      "slug": "forge",
+      "deployment_id": "9938121",
+      "url": "https://forge.laravel.com/deployments/9938121"
+    },
+    "url": "https://app.unolia.com/acme/projects/12/websites/118/deployments/4812"
+  },
+  "meta": {
+    "poll_interval": 2
+  }
+}

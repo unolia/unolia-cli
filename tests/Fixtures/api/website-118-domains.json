@@ -1,0 +1,40 @@
+{
+  "data": [
+    {
+      "id": 501,
+      "domain": "marketing.acme.com",
+      "kind": "primary",
+      "ssl_status": "active",
+      "ssl_expires_at": "2026-12-01T00:00:00Z",
+      "ssl_issuer": "Let's Encrypt",
+      "dns_resolved_ipv4": "203.0.113.10",
+      "dns_resolved_ipv6": null,
+      "dns_checked_at": "2026-09-05T09:00:00Z",
+      "synced_at": "2026-09-05T09:00:00Z"
+    },
+    {
+      "id": 502,
+      "domain": "www.acme.com",
+      "kind": "alias",
+      "ssl_status": "active",
+      "ssl_expires_at": "2026-12-01T00:00:00Z",
+      "ssl_issuer": "Let's Encrypt",
+      "dns_resolved_ipv4": "203.0.113.10",
+      "dns_resolved_ipv6": null,
+      "dns_checked_at": "2026-09-05T09:00:00Z",
+      "synced_at": "2026-09-05T09:00:00Z"
+    }
+  ],
+  "links": {
+    "first": null,
+    "last": null,
+    "prev": null,
+    "next": null
+  },
+  "meta": {
+    "current_page": 1,
+    "last_page": 1,
+    "per_page": 30,
+    "total": 2
+  }
+}

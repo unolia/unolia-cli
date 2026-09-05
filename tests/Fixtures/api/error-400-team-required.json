@@ -1,0 +1,9 @@
+{
+  "message": "Send X-Unolia-Team or run unolia team switch.",
+  "error": {
+    "code": "team_required",
+    "message": "Send X-Unolia-Team or run unolia team switch.",
+    "status": 400,
+    "hint": "Send X-Unolia-Team or run unolia team switch"
+  }
+}

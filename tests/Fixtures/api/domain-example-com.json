@@ -1,0 +1,15 @@
+{
+  "data": {
+    "domain": "acme.com",
+    "team": {
+      "id": 3,
+      "slug": "acme",
+      "name": "Acme"
+    },
+    "ns": [
+      "ns1.unolia.com",
+      "ns2.unolia.com"
+    ],
+    "synced_at": "2026-09-05T07:00:00Z"
+  }
+}

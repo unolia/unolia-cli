@@ -1,0 +1,47 @@
+{
+  "data": {
+    "id": 61,
+    "name": "web-01",
+    "provider": {
+      "slug": "forge",
+      "identifier": "402"
+    },
+    "type": "app",
+    "cloud": {
+      "source": "digitalocean",
+      "identifier": "3392012"
+    },
+    "public_ipv4": "203.0.113.10",
+    "public_ipv6": null,
+    "status": "connected",
+    "php_version": "8.3",
+    "php_cli_version": "8.3",
+    "database": {
+      "engine": "mysql",
+      "version": "8",
+      "raw": "mysql8"
+    },
+    "ubuntu_version": "22.04",
+    "ssh_port": 22,
+    "server": {
+      "id": 9,
+      "name": "web-01",
+      "region": "fra1",
+      "size": "s-2vcpu-4gb"
+    },
+    "websites": [
+      {
+        "id": 118,
+        "domain": "marketing.acme.com"
+      }
+    ],
+    "projects": [
+      {
+        "id": 12,
+        "name": "Marketing site"
+      }
+    ],
+    "synced_at": "2026-09-05T08:00:00Z",
+    "url": "https://app.unolia.com/acme/servers/61"
+  }
+}

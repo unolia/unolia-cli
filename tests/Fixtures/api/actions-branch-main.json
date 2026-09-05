@@ -1,0 +1,48 @@
+{
+  "data": [
+    {
+      "id": 9021,
+      "external_id": "1187",
+      "run_number": 1187,
+      "run_attempt": 1,
+      "name": "tests",
+      "workflow_path": ".github/workflows/tests.yml",
+      "event": "push",
+      "branch": "main",
+      "head_sha": "3f9c2e1a",
+      "status": "in_progress",
+      "conclusion": null,
+      "actor": "eser",
+      "repository": {
+        "id": 57,
+        "full_name": "acme/marketing"
+      },
+      "started_at": "2026-09-05T09:38:00Z",
+      "ended_at": null,
+      "duration_seconds": 160,
+      "jobs_synced_at": "2026-09-05T09:40:30Z",
+      "html_url": "https://github.com/acme/marketing/actions/runs/1187",
+      "can_rerun": true,
+      "url": "https://app.unolia.com/acme/projects/12/repositories/57/actions/9021",
+      "jobs_count": 2,
+      "jobs_summary": {
+        "success": 1,
+        "failure": 0,
+        "in_progress": 1,
+        "queued": 0
+      }
+    }
+  ],
+  "links": {
+    "first": null,
+    "last": null,
+    "prev": null,
+    "next": null
+  },
+  "meta": {
+    "current_page": 1,
+    "last_page": 1,
+    "per_page": 30,
+    "total": 1
+  }
+}

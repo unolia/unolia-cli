@@ -1,0 +1,10 @@
+{
+  "data": {
+    "id": 88231,
+    "name": "www.acme.com",
+    "type": "A",
+    "ttl": 3600,
+    "value": "203.0.113.10",
+    "state": "pending"
+  }
+}

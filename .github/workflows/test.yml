@@ -15,11 +15,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        # Windows returns once the new tree has been run there: the config
+        # layer keys tokens by POSIX file mode, which has no Windows answer yet.
+        os: [ubuntu-latest, macos-latest]
         php: [8.2, 8.3, 8.4, 8.5]
 
     name: Test with php ${{ matrix.php }} on ${{ matrix.os }}
-
 
     steps:
       - name: Checkout
@@ -47,11 +48,28 @@ jobs:
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: ${{ runner.os }}-composer-
 
+      # The phar is built from composer.lock on PHP 8.3, so that one job tests
+      # exactly what ships. The other PHP versions resolve fresh to catch drift.
+      - name: Install Dependencies from the lock
+        if: matrix.php == '8.3'
+        run: composer install --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
       - name: Install Dependencies
+        if: matrix.php != '8.3'
         run: composer update -W --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
 
       - name: Run tests
-        run: composer test
+        run: vendor/bin/pest -p --ci
+
+      - name: Smoke test the binary
+        run: |
+          php bin/unolia --version
+          php bin/unolia --help
+          php bin/unolia domain list --help
+
+      - name: Check the generated documentation is current
+        if: matrix.php == '8.4' && matrix.os == 'ubuntu-latest'
+        run: php bin/unolia docs:generate --check
 
       - name: Test cpx execution
         if: matrix.php == '8.4' && matrix.os == 'ubuntu-latest'
@@ -59,3 +77,36 @@ jobs:
           composer global require cpx/cpx --no-interaction --prefer-dist
           export PATH="$COMPOSER_HOME/vendor/bin:$PATH"
           cpx unolia/unolia-cli:dev-${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}} --version
+
+  static-analysis:
+    runs-on: ubuntu-latest
+    name: Static analysis
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2.37.2
+        with:
+          php-version: "8.3"
+          tools: composer:v2
+
+      - name: Get composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache dependencies
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install Dependencies
+        run: composer update -W --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse --no-progress

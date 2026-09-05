@@ -1,0 +1,34 @@
+{
+  "data": [
+    {
+      "domain": "acme.com",
+      "team": {
+        "id": 3,
+        "slug": "acme",
+        "name": "Acme"
+      },
+      "synced_at": "2026-09-05T07:00:00Z"
+    },
+    {
+      "domain": "acme.dev",
+      "team": {
+        "id": 3,
+        "slug": "acme",
+        "name": "Acme"
+      },
+      "synced_at": null
+    }
+  ],
+  "links": {
+    "first": null,
+    "last": null,
+    "prev": null,
+    "next": null
+  },
+  "meta": {
+    "current_page": 1,
+    "last_page": 1,
+    "per_page": 30,
+    "total": 2
+  }
+}

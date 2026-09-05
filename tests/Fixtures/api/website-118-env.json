@@ -1,0 +1,10 @@
+{
+  "data": {
+    "content": "APP_ENV=production\nAPP_KEY=base64:secret\nDB_CONNECTION=mysql\n",
+    "keys": [
+      "APP_ENV",
+      "APP_KEY",
+      "DB_CONNECTION"
+    ]
+  }
+}

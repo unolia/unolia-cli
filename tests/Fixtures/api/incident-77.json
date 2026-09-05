@@ -1,0 +1,41 @@
+{
+  "data": {
+    "id": 77,
+    "kind": "downtime",
+    "status": "open",
+    "severity": "critical",
+    "resolution": null,
+    "project": {
+      "id": 12,
+      "name": "Marketing site"
+    },
+    "website": {
+      "id": 118,
+      "domain": "marketing.acme.com"
+    },
+    "monitor": {
+      "id": 31,
+      "domain": "marketing.acme.com"
+    },
+    "domain": "marketing.acme.com",
+    "check_type": "http",
+    "started_at": "2026-09-05T09:50:00Z",
+    "started_at_exact": "2026-09-05T09:50:12Z",
+    "resolved_at": null,
+    "duration_seconds": 600,
+    "flap_count": 0,
+    "origin_deployment": {
+      "id": 4812,
+      "status": "success",
+      "commit": "3f9c2e1"
+    },
+    "fixing_deployment": null,
+    "origin_confidence": "likely",
+    "url": "https://app.unolia.com/acme/incidents/77",
+    "correlation": {
+      "deployments": [
+        4812
+      ]
+    }
+  }
+}

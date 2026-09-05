@@ -1,0 +1,9 @@
+{
+  "message": "This issue has no fixer.",
+  "error": {
+    "code": "unsupported",
+    "message": "This issue has no fixer.",
+    "status": 422,
+    "hint": null
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "data": {
+    "job_id": 3311,
+    "log_state": "stored",
+    "offset": 0,
+    "next_offset": 240,
+    "chunk": "Run pint\nAll files pass\n",
+    "complete": true,
+    "syncing": false
+  },
+  "meta": {
+    "poll_interval": 5
+  }
+}

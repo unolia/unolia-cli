@@ -1,0 +1,21 @@
+{
+  "data": [
+    {
+      "id": 3,
+      "slug": "acme",
+      "name": "Acme"
+    },
+    {
+      "id": 4,
+      "slug": "personal",
+      "name": "Eser"
+    }
+  ],
+  "links": {
+    "next": null
+  },
+  "meta": {
+    "current_page": 1,
+    "last_page": 1
+  }
+}

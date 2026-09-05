@@ -1,0 +1,67 @@
+{
+  "data": {
+    "id": 9021,
+    "external_id": "1187",
+    "run_number": 1187,
+    "run_attempt": 1,
+    "name": "tests",
+    "workflow_path": ".github/workflows/tests.yml",
+    "event": "push",
+    "branch": "main",
+    "head_sha": "3f9c2e1a",
+    "status": "completed",
+    "conclusion": "success",
+    "actor": "eser",
+    "repository": {
+      "id": 57,
+      "full_name": "acme/marketing"
+    },
+    "started_at": "2026-09-05T09:38:00Z",
+    "ended_at": "2026-09-05T09:41:00Z",
+    "duration_seconds": 180,
+    "jobs_synced_at": "2026-09-05T09:40:30Z",
+    "html_url": "https://github.com/acme/marketing/actions/runs/1187",
+    "can_rerun": true,
+    "url": "https://app.unolia.com/acme/projects/12/repositories/57/actions/9021",
+    "jobs": [
+      {
+        "id": 3311,
+        "external_id": "77120",
+        "name": "lint",
+        "status": "completed",
+        "conclusion": "success",
+        "position": 0,
+        "started_at": "2026-09-05T09:38:10Z",
+        "completed_at": "2026-09-05T09:38:52Z",
+        "duration_seconds": 42,
+        "html_url": "https://github.com/acme/marketing/actions/runs/1187/job/77120",
+        "log_state": "stored",
+        "steps": [
+          {
+            "name": "Run pint",
+            "status": "completed",
+            "conclusion": "success",
+            "number": 3
+          }
+        ]
+      },
+      {
+        "id": 3312,
+        "external_id": "77121",
+        "name": "tests",
+        "status": "completed",
+        "conclusion": "success",
+        "position": 2,
+        "started_at": "2026-09-05T09:38:12Z",
+        "completed_at": "2026-09-05T09:41:00Z",
+        "duration_seconds": 168,
+        "html_url": "https://github.com/acme/marketing/actions/runs/1187/job/77121",
+        "log_state": "stored",
+        "steps": []
+      }
+    ]
+  },
+  "meta": {
+    "poll_interval": 5
+  }
+}

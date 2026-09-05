@@ -1,0 +1,32 @@
+{
+  "data": [
+    {
+      "id": 88231,
+      "name": "www.acme.com",
+      "type": "A",
+      "ttl": 3600,
+      "value": "203.0.113.10",
+      "state": "pending"
+    },
+    {
+      "id": 88232,
+      "name": "acme.com",
+      "type": "MX",
+      "ttl": null,
+      "value": "10 mail.acme.com.",
+      "state": "verified"
+    }
+  ],
+  "links": {
+    "first": null,
+    "last": null,
+    "prev": null,
+    "next": null
+  },
+  "meta": {
+    "current_page": 1,
+    "last_page": 1,
+    "per_page": 30,
+    "total": 2
+  }
+}
