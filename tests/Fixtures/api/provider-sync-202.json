@@ -1,0 +1,23 @@
+{
+  "data": {
+    "id": 14,
+    "name": "Forge",
+    "provider": "forge",
+    "provider_label": "Laravel Forge",
+    "category": "hosting",
+    "state": "connected",
+    "status": "ok",
+    "is_expired": false,
+    "expires_at": null,
+    "synced_at": "2026-09-05T08:00:00Z",
+    "stale": false,
+    "sync_status": "ok",
+    "has_sync_error": false,
+    "cost_sync_status": "ok",
+    "cost_synced_at": "2026-09-05T06:00:00Z",
+    "has_cost_sync_error": false,
+    "needs_attention": false,
+    "attention_reasons": [],
+    "url": "https://app.unolia.com/acme/providers/14"
+  }
+}

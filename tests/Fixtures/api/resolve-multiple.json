@@ -1,0 +1,51 @@
+{
+  "data": {
+    "remote": "git@github.com:acme/marketing.git",
+    "parsed": {
+      "source": "github",
+      "full_name": "acme/marketing",
+      "full_url": null
+    },
+    "confidence": "ambiguous",
+    "teams": [
+      {
+        "team": {
+          "id": 3,
+          "slug": "acme",
+          "name": "Acme"
+        },
+        "repository": {
+          "id": 57,
+          "full_name": "acme/marketing",
+          "default_branch": "main",
+          "source": "github"
+        },
+        "projects": [
+          {
+            "id": 12,
+            "name": "Marketing site",
+            "domain": "acme.com"
+          }
+        ],
+        "websites": [
+          {
+            "id": 118,
+            "domain": "marketing.acme.com",
+            "project_id": 12,
+            "branch": "main",
+            "environment": "production",
+            "provider": "forge"
+          },
+          {
+            "id": 121,
+            "domain": "staging.acme.dev",
+            "project_id": 12,
+            "branch": "develop",
+            "environment": "staging",
+            "provider": "forge"
+          }
+        ]
+      }
+    ]
+  }
+}

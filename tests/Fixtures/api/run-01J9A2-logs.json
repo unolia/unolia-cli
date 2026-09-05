@@ -1,0 +1,25 @@
+{
+  "data": [
+    {
+      "id": "01J9A2K7Q4X0N1R8S3T5V6W7Z1",
+      "step_id": 901,
+      "level": "info",
+      "type": "text",
+      "message": "Selected 2 servers",
+      "external_url": null,
+      "logged_at": "2026-09-05T10:00:04Z"
+    },
+    {
+      "id": "01J9A2K7Q4X0N1R8S3T5V6W7Z2",
+      "step_id": 902,
+      "level": "info",
+      "type": "text",
+      "message": "apt upgrade finished on web-01",
+      "external_url": null,
+      "logged_at": "2026-09-05T10:01:16Z"
+    }
+  ],
+  "meta": {
+    "next_after": "01J9A2K7Q4X0N1R8S3T5V6W7Z2"
+  }
+}

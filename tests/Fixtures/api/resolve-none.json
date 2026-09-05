@@ -1,0 +1,12 @@
+{
+  "data": {
+    "remote": "git@github.com:acme/unknown.git",
+    "parsed": {
+      "source": "github",
+      "full_name": "acme/unknown",
+      "full_url": null
+    },
+    "confidence": "none",
+    "teams": []
+  }
+}

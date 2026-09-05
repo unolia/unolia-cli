@@ -1,0 +1,9 @@
+{
+  "message": "Unauthenticated.",
+  "error": {
+    "code": "unauthenticated",
+    "message": "Unauthenticated.",
+    "status": 401,
+    "hint": "Run unolia login"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "message": "Website 999 was not found on team acme.",
+  "error": {
+    "code": "not_found",
+    "message": "Website 999 was not found on team acme.",
+    "status": 404,
+    "hint": null
+  }
+}

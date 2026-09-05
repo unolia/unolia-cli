@@ -1,0 +1,24 @@
+{
+  "data": {
+    "id": 57,
+    "full_name": "acme/marketing",
+    "name": "marketing",
+    "owner": "acme",
+    "source": "github",
+    "full_url": "https://github.com/acme/marketing",
+    "private": true,
+    "default_branch": "main",
+    "last_pushed_at": "2026-09-05T09:30:00Z",
+    "archived_at": null,
+    "projects": [
+      {
+        "id": 12,
+        "name": "Marketing site"
+      }
+    ],
+    "websites_count": 2,
+    "connected_provider_id": 7,
+    "synced_at": "2026-09-05T09:35:00Z",
+    "url": "https://app.unolia.com/acme/projects/12/repositories/57"
+  }
+}

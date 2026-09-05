@@ -1,0 +1,14 @@
+{
+  "message": "The given data was invalid.",
+  "errors": {
+    "value": [
+      "The value must be a valid IPv4 address."
+    ]
+  },
+  "error": {
+    "code": "validation_failed",
+    "message": "The given data was invalid.",
+    "status": 422,
+    "hint": null
+  }
+}

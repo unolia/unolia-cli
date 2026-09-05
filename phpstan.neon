@@ -1,9 +1,6 @@
-includes:
-  - ./vendor/larastan/larastan/extension.neon
 parameters:
-  paths:
-    - app
-    - bootstrap
-    - config
-  level: 5
-  ignoreErrors:
+    level: 6
+    paths:
+        - src
+        - bin
+    treatPhpDocTypesAsCertain: false

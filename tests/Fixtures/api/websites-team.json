@@ -1,0 +1,126 @@
+{
+  "data": [
+    {
+      "id": 118,
+      "domain": "marketing.acme.com",
+      "name": "marketing",
+      "status": "active",
+      "health": "ok",
+      "health_label": "Healthy",
+      "provider": {
+        "slug": "forge",
+        "label": "Forge",
+        "identifier": "8815",
+        "connected_provider_id": 14
+      },
+      "project": {
+        "id": 12,
+        "name": "Marketing site",
+        "team": {
+          "id": 3,
+          "slug": "acme"
+        }
+      },
+      "managed_server": {
+        "id": 61,
+        "name": "web-01",
+        "identifier": "402",
+        "provider": "forge"
+      },
+      "repository": {
+        "id": 57,
+        "full_name": "acme/marketing",
+        "branch": "main",
+        "url": "https://github.com/acme/marketing"
+      },
+      "php_version": "8.3",
+      "system_user": "forge",
+      "document_root": "/home/forge/marketing.acme.com/public",
+      "project_root": "/home/forge/marketing.acme.com",
+      "deployed_commit": "3f9c2e1a",
+      "last_deployed_at": "2026-09-05T09:41:55Z",
+      "latest_deployment": {
+        "id": 4812,
+        "status": "success",
+        "started_at": "2026-09-05T09:41:03Z"
+      },
+      "supports": {
+        "deployments": true,
+        "manual_deploy": true,
+        "deploy_script": true,
+        "env": true,
+        "deployment_output": true
+      },
+      "created_at": "2026-05-12T10:00:00Z",
+      "synced_at": "2026-09-05T09:30:00Z",
+      "url": "https://app.unolia.com/acme/projects/12/websites/118"
+    },
+    {
+      "id": 121,
+      "domain": "staging.acme.dev",
+      "name": "staging",
+      "status": "active",
+      "health": "ok",
+      "health_label": "Healthy",
+      "provider": {
+        "slug": "forge",
+        "label": "Forge",
+        "identifier": "8816",
+        "connected_provider_id": 14
+      },
+      "project": {
+        "id": 12,
+        "name": "Marketing site",
+        "team": {
+          "id": 3,
+          "slug": "acme"
+        }
+      },
+      "managed_server": {
+        "id": 61,
+        "name": "web-01",
+        "identifier": "402",
+        "provider": "forge"
+      },
+      "repository": {
+        "id": 57,
+        "full_name": "acme/marketing",
+        "branch": "main",
+        "url": "https://github.com/acme/marketing"
+      },
+      "php_version": "8.3",
+      "system_user": "forge",
+      "document_root": "/home/forge/marketing.acme.com/public",
+      "project_root": "/home/forge/marketing.acme.com",
+      "deployed_commit": "3f9c2e1a",
+      "last_deployed_at": "2026-09-05T09:41:55Z",
+      "latest_deployment": {
+        "id": 4790,
+        "status": "failed",
+        "started_at": "2026-09-04T18:00:00Z"
+      },
+      "supports": {
+        "deployments": true,
+        "manual_deploy": true,
+        "deploy_script": true,
+        "env": true,
+        "deployment_output": true
+      },
+      "created_at": "2026-05-12T10:00:00Z",
+      "synced_at": "2026-09-05T09:30:00Z",
+      "url": "https://app.unolia.com/acme/projects/12/websites/121"
+    }
+  ],
+  "links": {
+    "first": null,
+    "last": null,
+    "prev": null,
+    "next": null
+  },
+  "meta": {
+    "current_page": 1,
+    "last_page": 1,
+    "per_page": 30,
+    "total": 2
+  }
+}

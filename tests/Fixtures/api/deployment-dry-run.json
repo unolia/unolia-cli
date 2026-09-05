@@ -1,0 +1,9 @@
+{
+  "data": {
+    "dry_run": true,
+    "website_id": 118,
+    "supports_deployments": true,
+    "would_trigger": true,
+    "summary": "Forge would redeploy marketing.acme.com from main."
+  }
+}

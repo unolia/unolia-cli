@@ -1,0 +1,17 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+use Unolia\Cli\Application;
+use Unolia\Cli\Runtime;
+
+foreach ([$_composer_autoload_path ?? null, __DIR__.'/../vendor/autoload.php', __DIR__.'/../../../autoload.php'] as $file) {
+    if ($file !== null && is_file($file)) {
+        require $file;
+
+        break;
+    }
+}
+
+exit((new Application(Runtime::fromEnvironment()))->run());

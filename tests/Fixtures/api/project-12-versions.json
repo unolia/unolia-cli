@@ -1,0 +1,38 @@
+{
+  "data": [
+    {
+      "subject": {
+        "type": "repository",
+        "id": 57,
+        "name": "acme/marketing"
+      },
+      "name": "laravel/framework",
+      "type": "composer",
+      "constraint": "^12.0",
+      "installed_version": "12.28.1",
+      "installed": {
+        "major": 12,
+        "minor": 28,
+        "patch": 1
+      },
+      "fetched_at": "2026-09-05T06:00:00Z"
+    },
+    {
+      "subject": {
+        "type": "website",
+        "id": 118,
+        "name": "marketing.acme.com"
+      },
+      "name": "php",
+      "type": "runtime",
+      "constraint": null,
+      "installed_version": "8.3",
+      "installed": {
+        "major": 8,
+        "minor": 3,
+        "patch": null
+      },
+      "fetched_at": "2026-09-05T08:30:00Z"
+    }
+  ]
+}

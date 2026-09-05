@@ -11,4 +11,3 @@ If you discover a security vulnerability, please report it privately using one o
 2. **Email** — send the details to [Unolia] at **security@unolia.com**.
 
 All security vulnerabilities will be promptly addressed.
-│

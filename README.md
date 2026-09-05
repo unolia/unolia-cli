@@ -1,104 +1,159 @@
-
 # Unolia CLI
 
 ![GitHub release (with filter)](https://img.shields.io/github/v/release/unolia/unolia-cli)
 ![Packagist PHP Version](https://img.shields.io/packagist/dependency-v/unolia/unolia-cli/php)
 ![Packagist License (custom server)](https://img.shields.io/packagist/l/unolia/unolia-cli)
 
-Unolia CLI is a command line interface for managing your DNS records across different providers. It uses [Unolia API](https://app.unolia.com/docs/#/) to unify your provider under the same API. Check out [unolia.com](https://unolia.com) for more information.
+Unolia CLI is the command line interface for [app.unolia.com](https://app.unolia.com). It drives your
+projects, websites, deployments, CI runs, automations, issues, DNS and providers from one place, and
+it is built for two audiences at once. At a terminal it prompts, draws tables and colors. In a pipe,
+in CI or in an agent it never prompts, answers JSON and exits with a code that says what happened.
 
-Currently supported providers:
-- [Amazon Route 53](https://aws.amazon.com/route53/)
-- [Bunnynet](https://bunny.net/)
-- [Cloudflare](https://www.cloudflare.com/)
-- [Digitalocean](https://www.digitalocean.com/)
-- [Gandi](https://www.gandi.net/)
-- [Ionos](https://www.ionos.fr/)
-- [OVH](https://www.ovh.com/)
-- [Porkbun](https://porkbun.com)
-- [Namecheap](https://www.namecheap.com/)
-- Godaddy
+## Install
 
-## Installation
-Current installation requires you to have PHP and Composer installed on your computer. After that, it's as simple as that:
 ```bash
 composer global require unolia/unolia-cli
 ```
 
-Or run it without installing globally via [cpx](https://github.com/laravel/cpx):
+Without installing anything, through [cpx](https://github.com/laravel/cpx):
+
 ```bash
 cpx unolia/unolia-cli
 ```
 
-## Connect your accounts
-If it's the first time you are using Unolia, [add your first providers](https://app.unolia.com/providers).
+Or download `unolia.phar` from the [releases](https://github.com/unolia/unolia-cli/releases) and put
+it on your `PATH`.
 
-Then you can log in for a 30-day period with this command:
+## Log in
+
+If this is your first time on Unolia, [connect your providers](https://app.unolia.com/providers) first.
+
 ```bash
-unolia login
+unolia login                       # paste a token, or sign in with email and password
+unolia login --token=<token>       # a token you already have
+unolia login --with-token < token  # from a script
 ```
 
-If you prefer a longer lifetime, [create a token](https://unolia.test/user/api-tokens) for your user account or one dedicated to your team and use the token as follows:
+Tokens live in `~/.config/unolia/hosts.json` with mode 0600 and are never printed. A token from v1 in
+`~/.unolia/cli/config.json` is migrated on first run and the old file is left alone.
+
+## The command grammar
+
+Commands read as a noun and a verb, the way `gh` does. The colon spelling from v1 keeps working.
+
 ```bash
-unolia login --token={TOKEN}
+unolia status                       # who you are, which team, what this directory maps to
+unolia init                         # link this directory to a project and website
+unolia deploy --wait                # deploy the linked website and follow it
+unolia issue list --fixable         # what is broken and what can be fixed
+unolia domain records acme.com      # the DNS records of a zone
 ```
 
-## Usage
-List information about the current user
-```bash
-unolia me 
-unolia teams 
-```
-List all domains
-```bash
-unolia domain:list
-```
-List all records for a domain
-```bash
-unolia domain:records example.com
-```
-Add, update and remove records
-```bash
-unolia domain:add example.com mg.example.com MX "10 mxa.eu.mailgun.org"
-unolia domain:add example.com mg.example.com MX "10 mxb.eu.mailgun.org"
-unolia domain:update {ID} 
-unolia domain:remove {ID}
-```
-Check DNS records
-```bash
-unolia dig unolia.com TXT
-unolia dig unolia.com A
+Run `unolia` for the full tree, `unolia <namespace>` for one group, and `unolia <command> --help` for
+one command. The generated reference lives in [docs/cli](docs/cli).
+
+## Context
+
+`unolia init` writes `.unolia/config.json`, which is committed:
+
+```json
+{
+  "team": "acme",
+  "project": 12,
+  "website": 118,
+  "environments": { "production": 118, "staging": 121 }
+}
 ```
 
+Context is resolved once per invocation, most specific first: the `--team`, `--project` and
+`--website` flags, then `UNOLIA_TEAM`, `UNOLIA_PROJECT` and `UNOLIA_WEBSITE`, then
+`.unolia/config.json` searched from the current directory up to the git root, then the git remote
+matched by the API, then the default team from `~/.config/unolia/config.json`, then a prompt on a
+terminal. `unolia status` prints which source answered.
 
-## Connect your AI agents (MCP)
-Unolia exposes a remote MCP server so AI agents can manage your infrastructure with you. Set it up with:
-```bash
-unolia mcp setup
+`.unolia/local.json` is gitignored and holds only what a bare `unolia watch` needs.
+
+## Environment variables
+
+| Variable | Meaning |
+| --- | --- |
+| `UNOLIA_TOKEN` | Personal or team token. Wins over `hosts.json`. `UNOLIA_API_TOKEN` still works with a warning. |
+| `UNOLIA_HOST` | Host, `app.unolia.com` by default. |
+| `UNOLIA_TEAM`, `UNOLIA_PROJECT`, `UNOLIA_WEBSITE` | Context without a config file. |
+| `UNOLIA_FORMAT` | `table`, `json`, `ndjson`, `csv` or `yaml`. |
+| `UNOLIA_DEBUG` | Print one line per request on stderr. Never a token. |
+| `NO_COLOR`, `CI` | Turn colors off and force the pipe face. |
+
+## Exit codes
+
+| Code | Name | When |
+| --- | --- | --- |
+| 0 | ok | Success, a `--dry-run` that printed a plan, a watch that ended well. |
+| 1 | remote failure | The remote thing failed, or `compare local` found a mismatch. |
+| 2 | usage | Bad arguments, missing input without a terminal, a refused confirmation, a 422. |
+| 3 | auth | No token, or a token the API rejected. |
+| 4 | not found | Nothing matched. |
+| 5 | forbidden | Not allowed, or your plan does not include it. |
+| 6 | timeout | `--timeout` elapsed. The remote thing is still running. |
+| 7 | awaiting input | An automation run is waiting for an answer. Resume it, do not retry. |
+| 130 | interrupted | Ctrl+C. The remote thing keeps going. |
+
+## For agents and scripts
+
 ```
-The command detects the agents installed on your machine (pre-selected in the prompt), lets you choose between a global install (all your projects) or a local one (current directory), and writes the connector into each agent's MCP config.
-
-Supported agents: Claude Code, Cursor, VS Code (Copilot), Codex, Gemini CLI, Junie (JetBrains), Kiro, OpenCode and Amp — plus a manual JSON snippet for any other OAuth-capable client.
-
-No login or token is needed: on first connection the agent opens your browser and you sign in to Unolia (OAuth).
-
-For scripting, skip the prompts with flags:
-```bash
-unolia mcp setup --global --agents=claude,cursor
-unolia mcp setup --local --agents=vscode
-unolia mcp setup --print   # just print the JSON snippet
+- Detects a pipe. Never prompts. Missing input exits 2 and lists candidates.
+- Add --json for structured output, --format ndjson for progress streams, --jq to filter.
+- Add --dry-run to any mutating command to see the plan without changing anything.
+- Add --yes to skip confirmations. Add --wait to block until the remote work finishes.
+- Context: .unolia/config.json in the repo, or --team/--project/--website, or UNOLIA_* env vars.
+- Auth: UNOLIA_TOKEN env var, or unolia login --with-token < token.txt.
+- Errors with --json are one JSON object on stderr: {"error":{"code","message","hint","exit_code"}}.
 ```
 
-Self-hosted or development instances can point the connector elsewhere with the `UNOLIA_MCP_URL` environment variable (default: `https://app.unolia.com/mcp/team`).
+`unolia help agents` prints the same block. `unolia api` reaches any endpoint the way `gh api` does:
+
+```bash
+unolia api v1/websites --jq '.data[].domain'
+unolia api v1/websites/118/deployments -X POST -F dry_run=true
+```
+
+## Shell completion
+
+```bash
+eval "$(unolia completion zsh)"     # or bash, fish
+```
 
 ## Upgrade
-Installed with composer:
+
 ```bash
-composer global update unolia/unolia-cli
+unolia upgrade            # the phar updates itself
+unolia upgrade --check    # exits 1 when a newer version exists
 ```
 
+Installed with Composer: `composer global update unolia/unolia-cli`. With cpx there is nothing to do,
+it always fetches the latest.
+
+## Contributing
+
+```bash
+composer qa    # pint, phpstan level 6, pest
+```
+
+The phar is built with [Box](https://github.com/box-project/box), downloaded from its release rather
+than required, so it never touches `composer.lock`:
+
+```bash
+curl -sSL -o box.phar https://github.com/box-project/box/releases/download/4.7.0/box.phar
+php -d phar.readonly=0 box.phar compile
+```
+
+`docs/cli` is generated from the same metadata the help renderer uses. Run `php bin/unolia
+docs:generate` after changing a command, and CI fails when the two drift apart.
+
 ## Credits
+
 **unolia-cli** was created by Eser DENIZ.
 
 ## License
-**unolia-cli** PHP is licensed under the MIT License. See LICENSE for more information.
+
+**unolia-cli** is licensed under the MIT License. See LICENSE for more information.

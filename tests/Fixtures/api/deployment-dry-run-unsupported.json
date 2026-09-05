@@ -1,0 +1,9 @@
+{
+  "data": {
+    "dry_run": true,
+    "website_id": 118,
+    "supports_deployments": false,
+    "would_trigger": false,
+    "summary": "This provider cannot deploy from Unolia."
+  }
+}

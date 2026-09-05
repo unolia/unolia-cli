@@ -1,0 +1,26 @@
+{
+  "data": {
+    "dry_run": true,
+    "steps": [
+      {
+        "position": 1,
+        "slug": "select-servers",
+        "label": "Select servers"
+      },
+      {
+        "position": 2,
+        "slug": "apt-upgrade",
+        "label": "apt update, apt upgrade"
+      }
+    ],
+    "targets": [
+      {
+        "type": "managed_server",
+        "id": 61,
+        "name": "web-01"
+      }
+    ],
+    "would_start": true,
+    "rejection": null
+  }
+}

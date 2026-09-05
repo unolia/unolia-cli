@@ -1,0 +1,65 @@
+{
+  "data": [
+    {
+      "id": 41,
+      "name": "marketing.acme.com",
+      "project": {
+        "id": 12,
+        "name": "Marketing site"
+      },
+      "anchor": {
+        "type": "website",
+        "id": 118,
+        "name": "marketing.acme.com"
+      },
+      "resources": [
+        {
+          "role": "website",
+          "label": "Website",
+          "type": "website",
+          "id": 118,
+          "name": "marketing.acme.com",
+          "dns_state": "ok"
+        },
+        {
+          "role": "managed_server",
+          "label": "Managed server",
+          "type": "managed_server",
+          "id": 61,
+          "name": "web-01",
+          "dns_state": null
+        },
+        {
+          "role": "domain",
+          "label": "Domain",
+          "type": "zone",
+          "id": 9,
+          "name": "acme.com",
+          "dns_state": "ok"
+        },
+        {
+          "role": "repository",
+          "label": "Repository",
+          "type": "repository",
+          "id": 57,
+          "name": "acme/marketing",
+          "dns_state": null
+        }
+      ],
+      "last_computed_at": "2026-09-05T08:00:00Z",
+      "url": "https://app.unolia.com/acme/projects/12/environments"
+    }
+  ],
+  "links": {
+    "first": null,
+    "last": null,
+    "prev": null,
+    "next": null
+  },
+  "meta": {
+    "current_page": 1,
+    "last_page": 1,
+    "per_page": 30,
+    "total": 1
+  }
+}

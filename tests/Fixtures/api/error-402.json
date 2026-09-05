@@ -1,0 +1,7 @@
+{
+  "message": "Automations need the Studio plan.",
+  "error": "upgrade_required",
+  "feature": "Automations",
+  "required_plan": "Studio",
+  "upgrade_url": "https://app.unolia.com/acme/billing"
+}

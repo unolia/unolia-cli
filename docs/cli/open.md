@@ -1,0 +1,39 @@
+# unolia open
+
+Open this project, website, repository or Forge site
+
+```
+USAGE
+  unolia open [<what>] [<id>] [flags]
+
+ARGUMENTS
+  what  project, website, repo, forge or deployment (default project)
+  id    The deployment id, when opening a deployment
+
+FLAGS
+      --print  Print the URL instead of opening it
+
+INHERITED FLAGS
+  -t, --team <value>     Team slug or id
+  -p, --project <value>  Project id or name
+  -w, --website <value>  Website id or domain
+      --json [<value>]   JSON output, optionally a comma list of fields
+      --format <value>   table, json, ndjson, csv or yaml
+      --jq <value>       Filter the JSON output through jq
+  -y, --yes              Skip confirmations
+      --no-input         Never prompt, fail instead
+      --dry-run          Show the plan without changing anything
+      --paginate         Follow every page
+      --limit <value>    Page size, up to 100 (default 30)
+
+EXAMPLES
+  # The project page
+  $ unolia open
+  # The website page
+  $ unolia open website
+  # The Forge site
+  $ unolia open forge --print
+
+LEARN MORE
+  https://unolia.com/docs/cli/open
+```
