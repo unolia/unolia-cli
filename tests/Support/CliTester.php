@@ -19,6 +19,7 @@ use Unolia\Cli\Local\ComposerLock;
 use Unolia\Cli\Local\Herd;
 use Unolia\Cli\Local\Node;
 use Unolia\Cli\Local\Php;
+use Unolia\Cli\Mcp\AgentCli;
 use Unolia\Cli\Runtime;
 use Unolia\Cli\Support\Browser;
 use Unolia\Cli\Support\Notifier;
@@ -253,6 +254,7 @@ final class CliTester
         $runtime->set(Notifier::class, $this->notifier);
         $runtime->set(Stdin::class, new FakeStdin($this->stdin));
         $runtime->set(Herd::class, new FakeHerd($this->home->cwd));
+        $runtime->set(AgentCli::class, new FakeAgentCli);
 
         foreach ($this->services as $id => $service) {
             $runtime->set($id, $service);

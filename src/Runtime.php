@@ -23,6 +23,10 @@ use Unolia\Cli\Local\DotEnv;
 use Unolia\Cli\Local\Herd;
 use Unolia\Cli\Local\Node;
 use Unolia\Cli\Local\Php;
+use Unolia\Cli\Mcp\AgentCli;
+use Unolia\Cli\Mcp\AgentDetector;
+use Unolia\Cli\Mcp\ConfigPaths;
+use Unolia\Cli\Mcp\Installer;
 use Unolia\Cli\Support\Browser;
 use Unolia\Cli\Support\Dns;
 use Unolia\Cli\Support\Notifier;
@@ -66,7 +70,7 @@ final class Runtime
     public static function captureEnvironment(): array
     {
         $captured = [];
-        $wanted = ['CI', 'NO_COLOR', 'HOME', 'USERPROFILE', 'XDG_CONFIG_HOME', 'TERM_PROGRAM', 'EDITOR', 'PATH'];
+        $wanted = ['CI', 'NO_COLOR', 'HOME', 'USERPROFILE', 'XDG_CONFIG_HOME', 'TERM_PROGRAM', 'EDITOR', 'PATH', 'APPDATA', 'LOCALAPPDATA', 'ProgramFiles'];
 
         /** @var mixed $value */
         foreach ($_SERVER as $key => $value) {
@@ -302,5 +306,16 @@ final class Runtime
         $this->factory(ComposerLock::class, fn (): ComposerLock => new ComposerLock);
         $this->factory(Node::class, fn (): Node => new Node);
         $this->factory(DotEnv::class, fn (): DotEnv => new DotEnv);
+        $this->factory(AgentCli::class, fn (): AgentCli => new AgentCli);
+        $this->factory(ConfigPaths::class, fn (self $runtime): ConfigPaths => new ConfigPaths($runtime->environment()));
+        $this->factory(AgentDetector::class, fn (self $runtime): AgentDetector => new AgentDetector(
+            $runtime->get(AgentCli::class),
+            $runtime->get(ConfigPaths::class),
+        ));
+        $this->factory(Installer::class, fn (self $runtime): Installer => new Installer(
+            $runtime->get(AgentCli::class),
+            $runtime->get(ConfigPaths::class),
+            $runtime->paths(),
+        ));
     }
 }

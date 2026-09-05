@@ -117,6 +117,22 @@ unolia api v1/websites --jq '.data[].domain'
 unolia api v1/websites/118/deployments -X POST -F dry_run=true
 ```
 
+## Connect your AI agents
+
+Unolia exposes a remote MCP server, so an AI agent can manage your infrastructure with you. Put it into
+the config of the agents on your machine:
+
+```bash
+unolia mcp setup                                   # pick the agents and the scope at the terminal
+unolia mcp setup --global --agent claude,cursor    # every project, no prompt
+unolia mcp setup --local --agent vscode --yes      # this directory only, from a script or an agent
+unolia mcp setup --print                           # the JSON snippet for any other client
+```
+
+Supported agents: Claude Code, Cursor, VS Code (Copilot), Codex, Gemini CLI, Junie (JetBrains), Kiro,
+OpenCode and Amp. No token is stored: the first connection opens your browser to sign in. `--dry-run`
+shows which files would be written. `--url` or `UNOLIA_MCP_URL` point the connector at another host.
+
 ## Shell completion
 
 ```bash

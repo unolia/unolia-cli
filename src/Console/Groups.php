@@ -44,6 +44,7 @@ final class Groups
         'team' => self::RESOURCES,
         'configure' => self::LOCAL,
         'compare' => self::LOCAL,
+        'mcp' => self::LOCAL,
         'completion' => self::UTILITY,
         'config' => self::UTILITY,
         'upgrade' => self::UTILITY,
@@ -67,6 +68,7 @@ final class Groups
         'team' => 'list · switch · tokens',
         'configure' => 'herd · env',
         'compare' => 'local · versions',
+        'mcp' => 'setup',
         'config' => 'get · set · list',
     ];
 
@@ -83,6 +85,7 @@ final class Groups
         'domain:dig' => ['dig'],
         'issue:list' => ['issues'],
         'ci:list' => ['ci'],
+        'mcp:setup' => ['mcp'],
     ];
 
     /** @return list<string> */
