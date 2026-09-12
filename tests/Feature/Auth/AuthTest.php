@@ -78,6 +78,18 @@ describe('auth refresh', function () {
             ->and($entry['scopes'])->toBe(['project:read', 'deployment:read', 'deployment:write']);
     });
 
+    it('tells the consent page which token it replaces', function () {
+        $cli = deviceCli()->withApi(refreshApi()->on('DELETE', 'logout', []))->interactive();
+        $file = $cli->home->home.'/.config/unolia/hosts.json';
+        $entries = json_decode((string) file_get_contents($file), true);
+        $entries['app.unolia.com']['token_id'] = 'tok_previous';
+        file_put_contents($file, (string) json_encode($entries));
+
+        $cli->run('auth', 'refresh', '--scopes', 'deployment:write');
+
+        expect($cli->browser->opened[0])->toBe('https://app.unolia.com/oauth/device/authorize?user_code=ABCD-EFGH&replaces=tok_previous');
+    });
+
     it('removes scopes from the stored set', function () {
         $cli = deviceCli(['project:read', 'deployment:read', 'env:read'])
             ->withApi(refreshApi()->on('DELETE', 'logout', []))
