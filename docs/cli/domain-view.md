@@ -1,13 +1,16 @@
 # unolia domain view
 
-Show one domain
+Show one DNS zone
 
 ```
 USAGE
-  unolia domain view [<domain>] [flags]
+  unolia domain view [<zone>] [flags]
 
 ARGUMENTS
-  domain  The domain name
+  zone  The zone, the project's one by default
+
+FLAGS
+      --zone <value>  Same as the argument
 
 INHERITED FLAGS
   -t, --team <value>     Team slug or id
@@ -23,10 +26,12 @@ INHERITED FLAGS
       --limit <value>    Page size, up to 100 (default 30)
 
 EXAMPLES
-  # One domain
+  # This project's zone
+  $ unolia domain view
+  # Another one
   $ unolia domain view acme.com
   # Its nameservers
-  $ unolia domain view acme.com --json ns
+  $ unolia domain view acme.com --json nameservers
 
 LEARN MORE
   https://unolia.com/docs/cli/domain-view

@@ -2,35 +2,42 @@
 
 declare(strict_types=1);
 
-namespace Unolia\Cli\Command\Domain;
+namespace Unolia\Cli\Command\Dns;
 
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Unolia\Cli\Api\Requests\Domains\DeleteRecord;
-use Unolia\Cli\Api\Requests\Domains\ShowRecord;
 use Unolia\Cli\Command\BaseCommand;
+use Unolia\Cli\Command\Concerns\ResolvesZones;
 use Unolia\Cli\Console\ExitCode;
+use Unolia\Cli\Support\Arr;
+use Unolia\Cli\Support\Str;
 
 /**
- * Removing a record is not reversible, so it always shows the record first.
+ * Removing a record cannot be undone, so the record is shown and confirmed first.
  */
 final class RemoveCommand extends BaseCommand
 {
+    use ResolvesZones;
+
     protected function canonical(): string
     {
-        return 'domain:remove';
+        return 'dns:remove';
     }
 
     protected function configure(): void
     {
         parent::configure();
 
-        $this->setDescription('Remove a record');
+        $this->setDescription('Remove a DNS record');
     }
 
     protected function define(): void
     {
-        $this->addArgument('record', InputArgument::REQUIRED, 'Record id');
+        $this->addArgument('record', InputArgument::REQUIRED, 'Record id, or its name');
+        $this->addArgument('type', InputArgument::OPTIONAL, 'Record type, when the name alone is not enough');
+        $this->addOption('zone', null, InputOption::VALUE_REQUIRED, 'The zone, the project\'s one by default');
     }
 
     public function mutates(): bool
@@ -41,18 +48,20 @@ final class RemoveCommand extends BaseCommand
     public function examples(): array
     {
         return [
-            'Remove a record' => 'unolia domain remove 88231',
-            'Without asking' => 'unolia domain remove 88231 --yes',
+            'By name' => 'unolia dns remove old CNAME',
+            'By id, without asking' => 'unolia dns remove 88231 --yes',
         ];
     }
 
     protected function handle(InputInterface $input): ExitCode
     {
-        $id = (string) $this->argumentString('record');
-        $record = $this->fetch(new ShowRecord($id));
+        $record = $this->record((string) $this->argumentString('record'), $this->argumentString('type'));
+        $zone = $this->zone(Str::scalar(Arr::get($record, 'zone.domain') ?? ($record['zone_domain'] ?? null), '') ?: null, Str::scalar($record['name'] ?? null, ''));
+        $id = Str::scalar($record['id'] ?? null, '');
 
         $plan = [
             'id' => $record['id'] ?? $id,
+            'zone' => $zone,
             'name' => $record['name'] ?? null,
             'type' => $record['type'] ?? null,
             'value' => $record['value'] ?? null,
@@ -64,14 +73,7 @@ final class RemoveCommand extends BaseCommand
             return ExitCode::Ok;
         }
 
-        $question = sprintf(
-            'Remove %s %s %s?',
-            (string) ($record['name'] ?? ''),
-            (string) ($record['type'] ?? ''),
-            (string) ($record['value'] ?? ''),
-        );
-
-        if (! $this->confirmOrPlan($question, $plan)) {
+        if (! $this->confirmOrPlan(sprintf('Remove %s from %s?', self::describe($record, $zone), $zone))) {
             $this->out()->note('Nothing was removed.');
 
             return ExitCode::Ok;
@@ -85,7 +87,7 @@ final class RemoveCommand extends BaseCommand
             return ExitCode::Ok;
         }
 
-        $this->out()->info('Removed the record');
+        $this->out()->info(sprintf('Removed %s from %s', self::describe($record, $zone), $zone));
 
         return ExitCode::Ok;
     }

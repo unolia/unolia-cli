@@ -1,19 +1,17 @@
-# unolia domain add
+# unolia dns check
 
-Add a record to a domain
+Compare the records Unolia knows with what a resolver answers
 
 ```
 USAGE
-  unolia domain add [<domain>] [<name>] [<type>] [<value>] [flags]
+  unolia dns check [<zone>] [flags]
 
 ARGUMENTS
-  domain  The domain name
-  name    The full record name, @ for the domain itself
-  type    Record type
-  value   Record value
+  zone  The zone, the project's one by default
 
 FLAGS
-      --ttl <value>  Time to live in seconds
+      --server <value>  Resolver to ask (default 1.1.1.1)
+      --type <value>    Only these types, comma separated
 
 INHERITED FLAGS
   -t, --team <value>     Team slug or id
@@ -29,11 +27,11 @@ INHERITED FLAGS
       --limit <value>    Page size, up to 100 (default 30)
 
 EXAMPLES
-  # Point a subdomain
-  $ unolia domain add acme.com www.acme.com A 203.0.113.10
-  # Publish a TXT record
-  $ unolia domain add acme.com _dmarc.acme.com TXT "v=DMARC1; p=none"
+  # This project's zone
+  $ unolia dns check
+  # Against Google
+  $ unolia dns check acme.com --server 8.8.8.8
 
 LEARN MORE
-  https://unolia.com/docs/cli/domain-add
+  https://unolia.com/docs/cli/dns-check
 ```

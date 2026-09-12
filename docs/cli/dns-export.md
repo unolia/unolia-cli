@@ -1,19 +1,16 @@
-# unolia domain watch
+# unolia dns export
 
-Watch a record until it propagates
+Print a zone as a zone file
 
 ```
 USAGE
-  unolia domain watch <record> [flags]
+  unolia dns export [<zone>] [flags]
 
 ARGUMENTS
-  record  Record id
+  zone  The zone, the project's one by default
 
 FLAGS
-      --once              Check once and stop
-      --interval <value>  Seconds between checks (default 2)
-      --timeout <value>   Give up waiting after this long (default 30s)
-      --notify            Send a desktop notification at the end
+      --type <value>  Only these types, comma separated
 
 INHERITED FLAGS
   -t, --team <value>     Team slug or id
@@ -29,11 +26,11 @@ INHERITED FLAGS
       --limit <value>    Page size, up to 100 (default 30)
 
 EXAMPLES
-  # Watch a record
-  $ unolia domain watch 88231
-  # Check it once
-  $ unolia domain watch 88231 --once
+  # To a file
+  $ unolia dns export acme.com > acme.com.zone
+  # As rows
+  $ unolia dns export acme.com --json
 
 LEARN MORE
-  https://unolia.com/docs/cli/domain-watch
+  https://unolia.com/docs/cli/dns-export
 ```

@@ -1,0 +1,34 @@
+{
+ "data": [
+  {
+   "id": 88231,
+   "name": "www.acme.com",
+   "zone": {
+    "id": 9,
+    "domain": "acme.com"
+   },
+   "type": "A",
+   "ttl": 3600,
+   "priority": null,
+   "value": "203.0.113.10",
+   "state": "pending",
+   "error": null,
+   "synced_at": "2026-09-05T07:00:00Z",
+   "created_at": "2026-09-01T00:00:00Z",
+   "updated_at": "2026-09-05T07:00:00Z",
+   "url": "https://app.unolia.com/acme/projects/12/domains/acme.com/records/88231/edit"
+  }
+ ],
+ "links": {
+  "first": null,
+  "last": null,
+  "prev": null,
+  "next": null
+ },
+ "meta": {
+  "current_page": 1,
+  "last_page": 1,
+  "per_page": 30,
+  "total": 1
+ }
+}

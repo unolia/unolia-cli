@@ -32,39 +32,6 @@
       "synced_at": "2026-09-05T07:00:00Z",
       "checked_at": "2026-09-05T07:00:00Z",
       "url": "https://app.unolia.com/acme/projects/12/domains/acme.com"
-    },
-    {
-      "id": 10,
-      "domain": "acme.dev",
-      "team": {
-        "id": 3,
-        "slug": "acme",
-        "name": "Acme"
-      },
-      "project": {
-        "id": 12,
-        "name": "Marketing site"
-      },
-      "provider": {
-        "slug": "ovh",
-        "label": "OVH"
-      },
-      "records_count": 12,
-      "default_ttl": 3600,
-      "nameservers": {
-        "expected": [
-          "ns1.unolia.com",
-          "ns2.unolia.com"
-        ],
-        "observed": [
-          "dns1.registrar.example",
-          "dns2.registrar.example"
-        ],
-        "ok": false
-      },
-      "synced_at": null,
-      "checked_at": null,
-      "url": "https://app.unolia.com/acme/projects/12/domains/acme.dev"
     }
   ],
   "links": {
@@ -77,6 +44,6 @@
     "current_page": 1,
     "last_page": 1,
     "per_page": 30,
-    "total": 2
+    "total": 1
   }
 }

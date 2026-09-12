@@ -73,7 +73,23 @@ class Dns
             return '['.$server.']:53';
         }
 
-        return str_contains($server, ']:') || preg_match('/:\d+$/', $server) === 1 ? $server : $server.':53';
+        if (str_contains($server, ']:') || preg_match('/:\d+$/', $server) === 1) {
+            return $server;
+        }
+
+        // A nameserver given by name (ns1.example.com) has to become an
+        // address first: the transport speaks UDP to an IP, not to a name.
+        if (filter_var($server, FILTER_VALIDATE_IP) === false) {
+            $resolved = gethostbyname($server);
+
+            if ($resolved === $server) {
+                throw CliError::remoteFailure(sprintf('%s could not be resolved to an address', $server), 'Pass the resolver as an IP with --server.');
+            }
+
+            $server = $resolved;
+        }
+
+        return $server.':53';
     }
 
     private static function value(Record $answer): string

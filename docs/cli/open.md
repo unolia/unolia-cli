@@ -7,8 +7,8 @@ USAGE
   unolia open [<what>] [<id>] [flags]
 
 ARGUMENTS
-  what  project, website, live, repo, deployment, or a provider: forge, ploi, cloud, ovh, pages, github, gitlab (default project)
-  id    The deployment id, when opening a deployment
+  what  project, website, live, repo, deployment, domain, or a provider: forge, ploi, cloud, ovh, pages, github, gitlab (default project)
+  id    The deployment id, or the zone when opening a domain
 
 FLAGS
       --print  Print the URL instead of opening it

@@ -7,7 +7,7 @@ USAGE
   unolia automation list [flags]
 
 FLAGS
-      --state <value>   Filter by state
+      --state <value>   Filter by state; every state but archived by default, any for all
       --recipe <value>  Filter by recipe slug
       --q <value>       Filter by name
 
@@ -25,10 +25,12 @@ INHERITED FLAGS
       --limit <value>    Page size, up to 100 (default 30)
 
 EXAMPLES
-  # Every automation
+  # Every automation but the archived
   $ unolia automation list
-  # Active ones
-  $ unolia automation list --state active
+  # The archived ones too
+  $ unolia automation list --state any
+  # Paused ones
+  $ unolia automation list --state paused
 
 LEARN MORE
   https://unolia.com/docs/cli/automation-list

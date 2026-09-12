@@ -8,10 +8,12 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Unolia\Cli\Api\Requests\Deployments\ShowDeployment;
+use Unolia\Cli\Api\Requests\Domains\ShowDomain;
 use Unolia\Cli\Api\Requests\Projects\ShowProject;
 use Unolia\Cli\Api\Requests\Websites\ShowWebsite;
 use Unolia\Cli\Command\BaseCommand;
 use Unolia\Cli\Command\Concerns\ResolvesTargets;
+use Unolia\Cli\Command\Concerns\ResolvesZones;
 use Unolia\Cli\Console\CliError;
 use Unolia\Cli\Console\ExitCode;
 use Unolia\Cli\Context\Need;
@@ -24,8 +26,9 @@ use Unolia\Cli\Support\Browser;
 final class OpenCommand extends BaseCommand
 {
     use ResolvesTargets;
+    use ResolvesZones;
 
-    private const TARGETS = ['project', 'website', 'live', 'repo', 'deployment', 'forge', 'ploi', 'cloud', 'ovh', 'pages', 'github', 'gitlab'];
+    private const TARGETS = ['project', 'website', 'live', 'repo', 'deployment', 'domain', 'dns', 'forge', 'ploi', 'cloud', 'ovh', 'pages', 'github', 'gitlab'];
 
     /** A hosting target and the provider slug the API reports for it. */
     private const HOSTS = ['forge' => 'forge', 'ploi' => 'ploi', 'cloud' => 'laravel-cloud', 'ovh' => 'ovh', 'pages' => 'github'];
@@ -47,8 +50,8 @@ final class OpenCommand extends BaseCommand
 
     protected function define(): void
     {
-        $this->addArgument('what', InputArgument::OPTIONAL, 'project, website, live, repo, deployment, or a provider: forge, ploi, cloud, ovh, pages, github, gitlab', 'project');
-        $this->addArgument('id', InputArgument::OPTIONAL, 'The deployment id, when opening a deployment');
+        $this->addArgument('what', InputArgument::OPTIONAL, 'project, website, live, repo, deployment, domain, or a provider: forge, ploi, cloud, ovh, pages, github, gitlab', 'project');
+        $this->addArgument('id', InputArgument::OPTIONAL, 'The deployment id, or the zone when opening a domain');
         $this->addOption('print', null, InputOption::VALUE_NONE, 'Print the URL instead of opening it');
     }
 
@@ -102,6 +105,7 @@ final class OpenCommand extends BaseCommand
             'live' => $this->liveUrl(),
             'repo' => $this->repositoryUrl(),
             'deployment' => $this->deploymentUrl(),
+            'domain', 'dns' => $this->urlOf($this->fetch(new ShowDomain($this->zone($this->argumentString('id')))), 'this zone'),
             'forge', 'ploi', 'cloud', 'ovh', 'pages' => $this->hostUrl($what),
             'github', 'gitlab' => $this->codeHostUrl($what),
             default => $this->urlOf($this->fetch(new ShowProject($this->context(Need::Project)->requireProject())), 'this project'),

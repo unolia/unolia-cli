@@ -1,17 +1,18 @@
-# unolia domain dig
+# unolia dns list
 
-Query a DNS server about a domain
+List the DNS records of a zone
 
 ```
 USAGE
-  unolia domain dig [<domain>] [<type>] [flags]
+  unolia dns list [<zone>] [flags]
 
 ARGUMENTS
-  domain  The name to look up
-  type    Record type, A by default
+  zone  The zone, the project's one by default
 
 FLAGS
-      --server <value>  Resolver to ask (default 1.1.1.1)
+      --type <value>   Only these types, comma separated
+      --name <value>   Only this name, relative or full
+      --state <value>  Only records in this state
 
 INHERITED FLAGS
   -t, --team <value>     Team slug or id
@@ -27,11 +28,13 @@ INHERITED FLAGS
       --limit <value>    Page size, up to 100 (default 30)
 
 EXAMPLES
-  # Look up an address
-  $ unolia dig acme.com
-  # Ask another resolver
-  $ unolia dig acme.com TXT --server 8.8.8.8
+  # Records of this project's zone
+  $ unolia dns
+  # Another zone
+  $ unolia dns acme.com
+  # Mail records only
+  $ unolia dns --type MX,TXT
 
 LEARN MORE
-  https://unolia.com/docs/cli/domain-dig
+  https://unolia.com/docs/cli/dns-list
 ```

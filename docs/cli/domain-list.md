@@ -1,10 +1,16 @@
 # unolia domain list
 
-List the domains this token can reach
+List the DNS zones of a project
 
 ```
 USAGE
   unolia domain list [flags]
+
+FLAGS
+      --all-projects      Every zone of the team, not just this project
+      --all-teams         Every zone your token can reach, across teams
+      --provider <value>  Filter by DNS provider
+      --q <value>         Filter by name
 
 INHERITED FLAGS
   -t, --team <value>     Team slug or id
@@ -20,10 +26,12 @@ INHERITED FLAGS
       --limit <value>    Page size, up to 100 (default 30)
 
 EXAMPLES
-  # Every domain
-  $ unolia domain list
+  # Zones of this project
+  $ unolia domains
+  # Every zone of the team
+  $ unolia domains --all-projects
   # Names only
-  $ unolia domain list --json domain
+  $ unolia domains --json domain
 
 LEARN MORE
   https://unolia.com/docs/cli/domain-list

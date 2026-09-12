@@ -1,13 +1,21 @@
-# unolia domain remove
+# unolia dns watch
 
-Remove a record
+Watch a DNS record until it propagates
 
 ```
 USAGE
-  unolia domain remove <record> [flags]
+  unolia dns watch <record> [<type>] [flags]
 
 ARGUMENTS
-  record  Record id
+  record  Record id, or its name
+  type    Record type, when the name alone is not enough
+
+FLAGS
+      --zone <value>      The zone, the project's one by default
+      --once              Check once and stop
+      --interval <value>  Seconds between checks (default 2)
+      --timeout <value>   Give up waiting after this long (default 30s)
+      --notify            Send a desktop notification at the end
 
 INHERITED FLAGS
   -t, --team <value>     Team slug or id
@@ -23,11 +31,11 @@ INHERITED FLAGS
       --limit <value>    Page size, up to 100 (default 30)
 
 EXAMPLES
-  # Remove a record
-  $ unolia domain remove 88231
-  # Without asking
-  $ unolia domain remove 88231 --yes
+  # Watch a record
+  $ unolia dns watch www A
+  # Check it once
+  $ unolia dns watch 88231 --once
 
 LEARN MORE
-  https://unolia.com/docs/cli/domain-remove
+  https://unolia.com/docs/cli/dns-watch
 ```
