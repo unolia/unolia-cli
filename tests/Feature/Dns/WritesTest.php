@@ -201,6 +201,8 @@ it('removes a record after showing it, by name too, and needs a confirmation', f
         ->run('dns', 'remove', '88231');
 
     expect($asked->exitCode)->toBe(2)
+        ->and($asked->stdout)->toContain('#88231')
+        ->and($asked->stdout)->toContain('203.0.113.10')
         ->and($asked->stderr)->toContain('needs a confirmation')
         ->and($asked->stderr)->toContain('Remove www A 203.0.113.10 from acme.com?');
 });

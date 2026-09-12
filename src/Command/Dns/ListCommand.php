@@ -140,11 +140,11 @@ final class ListCommand extends BaseCommand
             }),
             Column::make('ttl', 'TTL')->right()->cell(static fn (array $row): Cell => Cell::text(is_numeric($row['ttl'] ?? null) ? RelativeTime::duration((int) $row['ttl']) : '')->dim()),
             Column::make('value', 'Value')->cell(static function (array $row): Cell {
-                $value = Str::scalar($row['value'] ?? null, '');
-                $priority = $row['priority'] ?? null;
+                $value = self::displayValue($row);
 
-                return Cell::text(Str::limit((is_numeric($priority) ? $priority.' ' : '').rtrim($value, '.'), self::VALUE_WIDTH))->plain((is_numeric($priority) ? $priority.' ' : '').$value);
+                return Cell::text(Str::limit(rtrim($value, '.'), self::VALUE_WIDTH))->plain($value);
             }),
+            Column::make('proxied')->cell(static fn (array $row): Cell => ($row['proxied'] ?? false) === true ? Cell::text('proxied')->color('#f38020') : Cell::empty()),
             Column::make('state')->cell(static fn (array $row): Cell => Status::word($row['state'] ?? null, 'verified')),
         )
             ->fields([
@@ -154,6 +154,7 @@ final class ListCommand extends BaseCommand
                 'ttl' => 'TTL',
                 'priority' => 'Priority',
                 'value' => 'Value',
+                'proxied' => 'Proxied',
                 'state' => 'State',
             ])
             ->sort(static function (array $a, array $b) use ($zone): int {

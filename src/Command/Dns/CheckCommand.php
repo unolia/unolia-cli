@@ -27,6 +27,9 @@ final class CheckCommand extends BaseCommand
 {
     use ResolvesZones;
 
+    /** Unolia's labels for what a resolver answers as TXT. */
+    private const QUERY_TYPES = ['SPF' => 'TXT', 'DKIM' => 'TXT', 'DMARC' => 'TXT', 'BIMI' => 'TXT'];
+
     protected function canonical(): string
     {
         return 'dns:check';
@@ -61,22 +64,25 @@ final class CheckCommand extends BaseCommand
         $only = $this->optionString('type');
         $types = $only === null ? [] : array_map(strtoupper(...), array_filter(array_map(trim(...), explode(',', $only))));
 
-        // Records grouped by name and type: DNS answers a set, so the
-        // comparison is set against set.
+        // Records grouped by name and the type a resolver answers with: SPF,
+        // DKIM, DMARC and BIMI are Unolia's labels for TXT records. DNS
+        // answers a set, so the comparison is set against set.
         $groups = [];
 
         foreach ($this->collection(new ListDomainRecords($zone, ['per_page' => 100])) as $record) {
-            $type = strtoupper(Str::scalar($record['type'] ?? null, ''));
+            $label = strtoupper(Str::scalar($record['type'] ?? null, ''));
+            $type = self::QUERY_TYPES[$label] ?? $label;
 
-            if (! isset(DigCommand::TYPES[$type]) || ($types !== [] && ! in_array($type, $types, true))) {
+            if (! isset(DigCommand::TYPES[$type]) || ($types !== [] && ! in_array($label, $types, true) && ! in_array($type, $types, true))) {
                 continue;
             }
 
             $name = self::tidy(Str::scalar($record['name'] ?? null, ''));
-            $priority = $record['priority'] ?? null;
-            $groups[$name.'|'.$type]['name'] = $name;
-            $groups[$name.'|'.$type]['type'] = $type;
-            $groups[$name.'|'.$type]['unolia'][] = self::normalise((is_numeric($priority) ? $priority.' ' : '').Str::scalar($record['value'] ?? null, ''));
+            $key = $name.'|'.$type;
+            $groups[$key]['name'] = $name;
+            $groups[$key]['type'] = $type;
+            $groups[$key]['proxied'] = ($groups[$key]['proxied'] ?? false) || ($record['proxied'] ?? false) === true;
+            $groups[$key]['unolia'][] = self::normalise(self::displayValue($record));
         }
 
         if ($groups === []) {
@@ -89,17 +95,33 @@ final class CheckCommand extends BaseCommand
         $dns = $this->runtime()->get(Dns::class);
 
         foreach ($groups as $group) {
+            $expected = $group['unolia'];
+            sort($expected);
+
+            // A proxied record answers the provider's edge, whatever the value
+            // says here. The most a check can do is see that something answers.
+            if ($group['proxied'] && in_array($group['type'], ['A', 'AAAA', 'CNAME'], true)) {
+                try {
+                    $answered = $dns->query($group['name'], $group['type'], DigCommand::TYPES[$group['type']], $server) !== []
+                        || $dns->query($group['name'], 'A', DigCommand::TYPES['A'], $server) !== [];
+                } catch (CliError) {
+                    $answered = false;
+                }
+
+                $rows[] = ['name' => $group['name'], 'type' => $group['type'], 'result' => $answered ? 'proxied' : 'propagating', 'unolia' => $expected, 'resolver' => [], 'detail' => null];
+
+                continue;
+            }
+
             try {
                 $answers = array_map(static fn (array $row): string => self::normalise($row['value']), $dns->query($group['name'], $group['type'], DigCommand::TYPES[$group['type']], $server));
             } catch (CliError $error) {
-                $rows[] = ['name' => $group['name'], 'type' => $group['type'], 'result' => 'error', 'unolia' => $group['unolia'], 'resolver' => [], 'detail' => $error->getMessage()];
+                $rows[] = ['name' => $group['name'], 'type' => $group['type'], 'result' => 'error', 'unolia' => $expected, 'resolver' => [], 'detail' => $error->getMessage()];
 
                 continue;
             }
 
             sort($answers);
-            $expected = $group['unolia'];
-            sort($expected);
 
             $result = match (true) {
                 $answers === $expected => 'match',
@@ -122,6 +144,30 @@ final class CheckCommand extends BaseCommand
     }
 
     /** Resolvers and providers disagree on quotes, trailing dots and case in names; none of that is a difference. */
+    /**
+     * Only what differs, each side: what Unolia has and the resolver lacks,
+     * and the other way round. Values both sides agree on are not the news.
+     *
+     * @param  list<string>  $unolia
+     * @param  list<string>  $resolver
+     */
+    private static function difference(array $unolia, array $resolver): string
+    {
+        $onlyUnolia = array_values(array_diff($unolia, $resolver));
+        $onlyResolver = array_values(array_diff($resolver, $unolia));
+        $parts = [];
+
+        if ($onlyUnolia !== []) {
+            $parts[] = 'Unolia has '.Str::limit(implode(', ', $onlyUnolia), 44);
+        }
+
+        if ($onlyResolver !== []) {
+            $parts[] = 'resolver has '.Str::limit(implode(', ', $onlyResolver), 44);
+        }
+
+        return implode(' · ', $parts);
+    }
+
     private static function normalise(string $value): string
     {
         return strtolower(rtrim(trim(str_replace('"', '', $value)), '.'));
@@ -131,7 +177,7 @@ final class CheckCommand extends BaseCommand
     {
         return Table::make(
             Column::make('glyph')->cell(static fn (array $row): Cell => match ($row['result']) {
-                'match' => Cell::text('●')->color('green')->plain(''),
+                'match', 'proxied' => Cell::text('●')->color('green')->plain(''),
                 'propagating' => Cell::text('◐')->color('yellow')->plain(''),
                 default => Cell::text('✕')->color('red')->plain(''),
             }),
@@ -147,12 +193,15 @@ final class CheckCommand extends BaseCommand
             }),
             Column::make('result', 'Result')->cell(static fn (array $row): Cell => match ($row['result']) {
                 'match' => Cell::text(implode(', ', array_map(static fn (string $value): string => Str::limit($value, 48), $row['unolia']))),
+                'proxied' => Cell::text(Str::limit(implode(', ', $row['unolia']), 40).' · proxied, the resolver answers the provider\'s edge')->dim()->plain(implode(', ', $row['unolia']).' · proxied'),
                 'propagating' => Cell::text('Unolia has '.Str::limit(implode(', ', $row['unolia']), 40).' · resolver has nothing yet')->color('yellow'),
                 'error' => Cell::text(Str::scalar($row['detail'] ?? null, 'the resolver did not answer'))->color('red'),
-                default => Cell::text('Unolia has '.Str::limit(implode(', ', $row['unolia']), 36).' · resolver has '.Str::limit(implode(', ', $row['resolver']), 36))->color('red'),
+                default => Cell::text(self::difference($row['unolia'], $row['resolver']))->color('red'),
             }),
         )
             ->fields(['name' => 'Name', 'type' => 'Type', 'result' => 'Result', 'unolia' => 'Unolia', 'resolver' => 'Resolver'])
-            ->footer(static fn (int $count): string => $count === 1 ? '1 record checked' : $count.' records checked');
+            ->footer(static function (int $count): string {
+                return $count === 1 ? '1 record checked' : $count.' records checked';
+            });
     }
 }
