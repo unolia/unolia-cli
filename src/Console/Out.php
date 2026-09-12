@@ -120,9 +120,11 @@ final class Out
         $text = (new StyledTableRenderer($this->face))->render($rows, $table);
 
         if ($this->face->interactive) {
-            // A breath before the table, so it does not sit on the prompt line.
+            // A breath before and after the table, so it sits on neither the
+            // prompt line above nor the one that follows.
             $this->stdout->writeln('');
             $this->stdout->writeln($text);
+            $this->stdout->writeln('');
 
             return;
         }
