@@ -6,6 +6,7 @@ namespace Unolia\Cli\Command\Core;
 
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Unolia\Cli\Api\ApiException;
 use Unolia\Cli\Api\Requests\Repositories\ListRepositoryActions;
 use Unolia\Cli\Api\Requests\Websites\ListWebsiteDeployments;
@@ -47,7 +48,8 @@ final class WatchCommand extends BaseCommand
     protected function define(): void
     {
         $this->addArgument('kind', InputArgument::OPTIONAL, 'deployment, ci, automation or record');
-        $this->addArgument('id', InputArgument::OPTIONAL, 'The id of the thing to watch');
+        $this->addArgument('id', InputArgument::OPTIONAL, 'The id of the thing to watch. For a deployment, the running or next one by default');
+        $this->addOption('last', null, InputOption::VALUE_NONE, 'Follow the latest deployment even when it has finished');
         $this->addWatchOptions();
     }
 
@@ -55,6 +57,7 @@ final class WatchCommand extends BaseCommand
     {
         return [
             'Whatever this directory started' => 'unolia watch',
+            'The running or next deployment, after a push' => 'unolia watch deployment',
             'A deployment' => 'unolia watch deployment 4812',
             'A DNS record' => 'unolia watch record 88231',
         ];
@@ -86,6 +89,10 @@ final class WatchCommand extends BaseCommand
                 'Watch one of: '.implode(', ', self::KINDS),
                 ['candidates' => self::KINDS],
             );
+        }
+
+        if ($id === null && $kind === 'deployment') {
+            return $this->deployment($this->pickDeployment($this->websiteId(), $this->optionBool('last')));
         }
 
         if ($id === null) {

@@ -8,9 +8,10 @@ USAGE
 
 ARGUMENTS
   kind  deployment, ci, automation or record
-  id    The id of the thing to watch
+  id    The id of the thing to watch. For a deployment, the running or next one by default
 
 FLAGS
+      --last              Follow the latest deployment even when it has finished
       --interval <value>  Seconds between checks (default 3)
       --timeout <value>   Give up waiting after this long (default 15m)
       --notify            Send a desktop notification at the end
@@ -31,6 +32,8 @@ INHERITED FLAGS
 EXAMPLES
   # Whatever this directory started
   $ unolia watch
+  # The running or next deployment, after a push
+  $ unolia watch deployment
   # A deployment
   $ unolia watch deployment 4812
   # A DNS record

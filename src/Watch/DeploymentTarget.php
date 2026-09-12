@@ -83,9 +83,7 @@ final class DeploymentTarget implements Target
         }
 
         foreach ($this->lines($state) as $line) {
-            // Indented on the table face, so the output reads as a block under
-            // the header and apart from the summary line that closes it.
-            yield new WatchEvent('deployment.output', ['line' => $line], '  '.$line);
+            yield new WatchEvent('deployment.output', ['line' => $line], $line);
         }
 
         if ($previous !== null && $previous->string('status') !== $state->string('status') && ! $this->isDone($state)) {
@@ -162,7 +160,7 @@ final class DeploymentTarget implements Target
         );
     }
 
-    public function header(TargetState $state): ?string
+    public function header(TargetState $state): string
     {
         $parts = array_filter([
             $state->get('website.domain'),
@@ -170,6 +168,8 @@ final class DeploymentTarget implements Target
             $state->get('commit.short'),
         ], is_string(...));
 
-        return $parts === [] ? null : implode(' · ', $parts);
+        $name = 'Deployment #'.(string) $state->int('id');
+
+        return $parts === [] ? $name : $name.' · '.implode(' · ', $parts);
     }
 }
