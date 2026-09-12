@@ -34,6 +34,20 @@ it('switches the default team', function () {
     expect($settings['default_team'])->toBe('acme');
 });
 
+it('switches by id or by name and stores the slug', function () {
+    $cli = cli()->withApi(api()->on('GET', 'v1/teams', fixture('teams.json')));
+
+    $result = $cli->run('team', 'switch', '3');
+
+    expect($result->exitCode)->toBe(0)
+        ->and($result->stdout)->toContain('Now working in team acme')
+        ->and(json_decode((string) file_get_contents($cli->home->home.'/.config/unolia/config.json'), true)['default_team'])->toBe('acme');
+
+    $byName = cli()->withApi(api()->on('GET', 'v1/teams', fixture('teams.json')))->run('team', 'switch', 'Eser');
+
+    expect($byName->stdout)->toContain('Now working in team personal');
+});
+
 it('switches only this directory with --local', function () {
     $cli = cli()
         ->withConfig(['project' => 12])

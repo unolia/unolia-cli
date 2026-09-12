@@ -32,7 +32,7 @@ final class SwitchCommand extends BaseCommand
 
     protected function define(): void
     {
-        $this->addArgument('team', InputArgument::OPTIONAL, 'Team slug');
+        $this->addArgument('team', InputArgument::OPTIONAL, 'Team slug, id or name');
         $this->addOption('local', null, InputOption::VALUE_NONE, 'Write it into .unolia/config.json instead');
     }
 
@@ -45,6 +45,7 @@ final class SwitchCommand extends BaseCommand
     {
         return [
             'Everywhere' => 'unolia team switch acme',
+            'By id' => 'unolia team switch 3',
             'This repository only' => 'unolia team switch acme --local',
         ];
     }
@@ -52,13 +53,15 @@ final class SwitchCommand extends BaseCommand
     protected function handle(InputInterface $input): ExitCode
     {
         $teams = $this->teams();
-        $slug = $this->argumentString('team') ?? $this->ask()->select('Which team?', $teams, '--team');
+        $choices = array_map(static fn (array $team): string => $team['name'], $teams);
+        $reference = $this->argumentString('team') ?? $this->ask()->select('Which team?', $choices, '--team');
+        $slug = $this->resolve($teams, $reference);
 
-        if (! isset($teams[$slug])) {
+        if ($slug === null) {
             throw CliError::notFound(
-                sprintf('no team called %s', $slug),
-                'Run unolia team list to see the ones you can reach.',
-                ['candidates' => $teams],
+                sprintf('no team called %s', $reference),
+                'Run unolia team list to see the ones you can reach, by slug, id or name.',
+                ['candidates' => $choices],
             );
         }
 
@@ -92,7 +95,9 @@ final class SwitchCommand extends BaseCommand
     }
 
     /**
-     * @return array<string, string>
+     * The teams the token reaches, keyed by slug.
+     *
+     * @return array<string, array{id: string, name: string}>
      */
     private function teams(): array
     {
@@ -102,11 +107,38 @@ final class SwitchCommand extends BaseCommand
             $slug = $team['slug'] ?? $team['id'] ?? null;
 
             if ($slug !== null && is_scalar($slug)) {
-                $teams[(string) $slug] = (string) ($team['name'] ?? $slug);
+                $teams[(string) $slug] = [
+                    'id' => is_scalar($team['id'] ?? null) ? (string) $team['id'] : '',
+                    'name' => (string) ($team['name'] ?? $slug),
+                ];
             }
         }
 
         return $teams;
+    }
+
+    /**
+     * The slug behind whatever was typed: the slug itself, the id, or the
+     * name when only one team carries it. The slug is what gets stored, so
+     * config files read the same however the team was named.
+     *
+     * @param  array<string, array{id: string, name: string}>  $teams
+     */
+    private function resolve(array $teams, string $reference): ?string
+    {
+        if (isset($teams[$reference])) {
+            return $reference;
+        }
+
+        foreach ($teams as $slug => $team) {
+            if ($team['id'] !== '' && $team['id'] === $reference) {
+                return $slug;
+            }
+        }
+
+        $byName = array_keys(array_filter($teams, static fn (array $team): bool => strcasecmp($team['name'], $reference) === 0));
+
+        return count($byName) === 1 ? (string) $byName[0] : null;
     }
 
     private function report(string $slug, string $path): void
