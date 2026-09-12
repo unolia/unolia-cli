@@ -53,7 +53,7 @@ final class Tint
             'domainchief' => '#2563eb',
             'mailgun' => '#f06b66',
             'postmark' => '#ffde00',
-            'ohdear' => '#5b6cff',
+            'ohdear' => '#e4405f',
             'uptimerobot' => '#3bd671',
             'slack' => '#4a154b',
             default => null,
