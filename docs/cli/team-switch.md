@@ -7,7 +7,7 @@ USAGE
   unolia team switch [<team>] [flags]
 
 ARGUMENTS
-  team  Team slug
+  team  Team slug, id or name
 
 FLAGS
       --local  Write it into .unolia/config.json instead
@@ -28,6 +28,8 @@ INHERITED FLAGS
 EXAMPLES
   # Everywhere
   $ unolia team switch acme
+  # By id
+  $ unolia team switch 3
   # This repository only
   $ unolia team switch acme --local
 

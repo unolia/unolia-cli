@@ -1,15 +1,35 @@
 {
   "data": {
+    "id": 9,
     "domain": "acme.com",
     "team": {
       "id": 3,
       "slug": "acme",
       "name": "Acme"
     },
-    "ns": [
-      "ns1.unolia.com",
-      "ns2.unolia.com"
-    ],
-    "synced_at": "2026-09-05T07:00:00Z"
+    "project": {
+      "id": 12,
+      "name": "Marketing site"
+    },
+    "provider": {
+      "slug": "cloudflare",
+      "label": "Cloudflare"
+    },
+    "records_count": 7,
+    "default_ttl": 3600,
+    "nameservers": {
+      "expected": [
+        "ns1.unolia.com",
+        "ns2.unolia.com"
+      ],
+      "observed": [
+        "ns1.unolia.com",
+        "ns2.unolia.com"
+      ],
+      "ok": true
+    },
+    "synced_at": "2026-09-05T07:00:00Z",
+    "checked_at": "2026-09-05T07:00:00Z",
+    "url": "https://app.unolia.com/acme/projects/12/domains/acme.com"
   }
 }

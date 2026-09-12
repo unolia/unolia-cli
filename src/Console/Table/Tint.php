@@ -15,6 +15,21 @@ final class Tint
     /** The terminal's default foreground, for monochrome brands. */
     public const DEFAULT = 'default';
 
+    /**
+     * DNS record types by family, so a zone reads by colour: addresses blue,
+     * aliases cyan, mail and text magenta. Delegation and the rest take the
+     * terminal's own foreground, dimmed by the caller when they matter less.
+     */
+    public static function recordType(mixed $type): ?string
+    {
+        return match (is_string($type) ? strtoupper($type) : '') {
+            'A', 'AAAA' => '#7aa7ff',
+            'CNAME', 'ALIAS', 'DNAME' => 'cyan',
+            'MX', 'TXT', 'SPF', 'DKIM', 'DMARC', 'BIMI' => 'magenta',
+            default => null,
+        };
+    }
+
     public static function provider(mixed $slug): ?string
     {
         return match (is_string($slug) ? strtolower($slug) : '') {
@@ -28,7 +43,12 @@ final class Tint
             'digitalocean' => '#0080ff',
             'vultr' => '#007bfc',
             'hetzner' => '#d50c2d',
-            'aws' => '#ff9900',
+            'aws', 'route53' => '#ff9900',
+            'gandi' => '#4ebd9e',
+            'porkbun' => '#ef7d73',
+            'namecheap' => '#de3723',
+            'ionos' => '#003d8f',
+            'bunny' => '#ff7f2a',
             default => null,
         };
     }

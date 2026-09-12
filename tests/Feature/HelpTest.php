@@ -32,7 +32,7 @@ it('explains a namespace', function () {
 
         expect($result->exitCode)->toBe(0, implode(' ', $argv))
             ->and($result->stdout)->toContain('AVAILABLE COMMANDS')
-            ->and($result->stdout)->toContain('records')
+            ->and($result->stdout)->toContain('view')
             ->and($result->stdout)->toContain('list');
     }
 });

@@ -52,7 +52,9 @@ it('collapses through an alias', function () {
 
 it('finds a command through its alias', function () {
     expect(application()->find('teams')->getName())->toBe('team:list')
-        ->and(application()->find('dig')->getName())->toBe('domain:dig')
+        ->and(application()->find('dig')->getName())->toBe('dns:dig')
+        ->and(application()->find('domains')->getName())->toBe('domain:list')
+        ->and(application()->find('dns')->getName())->toBe('dns:list')
         ->and(application()->find('ci')->getName())->toBe('ci:list');
 });
 

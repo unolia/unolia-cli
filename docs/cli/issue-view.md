@@ -7,7 +7,7 @@ USAGE
   unolia issue view <issue> [flags]
 
 ARGUMENTS
-  issue  Issue id or a prefix of it
+  issue  Issue id, or the six characters unolia issue list prints
 
 INHERITED FLAGS
   -t, --team <value>     Team slug or id
@@ -24,9 +24,9 @@ INHERITED FLAGS
 
 EXAMPLES
   # One issue
-  $ unolia issue view 01J9P7
+  $ unolia issue view 8d0e1f
   # Its fix metadata
-  $ unolia issue view 01J9P7 --json fix
+  $ unolia issue view 8d0e1f --json fix
 
 LEARN MORE
   https://unolia.com/docs/cli/issue-view

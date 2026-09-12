@@ -59,7 +59,8 @@ unolia auth refresh --scopes x      # sign in again with one more scope
 unolia init                         # link this directory to a project and website
 unolia deploy                       # deploy the linked website and follow it
 unolia issue list --fixable         # what is broken and what can be fixed
-unolia domain records acme.com      # the DNS records of a zone
+unolia dns                          # the DNS records of this project's zone
+unolia dns set www A 203.0.113.10   # point a name somewhere, and watch it propagate
 ```
 
 Run `unolia` for the full tree, `unolia <namespace>` for one group, and `unolia <command> --help` for
