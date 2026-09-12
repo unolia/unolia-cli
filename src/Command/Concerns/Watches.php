@@ -62,7 +62,7 @@ trait Watches
         $domain = $this->fetch(new ShowWebsite($website))['domain'] ?? null;
 
         $this->out()->note(sprintf(
-            'Waiting for the next deployment of %s. Ctrl+C stops watching, the deployment does not.',
+            'Waiting for the next deployment of %s. Ctrl+C stops watching.',
             is_string($domain) ? $domain : 'website '.$website,
         ));
 
