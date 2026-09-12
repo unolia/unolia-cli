@@ -50,7 +50,7 @@ final class FixCommand extends BaseCommand
     {
         $id = (string) $this->argumentString('provider');
         $provider = $this->fetch(new ShowProvider($id));
-        $url = $provider['url'] ?? null;
+        $url = $provider['fix_url'] ?? ($provider['url'] ?? null);
 
         if (! is_string($url) || $url === '') {
             throw CliError::notFound(sprintf('the API did not give a page for provider %s', $id));

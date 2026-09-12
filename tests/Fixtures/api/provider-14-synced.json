@@ -17,6 +17,7 @@
     "has_cost_sync_error": false,
     "needs_attention": false,
     "attention_reasons": [],
-    "url": "https://app.unolia.com/acme/providers/14"
+    "url": "https://app.unolia.com/acme/providers/14",
+    "fix_url": "https://app.unolia.com/acme/providers/14/refresh/forge"
   }
 }
