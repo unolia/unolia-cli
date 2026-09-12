@@ -169,6 +169,24 @@ trait ResolvesZones
     }
 
     /**
+     * The value with its priority in front, once: providers store MX and SRV
+     * values with the priority already in them, some do not.
+     *
+     * @param  array<string, mixed>  $record
+     */
+    public static function displayValue(array $record): string
+    {
+        $value = Str::scalar($record['value'] ?? null, '');
+        $priority = $record['priority'] ?? null;
+
+        if (! is_numeric($priority) || preg_match('/^\d+\s/', $value) === 1) {
+            return $value;
+        }
+
+        return $priority.' '.$value;
+    }
+
+    /**
      * "www A 95.179.220.235" the way a person says a record.
      *
      * @param  array<string, mixed>  $record
@@ -179,7 +197,7 @@ trait ResolvesZones
             '%s %s %s',
             self::relativeName($record['name'] ?? null, $zone),
             Str::scalar($record['type'] ?? null, ''),
-            Str::scalar($record['value'] ?? null, ''),
+            self::displayValue($record),
         ));
     }
 }

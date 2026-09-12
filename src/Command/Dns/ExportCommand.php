@@ -75,12 +75,7 @@ final class ExportCommand extends BaseCommand
 
         foreach ($rows as $row) {
             $type = strtoupper(Str::scalar($row['type'] ?? null, ''));
-            $value = Str::scalar($row['value'] ?? null, '');
-            $priority = $row['priority'] ?? null;
-
-            if (in_array($type, ['MX', 'SRV'], true) && is_numeric($priority)) {
-                $value = $priority.' '.$value;
-            }
+            $value = self::displayValue($row);
 
             if ($type === 'TXT' && ! str_starts_with($value, '"')) {
                 $value = '"'.str_replace('"', '\"', $value).'"';

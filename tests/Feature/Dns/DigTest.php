@@ -110,3 +110,44 @@ it('checks the records of a zone against a resolver', function () {
     expect($json->exitCode)->toBe(0)
         ->and(array_column($json->json(), 'result'))->toBe(['match', 'match']);
 });
+
+it('compares SPF as TXT, does not double the priority, skips proxied values and prints only what differs', function () {
+    $records = fixture('records.json');
+    $records['data'][1]['value'] = '10 mail.acme.com.';              // provider stored the priority in the value
+    $records['data'][2]['proxied'] = true;                           // apex A behind Cloudflare
+    $records['data'][] = ['id' => 88250, 'name' => 'acme.com', 'type' => 'SPF', 'ttl' => 300, 'priority' => null, 'value' => 'v=spf1 ~all', 'state' => 'verified', 'proxied' => false];
+    $records['data'][] = ['id' => 88251, 'name' => 'acme.com', 'type' => 'TXT', 'ttl' => 300, 'priority' => null, 'value' => 'google=one', 'state' => 'verified', 'proxied' => false];
+
+    $answers = [
+        ['name' => 'acme.com', 'type' => 'A', 'ttl' => 300, 'value' => '104.21.3.167'],
+        ['name' => 'acme.com', 'type' => 'MX', 'ttl' => 300, 'value' => '10 mail.acme.com'],
+        ['name' => 'acme.com', 'type' => 'TXT', 'ttl' => 300, 'value' => 'v=spf1 ~all'],
+        ['name' => 'acme.com', 'type' => 'TXT', 'ttl' => 300, 'value' => 'google=two'],
+    ];
+
+    $result = cli()
+        ->withApi(api()->on('GET', 'v1/domains/acme.com/records', $records))
+        ->withService(Dns::class, new FakeDns($answers))
+        ->run('dns', 'check', 'acme.com', '--type', 'A,MX,TXT,SPF', '--json');
+
+    $byKey = [];
+
+    foreach ($result->json() as $row) {
+        $byKey[$row['name'].' '.$row['type']] = $row;
+    }
+
+    expect($byKey['acme.com A']['result'])->toBe('proxied')
+        // The fake resolver answers every query with the same rows, so only Unolia's side is asserted here.
+        ->and($byKey['acme.com MX']['unolia'])->toBe(['10 mail.acme.com'])
+        ->and($byKey['acme.com TXT']['result'])->toBe('differs')
+        ->and($byKey['acme.com TXT']['unolia'])->toContain('v=spf1 ~all')
+        ->and($byKey)->not->toHaveKey('acme.com SPF');
+
+    $table = cli()
+        ->withApi(api()->on('GET', 'v1/domains/acme.com/records', $records))
+        ->withService(Dns::class, new FakeDns($answers))
+        ->run('dns', 'check', 'acme.com', '--type', 'TXT');
+
+    expect($table->stdout)->toContain('Unolia has google=one · resolver has google=two')
+        ->and($table->stdout)->not->toContain('v=spf1');
+});

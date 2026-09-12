@@ -20,6 +20,7 @@ it('lists the records of the project zone with bare dns, names relative to the z
         ->and($result->stdout)->toContain('www')
         ->and($result->stdout)->not->toContain('www.acme.com')
         ->and($result->stdout)->toContain('10 mail.acme.com.')
+        ->and($result->stdout)->not->toContain('10 10 mail')
         ->and($result->stdout)->toContain('pending')
         ->and($result->stdout)->toContain('3 records');
     $cli->api()->assertEverythingUsed();
@@ -108,4 +109,16 @@ it('exports a zone file', function () {
         ->and($result->stdout)->toMatch('/^@ +3600 +IN A +203\.0\.113\.10$/m')
         ->and($result->stdout)->toMatch('/^@ +IN MX +10 mail\.acme\.com\.$/m')
         ->and($result->stdout)->toMatch('/^www +3600 +IN A +203\.0\.113\.10$/m');
+});
+
+it('does not double a priority the provider already put in the value', function () {
+    $records = fixture('records.json');
+    $records['data'][1]['value'] = '10 mail.acme.com.';
+
+    $result = cli()
+        ->withApi(api()->on('GET', 'v1/domains/acme.com/records', $records))
+        ->run('dns', 'acme.com');
+
+    expect($result->stdout)->toContain('10 mail.acme.com.')
+        ->and($result->stdout)->not->toContain('10 10 mail');
 });

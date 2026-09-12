@@ -73,6 +73,11 @@ final class RemoveCommand extends BaseCommand
             return ExitCode::Ok;
         }
 
+        // The whole row first, so the question is about something seen.
+        if (! $this->structured()) {
+            $this->out()->table([$record], ListCommand::table($zone));
+        }
+
         if (! $this->confirmOrPlan(sprintf('Remove %s from %s?', self::describe($record, $zone), $zone))) {
             $this->out()->note('Nothing was removed.');
 
