@@ -9,6 +9,7 @@ use Symfony\Component\Console\Input\InputOption;
 use Unolia\Cli\Api\Requests\Providers\ListProviders;
 use Unolia\Cli\Command\BaseCommand;
 use Unolia\Cli\Console\ExitCode;
+use Unolia\Cli\Console\Format;
 use Unolia\Cli\Console\Table\Cell;
 use Unolia\Cli\Console\Table\Column;
 use Unolia\Cli\Console\Table\Status;
@@ -53,6 +54,15 @@ final class ListCommand extends BaseCommand
         }
 
         $this->out()->table($rows, self::table(), 'No connected providers.');
+
+        // A broken connection is repaired on its page; say which command gets there.
+        if ($this->out()->face()->format === Format::Table) {
+            foreach ($rows as $row) {
+                if (in_array($row['status'] ?? null, ['invalid', 'expired', 'needs_refresh'], true) && is_scalar($row['id'] ?? null)) {
+                    $this->out()->note(sprintf('%s is %s: unolia provider fix %s opens the page that repairs it.', Str::scalar($row['name'] ?? null, 'Provider '.$row['id']), str_replace('_', ' ', Str::scalar($row['status'], '')), $row['id']));
+                }
+            }
+        }
 
         return ExitCode::Ok;
     }

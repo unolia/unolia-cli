@@ -68,7 +68,7 @@ final class Groups
         'dns' => 'list · add · set · edit · remove · watch · dig · check · export',
         'server' => 'list · view',
         'env' => 'map · view',
-        'provider' => 'list · view · sync',
+        'provider' => 'list · view · sync · fix',
         'team' => 'list · switch · tokens',
         'configure' => 'herd · env',
         'compare' => 'local · versions',

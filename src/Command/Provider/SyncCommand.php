@@ -13,6 +13,7 @@ use Unolia\Cli\Command\BaseCommand;
 use Unolia\Cli\Command\Concerns\Watches;
 use Unolia\Cli\Console\CliError;
 use Unolia\Cli\Console\ExitCode;
+use Unolia\Cli\Support\Str;
 
 /**
  * Queue a sync of one provider, and optionally wait for it to land.
@@ -58,7 +59,17 @@ final class SyncCommand extends BaseCommand
         $id = (string) $this->argumentString('provider');
 
         if ($this->dryRun()) {
-            $this->out()->record($this->fetch(new SyncProvider($id, ['dry_run' => true])));
+            $preview = $this->fetch(new SyncProvider($id, ['dry_run' => true]));
+
+            if ($this->structured()) {
+                $this->out()->record($preview);
+            } else {
+                $this->out()->record($preview, ['dry_run' => 'Dry run', 'job' => 'Job', 'would_dispatch' => 'Would sync', 'status' => 'Connection', 'url' => 'Page']);
+
+                if (($preview['would_dispatch'] ?? true) === false) {
+                    $this->out()->note(sprintf('The connection is %s. unolia provider fix %s opens the page that repairs it.', str_replace('_', ' ', Str::scalar($preview['status'] ?? null, 'broken')), $id));
+                }
+            }
 
             return ExitCode::Ok;
         }

@@ -90,6 +90,15 @@ final class ApiException extends RuntimeException
                 ExitCode::RemoteFailure,
             ),
             $this->status === 422 => CliError::usage($this->validationMessage(), null, $this->details()),
+            $this->status === 409 && $this->errorCode() === 'provider_needs_attention' => new CliError(
+                'provider_needs_attention',
+                $this->message('the provider connection needs to be repaired first'),
+                ExitCode::RemoteFailure,
+                is_scalar(Arr::get($this->body, 'error.details.provider_id'))
+                    ? sprintf('unolia provider fix %s opens the page where the connection is repaired.', Arr::get($this->body, 'error.details.provider_id'))
+                    : null,
+                $this->details(),
+            ),
             $this->status === 409 => new CliError(
                 $this->errorCode() ?? 'conflict',
                 $this->message('the resource is not in a state where that can happen'),

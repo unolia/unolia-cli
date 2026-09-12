@@ -1,0 +1,13 @@
+{
+  "error": {
+    "code": "provider_needs_attention",
+    "message": "My Namecheap Account cannot be synced: its connection is invalid.",
+    "status": 409,
+    "hint": null,
+    "details": {
+      "provider_id": 39,
+      "status": "invalid",
+      "url": "https://app.unolia.com/acme/team/providers/39"
+    }
+  }
+}
