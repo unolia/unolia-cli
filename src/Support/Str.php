@@ -29,6 +29,35 @@ final class Str
         return mb_strlen($id) > $length ? mb_substr($id, -$length) : $id;
     }
 
+    /**
+     * Word wrapped to a width, each line prefixed. Existing line breaks are kept.
+     *
+     * @return list<string>
+     */
+    public static function wrap(string $text, int $width, string $prefix = ''): array
+    {
+        $lines = [];
+
+        foreach (preg_split('/\R/', trim($text)) ?: [] as $paragraph) {
+            $line = '';
+
+            foreach (preg_split('/\s+/', trim($paragraph)) ?: [] as $word) {
+                if ($line !== '' && mb_strwidth($line.' '.$word) > $width) {
+                    $lines[] = $prefix.$line;
+                    $line = $word;
+
+                    continue;
+                }
+
+                $line = $line === '' ? $word : $line.' '.$word;
+            }
+
+            $lines[] = $prefix.$line;
+        }
+
+        return $lines;
+    }
+
     public static function headline(string $value): string
     {
         $value = str_replace(['_', '-', '.'], ' ', $value);
