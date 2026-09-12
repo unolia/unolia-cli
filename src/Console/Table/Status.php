@@ -102,7 +102,7 @@ final class Status
 
         return match (strtolower($status)) {
             'active', 'success', 'succeeded', 'completed', 'ready', 'healthy', 'ok', 'up', 'passed', 'resolved', 'connected', 'verified', 'fixed' => 'ok',
-            'running', 'pending', 'queued', 'deploying', 'in_progress', 'waiting', 'maintenance', 'degraded', 'warning', 'awaiting_input', 'syncing', 'stale' => 'busy',
+            'running', 'pending', 'queued', 'deploying', 'in_progress', 'waiting', 'maintenance', 'degraded', 'warning', 'awaiting_input', 'syncing' => 'busy',
             'failed', 'failure', 'error', 'errored', 'offline', 'down', 'broken', 'expired', 'timed_out', 'open' => 'bad',
             'inactive', 'disabled', 'paused', 'archived', 'cancelled', 'canceled', 'skipped', 'revoked', 'ignored' => 'off',
             default => 'unknown',

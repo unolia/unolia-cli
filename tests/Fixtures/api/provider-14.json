@@ -10,7 +10,6 @@
     "is_expired": false,
     "expires_at": null,
     "synced_at": "2026-09-05T08:00:00Z",
-    "stale": false,
     "sync_status": "ok",
     "has_sync_error": false,
     "cost_sync_status": "ok",
