@@ -10,7 +10,8 @@ ARGUMENTS
   environment  An environment name from .unolia/config.json
 
 FLAGS
-      --wait              Block until the deployment finishes
+      --wait              Block until the deployment finishes, also in a pipe
+      --no-progress       Return as soon as the deployment is queued instead of following it
       --interval <value>  Seconds between checks (default 3)
       --timeout <value>   Give up waiting after this long (default 15m)
       --notify            Send a desktop notification at the end
@@ -29,10 +30,12 @@ INHERITED FLAGS
       --limit <value>    Page size, up to 100 (default 30)
 
 EXAMPLES
-  # Deploy this directory
+  # Deploy this directory and watch it
   $ unolia deploy
   # Deploy an environment
-  $ unolia deploy staging --wait
+  $ unolia deploy staging
+  # Queue it and come back later
+  $ unolia deploy --no-progress
 
 LEARN MORE
   https://unolia.com/docs/cli/deploy

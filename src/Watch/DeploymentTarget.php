@@ -83,7 +83,9 @@ final class DeploymentTarget implements Target
         }
 
         foreach ($this->lines($state) as $line) {
-            yield new WatchEvent('deployment.output', ['line' => $line], $line);
+            // Indented on the table face, so the output reads as a block under
+            // the header and apart from the summary line that closes it.
+            yield new WatchEvent('deployment.output', ['line' => $line], '  '.$line);
         }
 
         if ($previous !== null && $previous->string('status') !== $state->string('status') && ! $this->isDone($state)) {

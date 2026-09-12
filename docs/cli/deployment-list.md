@@ -11,6 +11,7 @@ FLAGS
       --branch <value>  Filter by branch
       --since <value>   Only deployments since, such as 7d
       --all-websites    Every website of the project, not just the linked one
+      --all-projects    Every website of the team
 
 INHERITED FLAGS
   -t, --team <value>     Team slug or id

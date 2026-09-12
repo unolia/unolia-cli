@@ -10,7 +10,8 @@ ARGUMENTS
   website  Website id or domain, the linked one by default
 
 FLAGS
-      --wait              Block until the deployment finishes
+      --wait              Block until the deployment finishes, also in a pipe
+      --no-progress       Return as soon as the deployment is queued instead of following it
       --interval <value>  Seconds between checks (default 3)
       --timeout <value>   Give up waiting after this long (default 15m)
       --notify            Send a desktop notification at the end
@@ -29,10 +30,12 @@ INHERITED FLAGS
       --limit <value>    Page size, up to 100 (default 30)
 
 EXAMPLES
-  # Deploy this directory
+  # Deploy this directory and watch it
   $ unolia deploy
-  # Deploy and wait
-  $ unolia deploy --wait
+  # Queue it and come back later
+  $ unolia deploy --no-progress
+  # Block in a script
+  $ unolia deploy --wait --yes
   # Stream the steps to a script
   $ unolia website deploy 118 --wait --format ndjson
 

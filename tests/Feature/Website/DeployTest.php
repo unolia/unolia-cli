@@ -43,16 +43,37 @@ it('exits 3 when nothing is linked and you are not logged in', function () {
         ->and($result->stderr)->toContain('not logged in');
 });
 
-it('asks before deploying on a terminal', function () {
+it('asks before deploying on a terminal, then follows the deployment in a task', function () {
+    $cli = linked()
+        ->answers(['Deploy marketing.acme.com' => true])
+        ->withApi(api()
+            ->on('GET', 'v1/websites/118', fixture('website-118.json'))
+            ->on('POST', 'v1/websites/118/deployments', fixture('deployment-create-201.json'), 201)
+            ->on('GET', 'v1/deployments/4813?wait=0', fixture('deployment-4812-running.json'))
+            ->on('GET', 'v1/deployments/4813/output?after=0', fixture('deployment-4812-output-0.json'))
+            ->on('GET', 'v1/deployments/4813?wait=20', fixture('deployment-4812-success.json'))
+            ->on('GET', 'v1/deployments/4813/output?after=1024', fixture('deployment-4812-output-1024.json')));
+
+    $result = $cli->run('deploy');
+
+    expect($result->stderr)->toBe('')
+        ->and($result->exitCode)->toBe(0)
+        ->and($result->stdout)->toContain('Deploying marketing.acme.com')
+        ->and($result->stdout)->toContain('Deployment 4812 success');
+});
+
+it('hands the id back at once with --no-progress on a terminal', function () {
     $cli = linked()
         ->answers(['Deploy marketing.acme.com' => true])
         ->withApi(api()
             ->on('GET', 'v1/websites/118', fixture('website-118.json'))
             ->on('POST', 'v1/websites/118/deployments', fixture('deployment-create-201.json'), 201));
 
-    $result = $cli->run('deploy');
+    $result = $cli->run('deploy', '--no-progress');
 
-    expect($result->exitCode)->toBe(0);
+    expect($result->stderr)->toBe('')
+        ->and($result->exitCode)->toBe(0)
+        ->and($result->stdout)->toContain('Deployment 4813 started');
 });
 
 it('stops when the confirmation is refused', function () {

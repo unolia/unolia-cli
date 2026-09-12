@@ -57,7 +57,7 @@ Commands read as a noun and a verb, the way `gh` does. The colon spelling from v
 unolia status                       # who you are, which team, what this directory maps to
 unolia auth refresh --scopes x      # sign in again with one more scope
 unolia init                         # link this directory to a project and website
-unolia deploy --wait                # deploy the linked website and follow it
+unolia deploy                       # deploy the linked website and follow it
 unolia issue list --fixable         # what is broken and what can be fixed
 unolia domain records acme.com      # the DNS records of a zone
 ```

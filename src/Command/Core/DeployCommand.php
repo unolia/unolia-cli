@@ -29,15 +29,17 @@ final class DeployCommand extends WebsiteDeployCommand
     protected function define(): void
     {
         $this->addArgument('environment', InputArgument::OPTIONAL, 'An environment name from .unolia/config.json');
-        $this->addOption('wait', null, InputOption::VALUE_NONE, 'Block until the deployment finishes');
+        $this->addOption('wait', null, InputOption::VALUE_NONE, 'Block until the deployment finishes, also in a pipe');
+        $this->addOption('no-progress', null, InputOption::VALUE_NONE, 'Return as soon as the deployment is queued instead of following it');
         $this->addWatchOptions();
     }
 
     public function examples(): array
     {
         return [
-            'Deploy this directory' => 'unolia deploy',
-            'Deploy an environment' => 'unolia deploy staging --wait',
+            'Deploy this directory and watch it' => 'unolia deploy',
+            'Deploy an environment' => 'unolia deploy staging',
+            'Queue it and come back later' => 'unolia deploy --no-progress',
         ];
     }
 

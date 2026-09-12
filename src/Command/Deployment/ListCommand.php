@@ -44,6 +44,7 @@ final class ListCommand extends BaseCommand
         $this->addOption('branch', null, InputOption::VALUE_REQUIRED, 'Filter by branch');
         $this->addOption('since', null, InputOption::VALUE_REQUIRED, 'Only deployments since, such as 7d');
         $this->addOption('all-websites', null, InputOption::VALUE_NONE, 'Every website of the project, not just the linked one');
+        $this->addOption('all-projects', null, InputOption::VALUE_NONE, 'Every website of the team');
     }
 
     public function examples(): array
@@ -57,11 +58,12 @@ final class ListCommand extends BaseCommand
     protected function handle(InputInterface $input): ExitCode
     {
         $context = $this->context(Need::None);
-        $website = $this->optionBool('all-websites') ? null : ($this->optionString('website') !== null ? $this->websiteId() : $context->website);
+        $everywhere = $this->optionBool('all-projects');
+        $website = $everywhere || $this->optionBool('all-websites') ? null : ($this->optionString('website') !== null ? $this->websiteId() : $context->website);
 
         $rows = $this->rows(new ListDeployments($this->listQuery([
             'website' => $website,
-            'project' => $website === null ? $context->project : null,
+            'project' => $website === null && ! $everywhere ? $context->project : null,
             'status' => $this->optionString('status'),
             'branch' => $this->optionString('branch'),
             'since' => $this->optionString('since'),
