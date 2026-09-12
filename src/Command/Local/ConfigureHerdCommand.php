@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Unolia\Cli\Command\Local;
 
-use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Unolia\Cli\Api\Requests\Servers\ShowServer;
@@ -14,10 +13,10 @@ use Unolia\Cli\Command\BaseCommand;
 use Unolia\Cli\Command\Concerns\ResolvesTargets;
 use Unolia\Cli\Console\CliError;
 use Unolia\Cli\Console\ExitCode;
+use Unolia\Cli\Console\StepLog;
 use Unolia\Cli\Local\Herd;
 use Unolia\Cli\Local\HerdPlanInput;
 use Unolia\Cli\Local\HerdYaml;
-use Unolia\Cli\Local\ProcessResult;
 use Unolia\Cli\Support\Arr;
 
 /**
@@ -260,58 +259,59 @@ final class ConfigureHerdCommand extends BaseCommand
     }
 
     /**
+     * Run the herd steps inside one task, so a PHP download is visibly a
+     * download: the command line in progress under the label, herd's own
+     * output scrolling, and one line per step kept when it is done.
+     *
      * @param  array<string, mixed>  $document
      * @return list<string>
      */
     private function apply(Herd $herd, string $root, array $document): array
     {
-        $applied = [];
-        $php = is_scalar($document['php'] ?? null) ? (string) $document['php'] : null;
+        return $this->ask()->task('Applying herd.yml', function (StepLog $log) use ($herd, $root, $document): array {
+            $applied = [];
+            $php = is_scalar($document['php'] ?? null) ? (string) $document['php'] : null;
+            $relay = static function (string $line) use ($log): void {
+                $log->line($line);
+            };
 
-        if (! $this->optionBool('no-init')) {
-            $result = $this->step('herd init -n', fn (?callable $relay): ProcessResult => $herd->init($root, $relay));
-            $applied[] = $result->successful() ? 'herd init' : 'failed';
+            if (! $this->optionBool('no-init')) {
+                $log->subLabel('$ herd init -n');
+                $result = $herd->init($root, $relay);
 
-            if (! $result->successful() && $result->ran) {
-                $this->out()->warn(trim($result->error !== '' ? $result->error : $result->output));
+                if ($result->successful()) {
+                    $applied[] = 'herd init';
+                    $log->success('herd init');
+                } else {
+                    $applied[] = 'failed';
+                    $log->error('herd init failed'.($result->ran ? ': '.trim($result->error !== '' ? $result->error : $result->output) : ''));
+                }
             }
-        }
 
-        if ($php !== null && $herd->isolatedVersion($root) !== $php) {
-            $this->step('herd isolate '.$php, fn (?callable $relay): ProcessResult => $herd->isolate($root, $php, $relay));
-            $this->step('herd link', fn (?callable $relay): ProcessResult => $herd->link($root, $relay));
-            $applied[] = 'herd isolate '.$php;
-            $applied[] = 'herd link';
-        }
+            if ($php !== null && $herd->isolatedVersion($root) !== $php) {
+                $log->subLabel('$ herd isolate '.$php);
+                $herd->isolate($root, $php, $relay);
+                $log->success('herd isolate '.$php);
+                $applied[] = 'herd isolate '.$php;
 
-        $name = is_string($document['name'] ?? null) ? $document['name'] : null;
+                $log->subLabel('$ herd link');
+                $herd->link($root, $relay);
+                $log->success('herd link');
+                $applied[] = 'herd link';
+            }
 
-        if (($document['secured'] ?? false) === true && $name !== null && ! in_array($name, $herd->securedSites(), true)) {
-            $this->step('herd secure '.$name, fn (?callable $relay): ProcessResult => $herd->secure($name, $relay));
-            $applied[] = 'herd secure '.$name;
-        }
+            $name = is_string($document['name'] ?? null) ? $document['name'] : null;
 
-        return $applied;
-    }
+            if (($document['secured'] ?? false) === true && $name !== null && ! in_array($name, $herd->securedSites(), true)) {
+                $log->subLabel('$ herd secure '.$name);
+                $herd->secure($name, $relay);
+                $log->success('herd secure '.$name);
+                $applied[] = 'herd secure '.$name;
+            }
 
-    /**
-     * Run one herd step. On a terminal the command line is announced and
-     * herd's own output is relayed as it happens, so a PHP download is
-     * visibly a download rather than a hang. Elsewhere the step runs quietly
-     * and the report lists it afterwards.
-     *
-     * @param  callable(?callable $relay): ProcessResult  $run
-     */
-    private function step(string $label, callable $run): ProcessResult
-    {
-        if (! $this->out()->face()->interactive || $this->structured()) {
-            return $run(null);
-        }
+            $log->subLabel('');
 
-        $this->out()->line('<fg=gray>$ '.OutputFormatter::escape($label).'</>');
-
-        return $run(function (string $line): void {
-            $this->out()->line('  <fg=gray>'.OutputFormatter::escape($line).'</>');
+            return $applied;
         });
     }
 
@@ -422,8 +422,10 @@ final class ConfigureHerdCommand extends BaseCommand
             return;
         }
 
-        foreach ($applied as $step) {
-            $this->out()->info($step);
+        if (! $this->out()->face()->interactive) {
+            foreach ($applied as $step) {
+                $this->out()->info($step);
+            }
         }
 
         if ($wrote) {

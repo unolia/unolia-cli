@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Unolia\Cli\Console;
 
+use Laravel\Prompts\Support\Logger;
+
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\multiselect;
 use function Laravel\Prompts\password;
 use function Laravel\Prompts\search;
 use function Laravel\Prompts\select;
+use function Laravel\Prompts\task;
 use function Laravel\Prompts\text;
 
 /**
@@ -94,5 +97,29 @@ class Ask
         }
 
         return confirm(label: $question, default: $default);
+    }
+
+    /**
+     * Run a long step. On a terminal it is a Prompts task: a spinner with the
+     * label, the tool's output scrolling underneath, and the success and error
+     * lines kept once it is done. Elsewhere the callback runs with a quiet log
+     * and the command's own report speaks afterwards.
+     *
+     * @template T
+     *
+     * @param  callable(StepLog): T  $callback
+     * @return T
+     */
+    public function task(string $label, callable $callback): mixed
+    {
+        if (! $this->face->interactive) {
+            return $callback(new QuietStepLog);
+        }
+
+        return task(
+            label: $label,
+            callback: static fn (Logger $logger): mixed => $callback(new PromptsStepLog($logger)),
+            keepSummary: true,
+        );
     }
 }

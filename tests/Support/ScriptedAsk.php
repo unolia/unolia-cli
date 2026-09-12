@@ -7,6 +7,8 @@ namespace Tests\Support;
 use PHPUnit\Framework\Assert;
 use Unolia\Cli\Console\Ask;
 use Unolia\Cli\Console\Face;
+use Unolia\Cli\Console\Out;
+use Unolia\Cli\Console\StepLog;
 
 /**
  * The TTY face without a terminal: answers are queued by label, and an unexpected
@@ -21,9 +23,56 @@ final class ScriptedAsk extends Ask
     /**
      * @param  array<string, mixed>  $answers  label or a fragment of it => answer
      */
-    public function __construct(Face $face, private array $answers = [])
+    /**
+     * @param  array<string, mixed>  $answers  label or a fragment of it => answer
+     * @param  (\Closure(): Out)|null  $out  where a task writes its lines, plainly
+     */
+    public function __construct(Face $face, private array $answers = [], private readonly ?\Closure $out = null)
     {
         parent::__construct($face);
+    }
+
+    /** A task without a terminal: the label, then every line and outcome as plain output. */
+    public function task(string $label, callable $callback): mixed
+    {
+        if (! $this->face->interactive || $this->out === null) {
+            return parent::task($label, $callback);
+        }
+
+        $out = ($this->out)();
+        $out->line($label);
+
+        return $callback(new class($out) implements StepLog
+        {
+            public function __construct(private readonly Out $out) {}
+
+            public function line(string $message): void
+            {
+                $this->out->line('  '.$message);
+            }
+
+            public function success(string $message): void
+            {
+                $this->out->info($message);
+            }
+
+            public function warning(string $message): void
+            {
+                $this->out->warn($message);
+            }
+
+            public function error(string $message): void
+            {
+                $this->out->line('✗ '.$message);
+            }
+
+            public function subLabel(string $message): void
+            {
+                if ($message !== '') {
+                    $this->out->line($message);
+                }
+            }
+        });
     }
 
     public function text(string $label, string $flag, string $placeholder = '', string $default = '', string $hint = ''): string

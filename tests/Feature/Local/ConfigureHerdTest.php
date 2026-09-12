@@ -183,6 +183,7 @@ it('relays what herd prints while a step runs on a terminal', function () {
     $result = $cli->run('configure', 'herd', '--site', 'marketing');
 
     expect($result->exitCode)->toBe(0)
+        ->and($result->stdout)->toContain('Applying herd.yml')
         ->and($result->stdout)->toContain('$ herd init -n')
         ->and($result->stdout)->toContain('Installing PHP 8.3')
         ->and($result->stdout)->toContain('Linking marketing.test')
