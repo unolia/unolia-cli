@@ -30,15 +30,16 @@ function sampleRows(): array
     ];
 }
 
-it('aligns ids right, sorts, and keeps the quiet state silent on a terminal', function () {
+it('aligns ids right, sorts, indents two spaces and keeps the quiet state silent on a terminal', function () {
     $face = new Face(interactive: true, color: false, format: Format::Table);
 
     $lines = explode("\n", (new StyledTableRenderer($face))->render(sampleRows(), sampleTable()));
 
-    expect($lines[0])->toBe('  <fg=gray>ID</>     <fg=gray>WEBSITE</>')
-        ->and($lines[1])->toBe('<fg=gray>#135</>  <fg=gray>○</>  alpha.test  <fg=gray>inactive</>')
-        ->and($lines[2])->toBe('  <fg=gray>#4</>  <fg=green>●</>  zeta.test')
-        ->and($lines[4])->toBe('<fg=gray>2 websites</>');
+    expect($lines[0])->toBe('    <fg=gray>ID</>     <fg=gray>WEBSITE</>')
+        ->and($lines[1])->toBe('  <fg=gray>#135</>  <fg=gray>○</>  alpha.test  <fg=gray>inactive</>')
+        ->and($lines[2])->toBe('    <fg=gray>#4</>  <fg=green>●</>  zeta.test')
+        ->and($lines[3])->toBe('')
+        ->and($lines[4])->toBe('  <fg=gray>2 websites</>');
 });
 
 it('wraps links in OSC 8 only when the terminal has colour', function () {

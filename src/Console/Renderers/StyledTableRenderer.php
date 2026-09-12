@@ -11,12 +11,16 @@ use Unolia\Cli\Console\Table\Table;
 
 /**
  * The table face without a box: a dim uppercase header, cells aligned on the
- * plain text width, two spaces between columns, a dim footer. Styles and
- * links only on a terminal; a pipe with --format table gets the same layout
- * in plain text, so grep and awk still work on it.
+ * plain text width, two spaces between columns, a dim footer. On a terminal
+ * the whole block sits two spaces in from the left edge; a pipe with
+ * --format table gets the same layout flush left in plain text, so grep and
+ * awk still work on it.
  */
 final class StyledTableRenderer
 {
+    /** The left margin of the terminal face. */
+    public const MARGIN = '  ';
+
     public function __construct(private readonly Face $face) {}
 
     /**
@@ -75,6 +79,10 @@ final class StyledTableRenderer
         if ($summary !== null) {
             $lines[] = '';
             $lines[] = $styled ? '<fg=gray>'.$summary.'</>' : $summary;
+        }
+
+        if ($styled) {
+            $lines = array_map(static fn (string $line): string => $line === '' ? '' : self::MARGIN.$line, $lines);
         }
 
         return implode("\n", $lines);

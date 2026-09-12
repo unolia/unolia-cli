@@ -5,22 +5,30 @@ declare(strict_types=1);
 namespace Unolia\Cli\Console\Table;
 
 /**
- * A faint hue per provider, the same in every list, so a column of providers
- * reads by colour before it reads by name. Low saturation on purpose: it is a
- * hint, not a highlight.
+ * Each provider in its own brand colour, the same in every list, so a column
+ * of providers reads by colour before it reads by name. Brands that are black
+ * and white (Laravel Cloud, GitHub) take the terminal's own foreground, which
+ * is white on a dark theme and black on a light one.
  */
 final class Tint
 {
+    /** The terminal's default foreground, for monochrome brands. */
+    public const DEFAULT = 'default';
+
     public static function provider(mixed $slug): ?string
     {
         return match (is_string($slug) ? strtolower($slug) : '') {
-            'forge' => '#7aa7ff',
-            'laravel-cloud', 'cloud' => '#c4a0ff',
-            'ploi' => '#6fd6c2',
-            'ovh' => '#9aa3ad',
-            'github', 'pages' => '#b0b8c4',
-            'gitlab' => '#f0a35e',
-            'cloudflare' => '#f6a35b',
+            'forge' => '#19b69b',
+            'ploi' => '#1853db',
+            'laravel-cloud', 'cloud' => self::DEFAULT,
+            'ovh' => '#0050d7',
+            'github', 'pages' => self::DEFAULT,
+            'gitlab' => '#fc6d26',
+            'cloudflare' => '#f38020',
+            'digitalocean' => '#0080ff',
+            'vultr' => '#007bfc',
+            'hetzner' => '#d50c2d',
+            'aws' => '#ff9900',
             default => null,
         };
     }
