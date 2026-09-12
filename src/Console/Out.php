@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Unolia\Cli\Console;
 
+use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Output\OutputInterface;
 use Unolia\Cli\Console\Renderers\CsvRenderer;
 use Unolia\Cli\Console\Renderers\JsonRenderer;
@@ -154,6 +155,58 @@ final class Out
             Format::Csv => $this->write($this->csv->line(array_values(array_map(static fn (mixed $value): string => Str::scalar($value, ''), $event)))),
             Format::Json, Format::Yaml => null,
         };
+    }
+
+    /**
+     * The frame around something followed live. On a terminal the header is a
+     * bar naming what is followed and the footer a bar in the colour of how it
+     * ended, with a blank line around each so the output between reads as one
+     * block. Elsewhere they are plain lines.
+     */
+    public function intro(string $line): void
+    {
+        if (! $this->framed()) {
+            $this->line($line);
+
+            return;
+        }
+
+        $this->stdout->writeln('');
+        $this->stdout->writeln(' <bg=#44475a;fg=#f8f8f2;options=bold> '.OutputFormatter::escape($line).' </>');
+        $this->stdout->writeln('');
+    }
+
+    /** The footer of something followed that ended well. */
+    public function outro(string $line): void
+    {
+        if (! $this->framed()) {
+            $this->info($line);
+
+            return;
+        }
+
+        $this->stdout->writeln('');
+        $this->stdout->writeln(' <bg=green;fg=black;options=bold> ✓ '.OutputFormatter::escape($line).' </>');
+        $this->stdout->writeln('');
+    }
+
+    /** The footer of something followed that did not end well. */
+    public function failure(string $line): void
+    {
+        if (! $this->framed()) {
+            $this->info($line);
+
+            return;
+        }
+
+        $this->stdout->writeln('');
+        $this->stdout->writeln(' <bg=red;fg=white;options=bold> ✕ '.OutputFormatter::escape($line).' </>');
+        $this->stdout->writeln('');
+    }
+
+    private function framed(): bool
+    {
+        return $this->face->interactive && $this->face->format === Format::Table;
     }
 
     public function info(string $line): void

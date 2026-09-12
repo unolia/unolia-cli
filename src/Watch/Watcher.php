@@ -46,7 +46,7 @@ final class Watcher
                 $header = $target->header($state);
 
                 if ($table && $header !== null && $log === null) {
-                    $this->out->line($header);
+                    $this->out->intro($header);
                 }
             }
 
@@ -67,7 +67,7 @@ final class Watcher
                     $log->subLabel('');
                     $target->exitCode($state) === ExitCode::Ok ? $log->success($summary) : $log->error($summary);
                 } elseif ($table && $summary !== '') {
-                    $this->out->info($summary);
+                    $target->exitCode($state) === ExitCode::Ok ? $this->out->outro($summary) : $this->out->failure($summary);
                 }
 
                 if ($notify && $summary !== '') {

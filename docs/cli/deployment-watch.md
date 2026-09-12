@@ -4,12 +4,13 @@ Follow a deployment until it finishes
 
 ```
 USAGE
-  unolia deployment watch <deployment> [flags]
+  unolia deployment watch [<deployment>] [flags]
 
 ARGUMENTS
-  deployment  Deployment id
+  deployment  Deployment id, the running or next one of the linked website by default
 
 FLAGS
+      --last              Follow the latest deployment even when it has finished
       --interval <value>  Seconds between checks (default 3)
       --timeout <value>   Give up waiting after this long (default 15m)
       --notify            Send a desktop notification at the end
@@ -28,6 +29,8 @@ INHERITED FLAGS
       --limit <value>    Page size, up to 100 (default 30)
 
 EXAMPLES
+  # The running or next deployment
+  $ unolia deployment watch
   # Follow a deployment
   $ unolia deployment watch 4812
   # As a stream of events
