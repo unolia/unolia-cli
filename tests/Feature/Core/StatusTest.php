@@ -18,8 +18,8 @@ it('shows where this directory points', function () {
     expect($result->exitCode)->toBe(0)
         ->and($result->stdout)->toContain('Host     app.unolia.com')
         ->and($result->stdout)->toContain('eser (user token, scopes *, expires 2027-09-05)')
-        ->and($result->stdout)->toContain('12 Marketing site')
-        ->and($result->stdout)->toContain('118 marketing.acme.com')
+        ->and($result->stdout)->toContain('#12 Marketing site')
+        ->and($result->stdout)->toContain('#118 marketing.acme.com')
         ->and($result->stdout)->toContain('acme/marketing @ main (3f9c2e1)')
         ->and($result->stdout)->toContain('.unolia/config.json');
 });
