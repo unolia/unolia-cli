@@ -77,8 +77,8 @@ it('accepts a run number', function () {
 
 it('watches a run to the end', function () {
     $cli = repo()->withApi(api()
-        ->on('GET', 'v1/actions/9022?wait=0', fixture('action-1187-in-progress.json'))
-        ->on('GET', 'v1/actions/9022?wait=20', fixture('action-1187-completed.json')));
+        ->on('GET', 'v1/actions/9021?wait=0', fixture('action-1187-in-progress.json'))
+        ->on('GET', 'v1/actions/9021?wait=20', fixture('action-1187-completed.json')));
 
     $result = $cli->run('ci', 'watch', '9021');
 
@@ -98,7 +98,7 @@ it('exits 1 when the run failed', function () {
 it('streams jobs as events', function () {
     $result = repo()
         ->withApi(api()
-            ->on('GET', 'v1/actions/9022?wait=0', fixture('action-1187-in-progress.json'))
+            ->on('GET', 'v1/actions/9021?wait=0', fixture('action-1187-in-progress.json'))
             ->on('GET', 'v1/actions/9021?wait=20', fixture('action-1187-completed.json')))
         ->run('ci', 'watch', '9021', '--format', 'ndjson');
 
