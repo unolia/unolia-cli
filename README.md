@@ -29,13 +29,25 @@ it on your `PATH`.
 If this is your first time on Unolia, [connect your providers](https://app.unolia.com/providers) first.
 
 ```bash
-unolia login                       # paste a token, or sign in with email and password
-unolia login --token=<token>       # a token you already have
-unolia login --with-token < token  # from a script
+unolia login                                  # sign in through the browser with a one time code
+unolia login --scopes project:read,env:read   # ask for chosen scopes instead of the defaults
+unolia login --with-token < token             # from a script, a token you already have
+unolia auth refresh --scopes deployment:write # add a scope to the current token
+unolia auth token                             # print the token in use, for curl and friends
 ```
 
-Tokens live in `~/.config/unolia/hosts.json` with mode 0600 and are never printed. A token from v1 in
-`~/.unolia/cli/config.json` is migrated on first run and the old file is left alone.
+`unolia login` shows a short code, opens the browser to `https://app.unolia.com/oauth/device`, and waits
+for you to approve it there, the way `gh auth login` does. The token is named `user@hostname` in the
+dashboard, `--name` picks another. It lasts a year, and `unolia status` warns during the last two weeks.
+When a command answers that the token lacks a scope, the error names the exact
+`unolia auth refresh --scopes <scope>` to run: it signs you in again with the wider set and revokes the
+old token. `--remove-scopes` narrows it. The browser login cannot grant `*`: a token with every ability
+is created on the dashboard and stored with `unolia login --token`. `unolia auth login`, `auth logout`
+and `auth status` are the same commands as the top level ones.
+
+Tokens live in `~/.config/unolia/hosts.json` with mode 0600 and are never printed, except by
+`unolia auth token` when you ask for it. A token from v1 in `~/.unolia/cli/config.json` is migrated on
+first run and the old file is left alone.
 
 ## The command grammar
 
@@ -43,6 +55,7 @@ Commands read as a noun and a verb, the way `gh` does. The colon spelling from v
 
 ```bash
 unolia status                       # who you are, which team, what this directory maps to
+unolia auth refresh --scopes x      # sign in again with one more scope
 unolia init                         # link this directory to a project and website
 unolia deploy --wait                # deploy the linked website and follow it
 unolia issue list --fixable         # what is broken and what can be fixed
@@ -78,7 +91,8 @@ terminal. `unolia status` prints which source answered.
 | Variable | Meaning |
 | --- | --- |
 | `UNOLIA_TOKEN` | Personal or team token. Wins over `hosts.json`. `UNOLIA_API_TOKEN` still works with a warning. |
-| `UNOLIA_HOST` | Host, `app.unolia.com` by default. |
+| `UNOLIA_HOST` | Host, `app.unolia.com` by default. Always https. A `.test` or `localhost` host skips the certificate check. |
+| `UNOLIA_INSECURE` | Talk plain http to the host. Only for a server that has no TLS at all. |
 | `UNOLIA_TEAM`, `UNOLIA_PROJECT`, `UNOLIA_WEBSITE` | Context without a config file. |
 | `UNOLIA_FORMAT` | `table`, `json`, `ndjson`, `csv` or `yaml`. |
 | `UNOLIA_DEBUG` | Print one line per request on stderr. Never a token. |
@@ -106,7 +120,8 @@ terminal. `unolia status` prints which source answered.
 - Add --dry-run to any mutating command to see the plan without changing anything.
 - Add --yes to skip confirmations. Add --wait to block until the remote work finishes.
 - Context: .unolia/config.json in the repo, or --team/--project/--website, or UNOLIA_* env vars.
-- Auth: UNOLIA_TOKEN env var, or unolia login --with-token < token.txt.
+- Auth: UNOLIA_TOKEN env var, or unolia login --with-token < token.txt. A person runs unolia login, which opens the browser.
+- Scopes: a 403 with insufficient_scope names the scope. unolia auth refresh --scopes <scope> adds it. unolia auth token prints the token in use.
 - Errors with --json are one JSON object on stderr: {"error":{"code","message","hint","exit_code"}}.
 ```
 

@@ -9,6 +9,10 @@ use Unolia\Cli\Runtime;
 /**
  * Builds connectors. Commands that must talk to the API with another token, such as
  * `login` verifying what you just pasted, go through here so tests can still fake it.
+ *
+ * Every host is reached over https. A local host (`.test`, `localhost`) keeps https but
+ * skips certificate verification, since Herd signs its own. Only UNOLIA_INSECURE drops
+ * to plain http.
  */
 class ClientFactory
 {
@@ -22,6 +26,7 @@ class ClientFactory
             tokenKind: $kind,
             insecure: $this->insecure($host),
             basePath: $basePath,
+            verify: $this->verifies($host),
         );
 
         $runtime = $this->runtime;
@@ -48,13 +53,36 @@ class ClientFactory
             host: $host,
             token: $token,
             insecure: $this->insecure($host),
+            verify: $this->verifies($host),
         );
     }
 
+    /** The unauthenticated connector the device code flow talks to. */
+    public function oauth(string $host): OAuthClient
+    {
+        return new OAuthClient(
+            host: $host,
+            insecure: $this->insecure($host),
+            verify: $this->verifies($host),
+        );
+    }
+
+    /** Plain http, only when asked for in so many words. */
     protected function insecure(string $host): bool
     {
-        return $this->runtime->flag('UNOLIA_INSECURE')
-            || str_ends_with($host, '.test')
-            || str_starts_with($host, 'localhost');
+        return $this->runtime->flag('UNOLIA_INSECURE');
+    }
+
+    /** Whether the certificate is checked. A local host signs its own, so it is not. */
+    protected function verifies(string $host): bool
+    {
+        return ! self::isLocal($host);
+    }
+
+    public static function isLocal(string $host): bool
+    {
+        $bare = (string) preg_replace('/:\d+$/', '', $host);
+
+        return str_ends_with($bare, '.test') || str_starts_with($bare, 'localhost');
     }
 }

@@ -8,6 +8,11 @@ use Unolia\Cli\Support\Arr;
 
 /**
  * Tokens per host in hosts.json, mode 0600. Nothing here is ever printed.
+ *
+ * An entry holds the access token and what is known about it: who it belongs to
+ * (`kind`, `name`), what it is called in the dashboard (`token_name`), when it ends
+ * (`expires_at`), what it may do (`scopes`), and for a token minted by the device flow
+ * the `client_id` it was issued to.
  */
 final class Hosts
 {
@@ -48,8 +53,13 @@ final class Hosts
             return $deprecated;
         }
 
-        $entry = $this->entry($host);
-        $token = $entry['token'] ?? null;
+        return $this->storedToken($host);
+    }
+
+    /** The token in the file, whatever the environment says. */
+    public function storedToken(string $host): ?string
+    {
+        $token = $this->entry($host)['token'] ?? null;
 
         return is_string($token) && $token !== '' ? $token : null;
     }
@@ -78,16 +88,65 @@ final class Hosts
         return is_array($entry) ? $entry : [];
     }
 
+    public function clientId(string $host): ?string
+    {
+        return $this->string($host, 'client_id');
+    }
+
+    public function expiresAt(string $host): ?string
+    {
+        return $this->string($host, 'expires_at');
+    }
+
+    public function tokenName(string $host): ?string
+    {
+        return $this->string($host, 'token_name');
+    }
+
+    /**
+     * The scopes recorded at login, null when the entry predates them.
+     *
+     * @return list<string>|null
+     */
+    public function scopes(string $host): ?array
+    {
+        $scopes = $this->entry($host)['scopes'] ?? null;
+
+        if (! is_array($scopes)) {
+            return null;
+        }
+
+        $list = [];
+
+        foreach ($scopes as $scope) {
+            if (is_string($scope) && $scope !== '') {
+                $list[] = $scope;
+            }
+        }
+
+        return $list;
+    }
+
     public function put(string $host, string $token, string $kind = 'unknown', ?string $name = null): void
     {
-        $entries = $this->all();
-
-        $entries[$host] = Arr::filled([
+        $this->putEntry($host, [
             'token' => $token,
             'kind' => $kind,
             'name' => $name,
-            'created_at' => gmdate('c'),
         ]);
+    }
+
+    /**
+     * Replace the entry for a host. Known keys: token, kind, name, token_name,
+     * expires_at, scopes, client_id. Empty values are dropped.
+     *
+     * @param  array<string, mixed>  $entry
+     */
+    public function putEntry(string $host, array $entry): void
+    {
+        $entries = $this->all();
+
+        $entries[$host] = Arr::filled(array_merge($entry, ['created_at' => gmdate('c')]));
 
         $this->save($entries);
     }
@@ -126,6 +185,13 @@ final class Hosts
         $this->notices = [];
 
         return $notices;
+    }
+
+    private function string(string $host, string $key): ?string
+    {
+        $value = $this->entry($host)[$key] ?? null;
+
+        return is_string($value) && $value !== '' ? $value : null;
     }
 
     /**

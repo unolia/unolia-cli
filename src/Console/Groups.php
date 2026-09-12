@@ -23,6 +23,7 @@ final class Groups
         'login' => self::CORE,
         'logout' => self::CORE,
         'status' => self::CORE,
+        'auth' => self::CORE,
         'init' => self::CORE,
         'deploy' => self::CORE,
         'watch' => self::CORE,
@@ -53,6 +54,7 @@ final class Groups
 
     /** @var array<string, string> one line summary per namespace, printed in the top level list */
     public const NAMESPACE_SUMMARY = [
+        'auth' => 'login · logout · status · refresh · token',
         'project' => 'list · view · switch · resolve',
         'website' => 'list · view · deploy · deployments · logs · domains · env',
         'deployment' => 'list · view · logs · watch',
@@ -74,6 +76,9 @@ final class Groups
 
     /** @var array<string, list<string>> canonical name => aliases kept working on day one */
     public const ALIASES = [
+        'login' => ['auth:login'],
+        'logout' => ['auth:logout'],
+        'status' => ['auth:status'],
         'website:deploy' => ['site:deploy'],
         'website:list' => ['site:list'],
         'website:view' => ['site:view'],

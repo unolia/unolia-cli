@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Unolia\Cli\Api;
 
 use Saloon\Exceptions\Request\FatalRequestException;
-use Saloon\Http\Auth\TokenAuthenticator;
 use Saloon\Http\Connector;
 use Saloon\Http\Faking\MockClient;
 use Saloon\Http\Request;
@@ -14,43 +13,42 @@ use Saloon\Traits\Plugins\AcceptsJson;
 use Unolia\Cli\Version;
 
 /**
- * The connector for /api, which is where logout still lives.
+ * The connector rooted at the host itself, for the device code flow: discovery, the
+ * device authorization and the token endpoint. It carries no token, and a 4xx is a
+ * normal answer here because RFC 8628 says "authorization_pending" with a 400.
  */
-final class AuthClient extends Connector
+final class OAuthClient extends Connector
 {
     use AcceptsJson;
 
     public function __construct(
         private readonly string $host = 'app.unolia.com',
-        private readonly ?string $token = null,
         private readonly bool $insecure = false,
         private readonly bool $verify = true,
     ) {}
 
+    public function host(): string
+    {
+        return $this->host;
+    }
+
     public function resolveBaseUrl(): string
     {
-        return ($this->insecure ? 'http' : 'https').'://'.$this->host.'/api/';
+        return ($this->insecure ? 'http' : 'https').'://'.$this->host.'/';
     }
 
     /**
+     * The response, whatever its status. Only a connection failure throws.
+     *
      * @throws ApiException
      */
     public function send(Request $request, ?MockClient $mockClient = null, ?callable $handleRetry = null): Response
     {
-        $method = $request->getMethod()->value;
-        $path = $request->resolveEndpoint();
-
         try {
-            $response = parent::send($request, $mockClient, $handleRetry);
+            return parent::send($request, $mockClient, $handleRetry);
         } catch (FatalRequestException $exception) {
             throw ApiException::network($this->host, $exception->getMessage());
         }
-
-        if ($response->failed()) {
-            throw ApiException::fromResponse($response, $method, $path, $this->host);
-        }
-
-        return $response;
     }
 
     /**
@@ -59,11 +57,6 @@ final class AuthClient extends Connector
     protected function defaultHeaders(): array
     {
         return ['User-Agent' => Version::userAgent()];
-    }
-
-    protected function defaultAuth(): ?TokenAuthenticator
-    {
-        return $this->token !== null && $this->token !== '' ? new TokenAuthenticator($this->token) : null;
     }
 
     /**

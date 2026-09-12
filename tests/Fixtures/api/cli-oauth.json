@@ -1,0 +1,33 @@
+{
+  "data": {
+    "client_id": "9d2f7c1a-3b4e-4f5a-8c6d-0e1f2a3b4c5d",
+    "device_authorization_endpoint": "https://app.unolia.com/oauth/device/code",
+    "token_endpoint": "https://app.unolia.com/oauth/token",
+    "verification_uri": "https://app.unolia.com/oauth/device",
+    "scopes": [
+      "project:read",
+      "project:write",
+      "website:read",
+      "website:write",
+      "deployment:read",
+      "deployment:write",
+      "domain:read",
+      "domain:write",
+      "issue:read",
+      "issue:write",
+      "provider:read",
+      "env:read",
+      "deploy-script:read"
+    ],
+    "default_scopes": [
+      "provider:read",
+      "project:read",
+      "website:read",
+      "deployment:read",
+      "domain:read",
+      "issue:read",
+      "env:read",
+      "deploy-script:read"
+    ]
+  }
+}

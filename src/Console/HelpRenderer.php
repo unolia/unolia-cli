@@ -65,7 +65,7 @@ final class HelpRenderer
         $entries = [];
 
         foreach ($application->all($namespace) as $name => $command) {
-            if ($command->isHidden() || $command->getName() !== $name) {
+            if ($command->isHidden() || ! $this->belongsTo($command, $name, $namespace)) {
                 continue;
             }
 
@@ -179,6 +179,24 @@ final class HelpRenderer
         $parts[] = '[flags]';
 
         return implode(' ', $parts);
+    }
+
+    /**
+     * A command is listed under a namespace when it lives there, or when it is reachable
+     * there through an alias from elsewhere, the way `auth login` reaches `login`. An
+     * alias inside the same namespace, such as `site deploy`, stays silent.
+     */
+    private function belongsTo(Command $command, string $name, string $namespace): bool
+    {
+        $canonical = (string) $command->getName();
+
+        if ($canonical === $name) {
+            return true;
+        }
+
+        return in_array($name, $command->getAliases(), true)
+            && Groups::namespaceOf($canonical) !== $namespace
+            && ! str_contains($canonical, ':');
     }
 
     /**
@@ -322,7 +340,8 @@ final class HelpRenderer
         - Add --yes to skip confirmations. Add --wait to block until the remote work finishes.
         - Exit codes: 0 ok, 1 remote failure, 2 usage, 3 auth, 4 not found, 5 forbidden or plan, 6 timeout, 7 awaiting input, 130 interrupted.
         - Context: .unolia/config.json in the repo, or --team/--project/--website, or UNOLIA_* env vars.
-        - Auth: UNOLIA_TOKEN env var, or unolia login --with-token < token.txt.
+        - Auth: UNOLIA_TOKEN env var, or unolia login --with-token < token.txt. A person runs unolia login, which opens the browser.
+        - Scopes: a 403 with insufficient_scope names the scope. unolia auth refresh --scopes <scope> adds it. unolia auth token prints the token in use.
         - Errors with --json are one JSON object on stderr: {"error":{"code","message","hint","exit_code"}}.
         - MCP: unolia mcp setup --local --agent <name> --yes connects an agent to the Unolia MCP server. --print shows the snippet.
         NOTES;

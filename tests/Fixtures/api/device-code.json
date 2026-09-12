@@ -1,0 +1,8 @@
+{
+  "device_code": "dc_7f3a9b2c4d5e6f708192a3b4c5d6e7f8",
+  "user_code": "ABCD-EFGH",
+  "verification_uri": "https://app.unolia.com/oauth/device",
+  "verification_uri_complete": "https://app.unolia.com/oauth/device?user_code=ABCD-EFGH",
+  "expires_in": 900,
+  "interval": 5
+}
