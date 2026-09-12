@@ -1,13 +1,13 @@
 # unolia open
 
-Open this project, website, live site, repository or Forge site
+Open this project, website, live site, repository, or the site at its provider
 
 ```
 USAGE
   unolia open [<what>] [<id>] [flags]
 
 ARGUMENTS
-  what  project, website, live, repo, forge or deployment (default project)
+  what  project, website, live, repo, deployment, or a provider: forge, ploi, cloud, ovh, pages, github, gitlab (default project)
   id    The deployment id, when opening a deployment
 
 FLAGS
@@ -33,8 +33,10 @@ EXAMPLES
   $ unolia open website
   # The deployed site itself
   $ unolia open live
-  # The Forge site
-  $ unolia open forge --print
+  # The site at its host
+  $ unolia open forge
+  # The repository at GitHub, only the URL
+  $ unolia open github --print
 
 LEARN MORE
   https://unolia.com/docs/cli/open
