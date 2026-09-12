@@ -26,7 +26,7 @@ final class OpenCommand extends BaseCommand
 {
     use ResolvesTargets;
 
-    private const TARGETS = ['project', 'website', 'repo', 'forge', 'deployment'];
+    private const TARGETS = ['project', 'website', 'live', 'repo', 'forge', 'deployment'];
 
     protected function canonical(): string
     {
@@ -37,12 +37,12 @@ final class OpenCommand extends BaseCommand
     {
         parent::configure();
 
-        $this->setDescription('Open this project, website, repository or Forge site');
+        $this->setDescription('Open this project, website, live site, repository or Forge site');
     }
 
     protected function define(): void
     {
-        $this->addArgument('what', InputArgument::OPTIONAL, 'project, website, repo, forge or deployment', 'project');
+        $this->addArgument('what', InputArgument::OPTIONAL, 'project, website, live, repo, forge or deployment', 'project');
         $this->addArgument('id', InputArgument::OPTIONAL, 'The deployment id, when opening a deployment');
         $this->addOption('print', null, InputOption::VALUE_NONE, 'Print the URL instead of opening it');
     }
@@ -52,6 +52,7 @@ final class OpenCommand extends BaseCommand
         return [
             'The project page' => 'unolia open',
             'The website page' => 'unolia open website',
+            'The deployed site itself' => 'unolia open live',
             'The Forge site' => 'unolia open forge --print',
         ];
     }
@@ -92,6 +93,7 @@ final class OpenCommand extends BaseCommand
     {
         return match ($what) {
             'website' => $this->urlOf($this->fetch(new ShowWebsite($this->websiteId())), 'this website'),
+            'live' => $this->liveUrl(),
             'repo' => $this->repositoryUrl(),
             'forge' => $this->forgeUrl(),
             'deployment' => $this->deploymentUrl(),
@@ -111,6 +113,19 @@ final class OpenCommand extends BaseCommand
         }
 
         return $url;
+    }
+
+    /** The deployed site as visitors reach it, at its primary domain. */
+    private function liveUrl(): string
+    {
+        $website = $this->fetch(new ShowWebsite($this->websiteId()));
+        $domain = $website['domain'] ?? null;
+
+        if (! is_string($domain) || $domain === '') {
+            throw CliError::notFound('this website has no domain yet');
+        }
+
+        return 'https://'.$domain;
     }
 
     private function repositoryUrl(): string

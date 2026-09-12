@@ -1,13 +1,13 @@
 # unolia open
 
-Open this project, website, repository or Forge site
+Open this project, website, live site, repository or Forge site
 
 ```
 USAGE
   unolia open [<what>] [<id>] [flags]
 
 ARGUMENTS
-  what  project, website, repo, forge or deployment (default project)
+  what  project, website, live, repo, forge or deployment (default project)
   id    The deployment id, when opening a deployment
 
 FLAGS
@@ -31,6 +31,8 @@ EXAMPLES
   $ unolia open
   # The website page
   $ unolia open website
+  # The deployed site itself
+  $ unolia open live
   # The Forge site
   $ unolia open forge --print
 
