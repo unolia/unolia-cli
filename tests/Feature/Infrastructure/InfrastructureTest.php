@@ -95,7 +95,7 @@ it('provider fix prints the page that repairs the connection in a pipe', functio
         ->run('provider', 'fix', '39');
 
     expect($result->exitCode)->toBe(0)
-        ->and(trim($result->stdout))->toBe('https://app.unolia.com/acme/team/providers/39');
+        ->and(trim($result->stdout))->toBe('https://app.unolia.com/acme/team/providers/39/refresh/namecheap');
 
     $json = infra()
         ->withApi(api()->on('GET', 'v1/providers/39', fixture('provider-39-invalid.json')))

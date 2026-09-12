@@ -18,7 +18,8 @@
       "has_cost_sync_error": false,
       "needs_attention": false,
       "attention_reasons": [],
-      "url": "https://app.unolia.com/acme/providers/14"
+      "url": "https://app.unolia.com/acme/providers/14",
+      "fix_url": "https://app.unolia.com/acme/providers/14/refresh/forge"
     },
     {
       "id": 39,
@@ -40,7 +41,8 @@
       "attention_reasons": [
         "invalid"
       ],
-      "url": "https://app.unolia.com/acme/team/providers/39"
+      "url": "https://app.unolia.com/acme/team/providers/39",
+      "fix_url": "https://app.unolia.com/acme/team/providers/39/refresh/namecheap"
     }
   ],
   "links": {

@@ -19,6 +19,7 @@
     "attention_reasons": [
       "invalid"
     ],
-    "url": "https://app.unolia.com/acme/team/providers/39"
+    "url": "https://app.unolia.com/acme/team/providers/39",
+    "fix_url": "https://app.unolia.com/acme/team/providers/39/refresh/namecheap"
   }
 }
