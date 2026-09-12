@@ -44,7 +44,7 @@ final class TokensCommand extends BaseCommand
     protected function handle(InputInterface $input): ExitCode
     {
         $team = $this->context(Need::Team)->team;
-        $url = sprintf('https://%s/%s/settings/api-tokens', $this->runtime()->host(), (string) $team);
+        $url = sprintf('https://%s/%s/team/api-tokens', $this->runtime()->host(), (string) $team);
 
         if ($this->optionBool('print') || ! $this->ask()->interactive()) {
             $this->printUrl($url);
