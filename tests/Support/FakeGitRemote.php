@@ -26,7 +26,9 @@ final class FakeGitRemote extends GitRemote
             'config --get remote.origin.url' => $this->answers['remote'] ?? null,
             'rev-parse --abbrev-ref HEAD' => $this->answers['branch'] ?? null,
             'rev-parse --short HEAD' => $this->answers['commit'] ?? null,
-            default => null,
+            'rev-parse HEAD' => $this->answers['head'] ?? null,
+            // Anything else is answered by its full command line, e.g. 'rev-list --count abc..HEAD' => '2'.
+            default => $this->answers[implode(' ', $arguments)] ?? null,
         };
     }
 }

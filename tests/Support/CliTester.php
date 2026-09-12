@@ -108,6 +108,19 @@ final class CliTester
         return $this;
     }
 
+    /**
+     * More git answers, keyed by the command line ('rev-list --count abc..HEAD' => '2') or
+     * by the named ones FakeGitRemote knows (head, commit, branch).
+     *
+     * @param  array<string, string|null>  $answers
+     */
+    public function withGitAnswers(array $answers): self
+    {
+        $this->git = [...$this->git, ...$answers];
+
+        return $this;
+    }
+
     public function withToken(string $token = 'test-token', string $kind = 'user', string $name = 'eser', string $host = 'app.unolia.com'): self
     {
         $file = $this->home->home.'/.config/unolia/hosts.json';
