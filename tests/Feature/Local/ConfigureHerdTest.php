@@ -159,18 +159,17 @@ it('does not claim to have written herd.yml when it already matched', function (
     expect($result->json()['wrote'])->toBeFalse();
 });
 
-it('explains an alias domain before offering it as a local alias', function () {
+it('shows the file it would create before asking', function () {
     $cli = cli()->withConfig(['team' => 'acme', 'project' => 12, 'website' => 118])
-        ->answers([
-            'Add www.test as a local alias of marketing.test?' => true,
-            'Write herd.yml' => true,
-        ]);
-    $herd = new FakeHerd($cli->home->cwd);
-    $cli = $cli->withHerd($herd)->withApi(herdApi());
+        ->answers(['Write herd.yml and run herd init?' => false]);
+    $cli = $cli->withHerd(new FakeHerd($cli->home->cwd))->withApi(herdApi());
 
     $result = $cli->run('configure', 'herd', '--site', 'marketing');
 
     expect($result->exitCode)->toBe(0)
-        ->and($result->stdout)->toContain('marketing.acme.com also answers on www.acme.com')
-        ->and($cli->home->read('herd.yml'))->toContain('www');
+        ->and($result->stdout)->toContain('does not exist yet')
+        ->and($result->stdout)->toContain("php: '8.3'")
+        ->and($result->stdout)->toContain('herd init')
+        ->and($result->stdout)->toContain('Nothing was written')
+        ->and($cli->home->read('herd.yml'))->toBeNull();
 });
