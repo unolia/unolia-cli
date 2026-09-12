@@ -46,7 +46,8 @@ it('shows one issue from its short id, the tail of the uuid', function () {
 
     expect($result->exitCode)->toBe(0)
         ->and($result->stdout)->toContain('No DMARC record at _dmarc.acme.dev')
-        ->and($result->stdout)->toContain('Blast radius');
+        ->and($result->stdout)->toContain('low blast radius · reversible · needs zone:write')
+        ->and($result->stdout)->toContain('unolia issue fix 8D0E1F --dry-run');
 });
 
 it('previews a fix and changes nothing', function () {
