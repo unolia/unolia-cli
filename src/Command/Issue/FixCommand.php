@@ -13,7 +13,9 @@ use Unolia\Cli\Api\Requests\Issues\ShowIssue;
 use Unolia\Cli\Command\BaseCommand;
 use Unolia\Cli\Command\Concerns\ResolvesIssues;
 use Unolia\Cli\Console\ExitCode;
+use Unolia\Cli\Console\StepLog;
 use Unolia\Cli\Support\Arr;
+use Unolia\Cli\Support\Str;
 
 /**
  * Apply the fix an issue carries. The preview always runs first, so nothing changes
@@ -37,8 +39,9 @@ final class FixCommand extends BaseCommand
 
     protected function define(): void
     {
-        $this->addArgument('issue', InputArgument::REQUIRED, 'Issue id or a prefix of it');
-        $this->addOption('wait', null, InputOption::VALUE_NONE, 'Recheck the issue and wait for the new state');
+        $this->addArgument('issue', InputArgument::REQUIRED, 'Issue id, or the six characters unolia issue list prints');
+        $this->addOption('wait', null, InputOption::VALUE_NONE, 'Recheck the issue and wait for the new state, also in a pipe');
+        $this->addOption('no-progress', null, InputOption::VALUE_NONE, 'Apply the fix and return without rechecking');
     }
 
     public function mutates(): bool
@@ -49,8 +52,9 @@ final class FixCommand extends BaseCommand
     public function examples(): array
     {
         return [
-            'See what it would change' => 'unolia issue fix 01J9P7 --dry-run',
-            'Fix it and recheck' => 'unolia issue fix 01J9P7 --yes --wait',
+            'See what it would change' => 'unolia issue fix 8d0e1f --dry-run',
+            'Fix it and watch the recheck' => 'unolia issue fix 8d0e1f',
+            'Block in a script' => 'unolia issue fix 8d0e1f --yes --wait',
         ];
     }
 
@@ -75,6 +79,31 @@ final class FixCommand extends BaseCommand
 
         $outcome = $this->fetch(new FixIssue($id, ['dry_run' => false]));
         $result = (string) ($outcome['outcome'] ?? 'failed');
+        $message = is_string($outcome['message'] ?? null) && $outcome['message'] !== '' ? $outcome['message'] : null;
+
+        // A terminal follows the recheck in a task by default, --no-progress
+        // returns as soon as the fix is applied, a pipe rechecks only with --wait.
+        $progress = $this->out()->face()->interactive && ! $this->structured() && ! $this->optionBool('no-progress');
+
+        if ($result === 'applied' && $progress) {
+            $title = Str::scalar(Arr::get($preview, 'issue.check_title') ?? Arr::get($preview, 'issue.fix.name') ?? Arr::get($preview, 'fix.name'), 'the issue');
+
+            $issue = $this->ask()->task(sprintf('Fixing %s', $title), function (StepLog $log) use ($id, $message): array {
+                $log->line('Fix applied'.($message === null ? '' : ': '.$message));
+                $log->subLabel('Rechecking');
+                $this->api()->send(new RecheckIssue($id, ['dry_run' => false]));
+                $issue = $this->waitForRecheck($id);
+                $state = Str::scalar($issue['state'] ?? null, 'open');
+
+                $state === 'open'
+                    ? $log->warning('Still open after the recheck; DNS may need a moment to propagate')
+                    : $log->success(sprintf('Issue %s', $state));
+
+                return $issue;
+            });
+
+            return Str::scalar($issue['state'] ?? null, 'open') === 'open' ? ExitCode::RemoteFailure : ExitCode::Ok;
+        }
 
         if ($this->optionBool('wait') && $result === 'applied') {
             $this->api()->send(new RecheckIssue($id, ['dry_run' => false]));
@@ -84,10 +113,12 @@ final class FixCommand extends BaseCommand
         if ($this->structured()) {
             $this->out()->record($outcome);
         } else {
-            $message = $outcome['message'] ?? null;
-            $line = sprintf('Fix %s%s', $result, is_string($message) && $message !== '' ? ': '.$message : '');
-
+            $line = sprintf('Fix %s%s', $result, $message === null ? '' : ': '.$message);
             $result === 'applied' ? $this->out()->info($line) : $this->out()->warn($line);
+
+            if ($result === 'applied' && ! $this->optionBool('wait')) {
+                $this->out()->note(sprintf('unolia issue recheck %s asks Unolia to look again.', Str::shortId($id)));
+            }
         }
 
         return $result === 'applied' ? ExitCode::Ok : ExitCode::RemoteFailure;

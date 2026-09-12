@@ -10,7 +10,8 @@ ARGUMENTS
   automation  Automation id or exact name
 
 FLAGS
-      --wait              Follow the run
+      --wait              Block until it finishes, also in a pipe
+      --no-progress       Return as soon as it is started instead of following it
       --interval <value>  Seconds between checks (default 3)
       --timeout <value>   Give up waiting after this long (default 15m)
       --notify            Send a desktop notification at the end
@@ -31,8 +32,12 @@ INHERITED FLAGS
 EXAMPLES
   # See the plan
   $ unolia automation run 7 --dry-run
-  # Run and follow
-  $ unolia automation run 7 --wait
+  # Run and follow it
+  $ unolia automation run 7
+  # Start it and come back later
+  $ unolia automation run 7 --no-progress
+  # Block in a script
+  $ unolia automation run 7 --yes --wait
 
 LEARN MORE
   https://unolia.com/docs/cli/automation-run

@@ -13,7 +13,8 @@ FLAGS
       --repo <value>      Repository id or full name
       --all-branches      Look at every branch when picking the newest run
       --failed            Only the failed jobs
-      --wait              Follow the new attempt
+      --wait              Block until it finishes, also in a pipe
+      --no-progress       Return as soon as it is started instead of following it
       --interval <value>  Seconds between checks (default 3)
       --timeout <value>   Give up waiting after this long (default 15m)
       --notify            Send a desktop notification at the end
@@ -35,7 +36,11 @@ EXAMPLES
   # Re-run the newest run
   $ unolia ci rerun
   # Only what failed
-  $ unolia ci rerun "#1187" --failed --wait
+  $ unolia ci rerun "#1187" --failed
+  # Queue it and come back later
+  $ unolia ci rerun --no-progress
+  # Block in a script
+  $ unolia ci rerun --yes --wait
 
 LEARN MORE
   https://unolia.com/docs/cli/ci-rerun

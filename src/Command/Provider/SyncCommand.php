@@ -6,14 +6,13 @@ namespace Unolia\Cli\Command\Provider;
 
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Unolia\Cli\Api\Requests\Providers\ShowProvider;
 use Unolia\Cli\Api\Requests\Providers\SyncProvider;
 use Unolia\Cli\Command\BaseCommand;
 use Unolia\Cli\Command\Concerns\Watches;
-use Unolia\Cli\Console\CliError;
 use Unolia\Cli\Console\ExitCode;
 use Unolia\Cli\Support\Str;
+use Unolia\Cli\Watch\ProviderSyncTarget;
 
 /**
  * Queue a sync of one provider, and optionally wait for it to land.
@@ -37,8 +36,7 @@ final class SyncCommand extends BaseCommand
     protected function define(): void
     {
         $this->addArgument('provider', InputArgument::REQUIRED, 'Provider id');
-        $this->addOption('wait', null, InputOption::VALUE_NONE, 'Wait until the sync lands');
-        $this->addWatchOptions('10m');
+        $this->addFollowOptions('10m', 3);
     }
 
     public function mutates(): bool
@@ -49,8 +47,9 @@ final class SyncCommand extends BaseCommand
     public function examples(): array
     {
         return [
-            'Sync a provider' => 'unolia provider sync 14',
-            'Sync and wait' => 'unolia provider sync 14 --wait',
+            'Sync a provider and watch it land' => 'unolia provider sync 14',
+            'Queue it and come back later' => 'unolia provider sync 14 --no-progress',
+            'Block in a script' => 'unolia provider sync 14 --wait',
         ];
     }
 
@@ -79,42 +78,14 @@ final class SyncCommand extends BaseCommand
 
         $provider = $this->fetch(new SyncProvider($id, ['dry_run' => false]));
 
-        if (! $this->optionBool('wait')) {
-            if ($this->structured()) {
-                $this->out()->record($provider);
+        $name = Str::scalar($provider['name'] ?? null, 'provider '.$id);
 
-                return ExitCode::Ok;
-            }
-
-            $this->out()->info(sprintf('Queued a sync of %s', (string) ($provider['name'] ?? $id)));
-
-            return ExitCode::Ok;
-        }
-
-        $timeout = $this->duration('timeout', 600);
-        $started = time();
-
-        while (true) {
-            $current = $this->fetch(new ShowProvider($id));
-
-            if (($current['synced_at'] ?? null) !== $syncedAt) {
-                if ($this->structured()) {
-                    $this->out()->record($current);
-                } else {
-                    $this->out()->info(sprintf('Synced %s', (string) ($current['name'] ?? $id)));
-                }
-
-                return ($current['has_sync_error'] ?? false) === true ? ExitCode::RemoteFailure : ExitCode::Ok;
-            }
-
-            if (time() - $started >= $timeout) {
-                throw CliError::timeout(
-                    'the sync is still running',
-                    'Check it later with unolia provider view '.$id,
-                );
-            }
-
-            $this->runtime()->poller()->sleep($this->duration('interval', 3));
-        }
+        return $this->followByDefault(
+            new ProviderSyncTarget($this->api(), $id, $syncedAt),
+            sprintf('Syncing %s', $name),
+            $provider,
+            sprintf('Queued a sync of %s · unolia provider view %s', $name, $id),
+            sprintf('unolia provider view %s shows the sync state.', $id),
+        );
     }
 }

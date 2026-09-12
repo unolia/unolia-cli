@@ -77,8 +77,8 @@ it('accepts a run number', function () {
 
 it('watches a run to the end', function () {
     $cli = repo()->withApi(api()
-        ->on('GET', 'v1/actions/9021?wait=0', fixture('action-1187-in-progress.json'))
-        ->on('GET', 'v1/actions/9021?wait=20', fixture('action-1187-completed.json')));
+        ->on('GET', 'v1/actions/9022?wait=0', fixture('action-1187-in-progress.json'))
+        ->on('GET', 'v1/actions/9022?wait=20', fixture('action-1187-completed.json')));
 
     $result = $cli->run('ci', 'watch', '9021');
 
@@ -98,7 +98,7 @@ it('exits 1 when the run failed', function () {
 it('streams jobs as events', function () {
     $result = repo()
         ->withApi(api()
-            ->on('GET', 'v1/actions/9021?wait=0', fixture('action-1187-in-progress.json'))
+            ->on('GET', 'v1/actions/9022?wait=0', fixture('action-1187-in-progress.json'))
             ->on('GET', 'v1/actions/9021?wait=20', fixture('action-1187-completed.json')))
         ->run('ci', 'watch', '9021', '--format', 'ndjson');
 
@@ -125,10 +125,26 @@ it('re-runs the failed jobs after asking', function () {
         ->answers(['Re-run the failed jobs' => true])
         ->withApi(api()->on('POST', 'v1/actions/9021/rerun', fixture('action-rerun-202.json'), 202));
 
-    $result = $cli->run('ci', 'rerun', '9021', '--failed');
+    $result = $cli->run('ci', 'rerun', '9021', '--failed', '--no-progress');
 
     expect($result->exitCode)->toBe(0)
+        ->and($result->stdout)->toContain('Re-running #1187 · unolia ci watch')
         ->and($cli->api()->lastCall()['body'])->toBe(['dry_run' => false, 'failed_only' => true]);
+});
+
+it('follows the new attempt in a task on a terminal', function () {
+    $cli = repo()
+        ->answers(['Re-run every job' => true])
+        ->withApi(api()
+            ->on('POST', 'v1/actions/9021/rerun', fixture('action-rerun-202.json'), 202)
+            ->on('GET', 'v1/actions/9022?wait=0', fixture('action-1187-in-progress.json'))
+            ->on('GET', 'v1/actions/9022?wait=20', fixture('action-1187-completed.json')));
+
+    $result = $cli->run('ci', 'rerun', '9021');
+
+    expect($result->exitCode)->toBe(0)
+        ->and($result->stdout)->toContain('Re-running #1187')
+        ->and($result->stdout)->toContain('Run #1187');
 });
 
 it('previews a rerun', function () {

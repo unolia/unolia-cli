@@ -7,6 +7,7 @@ namespace Unolia\Cli\Command\Concerns;
 use Symfony\Component\Console\Input\InputOption;
 use Unolia\Cli\Api\Requests\Websites\ListWebsiteDeployments;
 use Unolia\Cli\Api\Requests\Websites\ShowWebsite;
+use Unolia\Cli\Console\ExitCode;
 use Unolia\Cli\Console\StepLog;
 use Unolia\Cli\Support\Notifier;
 use Unolia\Cli\Watch\DeploymentTarget;
@@ -24,6 +25,58 @@ trait Watches
         $this->addOption('interval', null, InputOption::VALUE_REQUIRED, 'Seconds between checks', (string) $defaultInterval);
         $this->addOption('timeout', null, InputOption::VALUE_REQUIRED, 'Give up waiting after this long', $defaultTimeout);
         $this->addOption('notify', null, InputOption::VALUE_NONE, 'Send a desktop notification at the end');
+    }
+
+    /**
+     * The options of a command that starts something and can follow it:
+     * --wait for a pipe, --no-progress for a terminal, and the watch options.
+     */
+    protected function addFollowOptions(string $defaultTimeout = '15m', int $defaultInterval = 3): void
+    {
+        $this->addOption('wait', null, InputOption::VALUE_NONE, 'Block until it finishes, also in a pipe');
+        $this->addOption('no-progress', null, InputOption::VALUE_NONE, 'Return as soon as it is started instead of following it');
+        $this->addWatchOptions($defaultTimeout, $defaultInterval);
+    }
+
+    /**
+     * The convention for anything started remotely: a terminal follows it in
+     * a task by default, --no-progress hands it back at once, a pipe waits
+     * only with --wait. $record is what the data faces get when not waiting,
+     * $handBack the one line a terminal prints instead.
+     *
+     * @param  array<string, mixed>  $record
+     */
+    protected function followByDefault(Target $target, string $label, array $record, string $handBack, ?string $failureHint = null): ExitCode
+    {
+        $progress = $this->out()->face()->interactive && ! $this->structured() && ! $this->optionBool('no-progress');
+
+        if (! $this->optionBool('wait') && ! $progress) {
+            if ($this->structured()) {
+                $this->out()->record($record);
+            } else {
+                $this->out()->info($handBack);
+            }
+
+            return ExitCode::Ok;
+        }
+
+        if ($progress) {
+            $result = $this->ask()->task($label, fn (StepLog $log): WatchResult => $this->follow($target, $log));
+
+            if ($result->exitCode !== ExitCode::Ok && $failureHint !== null) {
+                $this->out()->note($failureHint);
+            }
+
+            return $result->exitCode;
+        }
+
+        $result = $this->follow($target);
+
+        if ($this->structured()) {
+            $this->out()->record($result->state->data);
+        }
+
+        return $result->exitCode;
     }
 
     protected function follow(Target $target, ?StepLog $log = null): WatchResult

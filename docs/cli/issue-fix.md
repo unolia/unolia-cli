@@ -7,10 +7,11 @@ USAGE
   unolia issue fix <issue> [flags]
 
 ARGUMENTS
-  issue  Issue id or a prefix of it
+  issue  Issue id, or the six characters unolia issue list prints
 
 FLAGS
-      --wait  Recheck the issue and wait for the new state
+      --wait         Recheck the issue and wait for the new state, also in a pipe
+      --no-progress  Apply the fix and return without rechecking
 
 INHERITED FLAGS
   -t, --team <value>     Team slug or id
@@ -27,9 +28,11 @@ INHERITED FLAGS
 
 EXAMPLES
   # See what it would change
-  $ unolia issue fix 01J9P7 --dry-run
-  # Fix it and recheck
-  $ unolia issue fix 01J9P7 --yes --wait
+  $ unolia issue fix 8d0e1f --dry-run
+  # Fix it and watch the recheck
+  $ unolia issue fix 8d0e1f
+  # Block in a script
+  $ unolia issue fix 8d0e1f --yes --wait
 
 LEARN MORE
   https://unolia.com/docs/cli/issue-fix

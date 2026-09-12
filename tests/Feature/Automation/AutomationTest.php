@@ -67,7 +67,7 @@ it('starts a run', function () {
         ->run('automation', 'run', '7', '--yes');
 
     expect($result->exitCode)->toBe(0)
-        ->and($result->stdout)->toContain('Run '.RUN.' started');
+        ->and($result->stdout)->toContain('Run '.substr(RUN, -6).' started · unolia automation watch '.substr(RUN, -6));
 });
 
 it('exits 7 when a run parks waiting for an answer', function () {

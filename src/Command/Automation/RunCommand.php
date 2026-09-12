@@ -6,12 +6,12 @@ namespace Unolia\Cli\Command\Automation;
 
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
 use Unolia\Cli\Api\Requests\Automations\CreateAutomationRun;
 use Unolia\Cli\Command\BaseCommand;
 use Unolia\Cli\Command\Concerns\ResolvesRuns;
 use Unolia\Cli\Command\Concerns\Watches;
 use Unolia\Cli\Console\ExitCode;
+use Unolia\Cli\Support\Arr;
 use Unolia\Cli\Support\Str;
 use Unolia\Cli\Watch\AutomationRunTarget;
 
@@ -38,8 +38,7 @@ final class RunCommand extends BaseCommand
     protected function define(): void
     {
         $this->addArgument('automation', InputArgument::REQUIRED, 'Automation id or exact name');
-        $this->addOption('wait', null, InputOption::VALUE_NONE, 'Follow the run');
-        $this->addWatchOptions();
+        $this->addFollowOptions();
     }
 
     public function mutates(): bool
@@ -51,7 +50,9 @@ final class RunCommand extends BaseCommand
     {
         return [
             'See the plan' => 'unolia automation run 7 --dry-run',
-            'Run and follow' => 'unolia automation run 7 --wait',
+            'Run and follow it' => 'unolia automation run 7',
+            'Start it and come back later' => 'unolia automation run 7 --no-progress',
+            'Block in a script' => 'unolia automation run 7 --yes --wait',
         ];
     }
 
@@ -79,25 +80,15 @@ final class RunCommand extends BaseCommand
             return ExitCode::RemoteFailure;
         }
 
-        if (! $this->optionBool('wait')) {
-            if ($this->structured()) {
-                $this->out()->record($run);
+        $short = Str::shortId($ulid);
 
-                return ExitCode::Ok;
-            }
-
-            $this->out()->info(sprintf('Run %s started · unolia automation watch %s', $ulid, Str::limit($ulid, 10, '')));
-
-            return ExitCode::Ok;
-        }
-
-        $result = $this->follow(new AutomationRunTarget($this->api(), $ulid, $this->waitSeconds()));
-
-        if ($this->structured()) {
-            $this->out()->record($result->state->data);
-        }
-
-        return $result->exitCode;
+        return $this->followByDefault(
+            new AutomationRunTarget($this->api(), $ulid, $this->waitSeconds()),
+            sprintf('Running %s', Str::scalar(Arr::get($run, 'automation.name'), 'the automation')),
+            $run,
+            sprintf('Run %s started · unolia automation watch %s', $short, $short),
+            sprintf('unolia automation logs %s shows the whole run.', $short),
+        );
     }
 
     private function preview(int $id): ExitCode
