@@ -26,6 +26,9 @@ final class Registry
         'api' => Command\Core\ApiCommand::class,
         'open' => Command\Core\OpenCommand::class,
 
+        'auth:refresh' => Command\Auth\RefreshCommand::class,
+        'auth:token' => Command\Auth\TokenCommand::class,
+
         'project:list' => Command\Project\ListCommand::class,
         'project:view' => Command\Project\ViewCommand::class,
         'project:switch' => Command\Project\SwitchCommand::class,

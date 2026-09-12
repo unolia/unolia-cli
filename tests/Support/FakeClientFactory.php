@@ -7,6 +7,7 @@ namespace Tests\Support;
 use Unolia\Cli\Api\AuthClient;
 use Unolia\Cli\Api\Client;
 use Unolia\Cli\Api\ClientFactory;
+use Unolia\Cli\Api\OAuthClient;
 use Unolia\Cli\Runtime;
 
 /**
@@ -27,5 +28,10 @@ final class FakeClientFactory extends ClientFactory
     public function auth(string $host, ?string $token = null): AuthClient
     {
         return parent::auth($host, $token)->withMockClient($this->api->mockClient());
+    }
+
+    public function oauth(string $host): OAuthClient
+    {
+        return parent::oauth($host)->withMockClient($this->api->mockClient());
     }
 }

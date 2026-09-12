@@ -23,6 +23,8 @@ use Unolia\Cli\Support\Str;
  */
 final class StatusCommand extends BaseCommand
 {
+    private const EXPIRY_NOTICE_DAYS = 14;
+
     protected function canonical(): string
     {
         return 'status';
@@ -108,15 +110,61 @@ final class StatusCommand extends BaseCommand
             throw $exception;
         }
 
-        $scopes = $token['scopes'] ?? [];
-        $scopes = is_array($scopes) ? implode(' ', array_map(strval(...), $scopes)) : '*';
+        $host = $this->runtime()->host();
+        $scopes = $token['scopes'] ?? $this->runtime()->hosts()->scopes($host) ?? [];
+        $expires = $token['expires_at'] ?? $this->runtime()->hosts()->expiresAt($host);
 
-        return sprintf(
-            '%s (%s token, scopes %s)',
+        $line = sprintf(
+            '%s (%s token, %s',
             Str::scalar($principal['name'] ?? null, 'unknown'),
             Str::scalar($token['tokenable_type'] ?? null, 'unknown'),
-            $scopes === '' ? '-' : $scopes,
+            $this->scopeSummary(is_array($scopes) ? $scopes : []),
         );
+
+        if (is_string($expires) && $expires !== '') {
+            $line .= ', expires '.substr($expires, 0, 10);
+            $this->warnAboutExpiry($expires);
+        }
+
+        return $line.')';
+    }
+
+    /** Two weeks of notice, so a token does not stop a deploy one morning. */
+    private function warnAboutExpiry(string $expires): void
+    {
+        $timestamp = strtotime($expires);
+
+        if ($timestamp === false) {
+            return;
+        }
+
+        $days = (int) ceil(($timestamp - time()) / 86400);
+
+        if ($days <= 0) {
+            $this->out()->warn('Your token has expired, run unolia login.');
+
+            return;
+        }
+
+        if ($days <= self::EXPIRY_NOTICE_DAYS) {
+            $this->out()->warn(sprintf('Your token expires in %d day%s, run unolia login.', $days, $days === 1 ? '' : 's'));
+        }
+    }
+
+    /**
+     * Short enough for one line: the list when it is short, a count when it is not.
+     *
+     * @param  array<mixed>  $scopes
+     */
+    private function scopeSummary(array $scopes): string
+    {
+        $names = array_values(array_filter(array_map(static fn (mixed $scope): string => Str::scalar($scope, ''), $scopes), static fn (string $scope): bool => $scope !== ''));
+
+        return match (true) {
+            $names === [] => 'scopes -',
+            count($names) <= 4 => 'scopes '.implode(' ', $names),
+            default => count($names).' scopes',
+        };
     }
 
     private function name(string $kind, ?int $id): ?string

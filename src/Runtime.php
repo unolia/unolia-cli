@@ -9,6 +9,8 @@ use Unolia\Cli\Api\AuthClient;
 use Unolia\Cli\Api\Client;
 use Unolia\Cli\Api\ClientFactory;
 use Unolia\Cli\Api\Poller;
+use Unolia\Cli\Auth\Authenticator;
+use Unolia\Cli\Auth\DeviceFlow;
 use Unolia\Cli\Config\Hosts;
 use Unolia\Cli\Config\Paths;
 use Unolia\Cli\Config\Settings;
@@ -30,6 +32,7 @@ use Unolia\Cli\Mcp\Installer;
 use Unolia\Cli\Support\Browser;
 use Unolia\Cli\Support\Dns;
 use Unolia\Cli\Support\Notifier;
+use Unolia\Cli\Support\Stdin;
 
 /**
  * The one place services are built. Everything is lazy, and everything can be replaced,
@@ -240,15 +243,10 @@ final class Runtime
         return $this->settings()->host();
     }
 
+    /** Plain http instead of https. Only UNOLIA_INSECURE asks for it, a local host does not. */
     public function insecure(): bool
     {
-        if ($this->flag('UNOLIA_INSECURE')) {
-            return true;
-        }
-
-        $host = $this->settings()->host();
-
-        return str_ends_with($host, '.test') || str_starts_with($host, 'localhost');
+        return $this->flag('UNOLIA_INSECURE');
     }
 
     private function registerDefaults(): void
@@ -298,8 +296,11 @@ final class Runtime
         ));
 
         $this->factory(Poller::class, fn (): Poller => new Poller);
+        $this->factory(DeviceFlow::class, fn (self $runtime): DeviceFlow => new DeviceFlow($runtime));
+        $this->factory(Authenticator::class, fn (self $runtime): Authenticator => new Authenticator($runtime));
         $this->factory(Browser::class, fn (): Browser => new Browser);
         $this->factory(Notifier::class, fn (): Notifier => new Notifier);
+        $this->factory(Stdin::class, fn (): Stdin => new Stdin);
         $this->factory(Dns::class, fn (): Dns => new Dns);
         $this->factory(Herd::class, fn (self $runtime): Herd => new Herd($runtime->cwd()));
         $this->factory(Php::class, fn (self $runtime): Php => new Php($runtime->get(Herd::class)));

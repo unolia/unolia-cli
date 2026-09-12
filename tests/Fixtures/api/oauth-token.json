@@ -1,0 +1,6 @@
+{
+  "token_type": "Bearer",
+  "expires_in": 31536000,
+  "access_token": "utk_device_5e1a9c3b7d2f",
+  "refresh_token": "urt_device_8c4d2e6f1a3b"
+}

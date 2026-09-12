@@ -67,6 +67,8 @@ final class Application extends SymfonyApplication
 
     public function doRun(InputInterface $input, OutputInterface $output): int
     {
+        $typed = $input instanceof ArgvInput ? ($input->getRawTokens()[0] ?? null) : null;
+
         if ($input instanceof ArgvInput) {
             $input = $this->collapseMultiWordName($input);
         }
@@ -80,7 +82,7 @@ final class Application extends SymfonyApplication
         }
 
         $this->boot($input, $output);
-        $this->hintColonForm($input);
+        $this->hintColonForm(is_string($typed) ? $typed : null);
 
         try {
             return parent::doRun($input, $output);
@@ -252,9 +254,9 @@ final class Application extends SymfonyApplication
     /**
      * The colon spelling keeps working for one major version, with a nudge towards the new one.
      */
-    private function hintColonForm(InputInterface $input): void
+    private function hintColonForm(?string $first): void
     {
-        if (! $input instanceof ArgvInput) {
+        if ($first === null) {
             return;
         }
 
@@ -264,9 +266,7 @@ final class Application extends SymfonyApplication
             return;
         }
 
-        $first = $input->getRawTokens()[0] ?? null;
-
-        if (! is_string($first) || ! str_contains($first, ':') || ! $this->has($first)) {
+        if (! str_contains($first, ':') || ! $this->has($first)) {
             return;
         }
 

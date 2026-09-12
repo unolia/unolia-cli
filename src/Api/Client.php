@@ -35,6 +35,7 @@ final class Client extends Connector implements HasPagination
         private readonly string $tokenKind = 'unknown',
         private readonly bool $insecure = false,
         private readonly string $basePath = 'api/v1/',
+        private readonly bool $verify = true,
     ) {}
 
     /** @param callable(): ?string $resolver */
@@ -104,7 +105,7 @@ final class Client extends Connector implements HasPagination
         ));
 
         if ($response->failed()) {
-            throw ApiException::fromResponse($response, $method, $path);
+            throw ApiException::fromResponse($response, $method, $path, $this->host);
         }
 
         return $response;
@@ -141,6 +142,7 @@ final class Client extends Connector implements HasPagination
         return [
             'timeout' => 30,
             'connect_timeout' => 10,
+            'verify' => $this->verify,
         ];
     }
 

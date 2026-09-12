@@ -102,6 +102,26 @@ it('separates a broken request from a resource that cannot do the thing', functi
     expect($invalid->exitCode)->toBe(ExitCode::Usage);
 });
 
+it('points at auth refresh when the token lacks a scope', function () {
+    $body = ['error' => ['code' => 'insufficient_scope', 'message' => 'Needs deployment:write.', 'details' => ['required_scope' => 'deployment:write']]];
+
+    $error = mapped(403, $body);
+
+    expect($error->exitCode)->toBe(ExitCode::Forbidden)
+        ->and($error->errorCode)->toBe('forbidden')
+        ->and($error->getMessage())->toBe('Needs deployment:write.')
+        ->and($error->hint)->toBe('Run unolia auth refresh --scopes deployment:write')
+        ->and($error->details['details']['required_scope'])->toBe('deployment:write');
+
+    $elsewhere = (new ApiException(403, $body, 'GET', 'v1/websites', [], '', 'unolia.test'))->toCliError();
+
+    expect($elsewhere->hint)->toBe('Run unolia auth refresh --scopes deployment:write --host unolia.test');
+
+    $plain = mapped(403, ['error' => ['code' => 'forbidden', 'message' => 'Not yours.']]);
+
+    expect($plain->hint)->toContain('abilities of your token');
+});
+
 it('says which host it could not reach', function () {
     $error = ApiException::network('unolia.test', 'connection refused')->toCliError();
 

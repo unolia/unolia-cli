@@ -1,0 +1,11 @@
+{
+  "message": "This action needs the deployment:write scope.",
+  "error": {
+    "code": "insufficient_scope",
+    "message": "This action needs the deployment:write scope.",
+    "status": 403,
+    "details": {
+      "required_scope": "deployment:write"
+    }
+  }
+}

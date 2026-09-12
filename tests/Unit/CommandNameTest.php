@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Output\NullOutput;
+use Tests\Support\CliTester;
 use Unolia\Cli\Application;
 use Unolia\Cli\Console\Registry;
 use Unolia\Cli\Runtime;
@@ -68,4 +69,12 @@ it('registers every command in the tree', function () {
     foreach (array_keys(Registry::COMMANDS) as $name) {
         expect($application->has($name))->toBeTrue("missing {$name}");
     }
+});
+
+it('only nudges towards the space spelling when a colon was typed', function () {
+    $spaced = CliTester::make()->interactive()->run('domain', 'list', '--help');
+    $colon = CliTester::make()->interactive()->run('domain:list', '--help');
+
+    expect($spaced->stdout)->not->toContain('new spelling')
+        ->and($colon->stdout)->toContain('Tip: "unolia domain list" is the new spelling.');
 });

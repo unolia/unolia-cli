@@ -11,6 +11,7 @@ use Saloon\Http\Faking\MockResponse;
 use Saloon\Http\PendingRequest;
 use Unolia\Cli\Api\AuthClient;
 use Unolia\Cli\Api\Client;
+use Unolia\Cli\Api\OAuthClient;
 
 /**
  * Canned API answers, matched on method and path. Every registered answer must be used,
@@ -88,6 +89,7 @@ final class FakeApi
         return new MockClient([
             Client::class => $handler,
             AuthClient::class => $handler,
+            OAuthClient::class => $handler,
         ]);
     }
 

@@ -6,6 +6,7 @@ namespace Unolia\Cli\Api;
 
 use RuntimeException;
 use Saloon\Http\Response;
+use Unolia\Cli\Config\Hosts;
 use Unolia\Cli\Console\CliError;
 use Unolia\Cli\Console\ExitCode;
 use Unolia\Cli\Support\Arr;
@@ -27,11 +28,12 @@ final class ApiException extends RuntimeException
         public readonly string $path,
         public readonly array $headers = [],
         string $message = '',
+        public readonly ?string $host = null,
     ) {
         parent::__construct($message !== '' ? $message : sprintf('%s %s answered %d', $method, $path, $status));
     }
 
-    public static function fromResponse(Response $response, string $method, string $path): self
+    public static function fromResponse(Response $response, string $method, string $path, ?string $host = null): self
     {
         /** @var mixed $decoded */
         $decoded = $response->json();
@@ -42,6 +44,7 @@ final class ApiException extends RuntimeException
             method: $method,
             path: $path,
             headers: $response->headers()->all(),
+            host: $host,
         );
     }
 
@@ -67,6 +70,11 @@ final class ApiException extends RuntimeException
             ),
             $this->status === 401 => CliError::auth($this->message('your token was rejected')),
             $this->status === 402 => $this->upgradeRequired(),
+            $this->status === 403 && $this->errorCode() === 'insufficient_scope' => CliError::forbidden(
+                $this->message('your token does not have the scope this needs'),
+                $this->details(),
+                $this->scopeHint(),
+            ),
             $this->status === 403 => CliError::forbidden(
                 $this->message('you are not allowed to do that'),
                 $this->details(),
@@ -168,6 +176,21 @@ final class ApiException extends RuntimeException
         }
 
         return $details;
+    }
+
+    /**
+     * The command that widens the token, with the scope the API named when it did.
+     */
+    private function scopeHint(): string
+    {
+        $scope = Arr::get($this->body, 'error.details.required_scope');
+        $hint = 'Run unolia auth refresh --scopes '.(is_string($scope) && $scope !== '' ? $scope : '<scope>');
+
+        if ($this->host !== null && $this->host !== Hosts::DEFAULT_HOST) {
+            $hint .= ' --host '.$this->host;
+        }
+
+        return $hint;
     }
 
     private function upgradeRequired(): CliError

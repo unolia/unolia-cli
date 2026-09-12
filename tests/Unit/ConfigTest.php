@@ -34,6 +34,35 @@ it('writes hosts.json with mode 0600 and config.json with 0644', function () {
         ->and($hosts->tokenFor('app.unolia.com'))->toBe('secret');
 });
 
+it('stores what the device flow learned', function () {
+    $home = new TempHome;
+    $paths = new Paths(['HOME' => $home->home]);
+    $hosts = new Hosts($paths, ['HOME' => $home->home]);
+
+    $hosts->putEntry('app.unolia.com', [
+        'token' => 'access',
+        'kind' => 'user',
+        'name' => 'eser',
+        'token_name' => 'eser@mac',
+        'expires_at' => '2027-09-12T10:00:00+00:00',
+        'scopes' => ['project:read'],
+        'client_id' => 'client',
+    ]);
+
+    expect($hosts->tokenFor('app.unolia.com'))->toBe('access')
+        ->and($hosts->clientId('app.unolia.com'))->toBe('client')
+        ->and($hosts->scopes('app.unolia.com'))->toBe(['project:read'])
+        ->and($hosts->expiresAt('app.unolia.com'))->toBe('2027-09-12T10:00:00+00:00')
+        ->and($hosts->tokenName('app.unolia.com'))->toBe('eser@mac')
+        ->and(decoct(fileperms($paths->hostsFile()) & 0777))->toBe('600');
+
+    $plain = new Hosts($paths, ['HOME' => $home->home]);
+    $plain->put('unolia.test', 'pasted', 'team', 'bot');
+
+    expect($plain->scopes('unolia.test'))->toBeNull()
+        ->and($plain->clientId('unolia.test'))->toBeNull();
+});
+
 it('prefers the environment over the file, and warns about the old variable', function () {
     $home = new TempHome;
     $paths = new Paths(['HOME' => $home->home]);
