@@ -84,7 +84,8 @@ it('replays the latest finished deployment with --last', function () {
 
     expect($result->stderr)->toBe('')
         ->and($result->exitCode)->toBe(0)
-        ->and($result->stdout)->toContain('Deployment 4812 success');
+        ->and(substr_count($result->stdout, 'Deployment 4812 success'))->toBe(1)
+        ->and($result->stdout)->not->toContain('is success');
 });
 
 it('exits 4 when there is nothing to watch', function () {
