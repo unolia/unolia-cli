@@ -158,3 +158,19 @@ it('does not claim to have written herd.yml when it already matched', function (
 
     expect($result->json()['wrote'])->toBeFalse();
 });
+
+it('explains an alias domain before offering it as a local alias', function () {
+    $cli = cli()->withConfig(['team' => 'acme', 'project' => 12, 'website' => 118])
+        ->answers([
+            'Add www.test as a local alias of marketing.test?' => true,
+            'Write herd.yml' => true,
+        ]);
+    $herd = new FakeHerd($cli->home->cwd);
+    $cli = $cli->withHerd($herd)->withApi(herdApi());
+
+    $result = $cli->run('configure', 'herd', '--site', 'marketing');
+
+    expect($result->exitCode)->toBe(0)
+        ->and($result->stdout)->toContain('marketing.acme.com also answers on www.acme.com')
+        ->and($cli->home->read('herd.yml'))->toContain('www');
+});
