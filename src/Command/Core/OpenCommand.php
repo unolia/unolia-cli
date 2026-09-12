@@ -15,7 +15,6 @@ use Unolia\Cli\Command\Concerns\ResolvesTargets;
 use Unolia\Cli\Console\CliError;
 use Unolia\Cli\Console\ExitCode;
 use Unolia\Cli\Context\Need;
-use Unolia\Cli\Local\HerdYaml;
 use Unolia\Cli\Support\Arr;
 use Unolia\Cli\Support\Browser;
 
@@ -26,7 +25,13 @@ final class OpenCommand extends BaseCommand
 {
     use ResolvesTargets;
 
-    private const TARGETS = ['project', 'website', 'live', 'repo', 'forge', 'deployment'];
+    private const TARGETS = ['project', 'website', 'live', 'repo', 'deployment', 'forge', 'ploi', 'cloud', 'ovh', 'pages', 'github', 'gitlab'];
+
+    /** A hosting target and the provider slug the API reports for it. */
+    private const HOSTS = ['forge' => 'forge', 'ploi' => 'ploi', 'cloud' => 'laravel-cloud', 'ovh' => 'ovh', 'pages' => 'github'];
+
+    /** A code host target and the repository source the API reports for it. */
+    private const CODE_HOSTS = ['github' => 'github', 'gitlab' => 'gitlab'];
 
     protected function canonical(): string
     {
@@ -37,12 +42,12 @@ final class OpenCommand extends BaseCommand
     {
         parent::configure();
 
-        $this->setDescription('Open this project, website, live site, repository or Forge site');
+        $this->setDescription('Open this project, website, live site, repository, or the site at its provider');
     }
 
     protected function define(): void
     {
-        $this->addArgument('what', InputArgument::OPTIONAL, 'project, website, live, repo, forge or deployment', 'project');
+        $this->addArgument('what', InputArgument::OPTIONAL, 'project, website, live, repo, deployment, or a provider: forge, ploi, cloud, ovh, pages, github, gitlab', 'project');
         $this->addArgument('id', InputArgument::OPTIONAL, 'The deployment id, when opening a deployment');
         $this->addOption('print', null, InputOption::VALUE_NONE, 'Print the URL instead of opening it');
     }
@@ -53,7 +58,8 @@ final class OpenCommand extends BaseCommand
             'The project page' => 'unolia open',
             'The website page' => 'unolia open website',
             'The deployed site itself' => 'unolia open live',
-            'The Forge site' => 'unolia open forge --print',
+            'The site at its host' => 'unolia open forge',
+            'The repository at GitHub, only the URL' => 'unolia open github --print',
         ];
     }
 
@@ -95,8 +101,9 @@ final class OpenCommand extends BaseCommand
             'website' => $this->urlOf($this->fetch(new ShowWebsite($this->websiteId())), 'this website'),
             'live' => $this->liveUrl(),
             'repo' => $this->repositoryUrl(),
-            'forge' => $this->forgeUrl(),
             'deployment' => $this->deploymentUrl(),
+            'forge', 'ploi', 'cloud', 'ovh', 'pages' => $this->hostUrl($what),
+            'github', 'gitlab' => $this->codeHostUrl($what),
             default => $this->urlOf($this->fetch(new ShowProject($this->context(Need::Project)->requireProject())), 'this project'),
         };
     }
@@ -152,33 +159,77 @@ final class OpenCommand extends BaseCommand
     }
 
     /**
-     * Forge ids live in herd.yml, which is the only place the CLI stores provider ids.
+     * The site at its hosting provider, only when that is where it lives: asking
+     * for Forge about a Ploi site is a wrong turn, not a page.
      */
-    private function forgeUrl(): string
+    private function hostUrl(string $what): string
     {
-        $root = $this->runtime()->context()->config()->rootDir()
-            ?? $this->runtime()->context()->git()->root()
-            ?? $this->runtime()->cwd();
+        $website = $this->fetch(new ShowWebsite($this->websiteId()));
+        $slug = Arr::get($website, 'provider.slug');
+        $label = Arr::get($website, 'provider.label');
 
-        $document = HerdYaml::read(rtrim($root, '/').'/herd.yml');
-        $forge = Arr::get($document, 'integrations.forge');
+        if (! is_string($slug) || $slug === '') {
+            throw CliError::notFound('this website has no hosting provider');
+        }
 
-        if (! is_array($forge) || $forge === []) {
+        if ($slug !== self::HOSTS[$what]) {
+            $target = array_search($slug, self::HOSTS, true);
+
             throw CliError::notFound(
-                'herd.yml has no Forge ids',
-                'Run unolia configure herd to write them.',
+                sprintf('this website is hosted on %s, not %s', is_string($label) ? $label : $slug, self::labelOf($what)),
+                is_string($target) ? sprintf('Run unolia open %s.', $target) : null,
             );
         }
 
-        $entry = reset($forge);
-        $server = is_array($entry) ? ($entry['server-id'] ?? null) : null;
-        $site = is_array($entry) ? ($entry['site-id'] ?? null) : null;
+        $url = Arr::get($website, 'provider.url');
 
-        if (! is_numeric($server) || ! is_numeric($site)) {
-            throw CliError::notFound('herd.yml has no Forge server and site ids');
+        if (! is_string($url) || $url === '') {
+            throw CliError::notFound(sprintf('no page is known for this website at %s', self::labelOf($what)));
         }
 
-        return sprintf('https://forge.laravel.com/servers/%d/sites/%d', (int) $server, (int) $site);
+        return $url;
+    }
+
+    /** The repository at its code host, only when that is where it lives. */
+    private function codeHostUrl(string $what): string
+    {
+        $website = $this->fetch(new ShowWebsite($this->websiteId()));
+        $source = Arr::get($website, 'repository.source');
+
+        if (! is_array($website['repository'] ?? null)) {
+            throw CliError::notFound('this website has no repository');
+        }
+
+        if ($source !== self::CODE_HOSTS[$what]) {
+            $target = is_string($source) ? array_search($source, self::CODE_HOSTS, true) : false;
+
+            throw CliError::notFound(
+                sprintf('the repository of this website is on %s, not %s', is_string($source) ? self::labelOf($source) : 'another host', self::labelOf($what)),
+                is_string($target) ? sprintf('Run unolia open %s.', $target) : 'Run unolia open repo to go wherever it is.',
+            );
+        }
+
+        $url = Arr::get($website, 'repository.url');
+
+        if (! is_string($url) || $url === '') {
+            throw CliError::notFound('the API did not give a page for this repository');
+        }
+
+        return $url;
+    }
+
+    private static function labelOf(string $target): string
+    {
+        return match ($target) {
+            'forge' => 'Forge',
+            'ploi' => 'Ploi',
+            'cloud', 'laravel-cloud' => 'Laravel Cloud',
+            'ovh' => 'OVH',
+            'pages' => 'GitHub Pages',
+            'github' => 'GitHub',
+            'gitlab' => 'GitLab',
+            default => ucfirst($target),
+        };
     }
 
     private function browserOverride(): ?string

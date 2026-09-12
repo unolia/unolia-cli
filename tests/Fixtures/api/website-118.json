@@ -10,7 +10,8 @@
       "slug": "forge",
       "label": "Forge",
       "identifier": "8815",
-      "connected_provider_id": 14
+      "connected_provider_id": 14,
+      "url": "https://forge.laravel.com/servers/402/sites/8815"
     },
     "project": {
       "id": 12,
@@ -29,6 +30,7 @@
     "repository": {
       "id": 57,
       "full_name": "acme/marketing",
+      "source": "github",
       "branch": "main",
       "url": "https://github.com/acme/marketing"
     },
