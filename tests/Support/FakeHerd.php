@@ -52,28 +52,33 @@ final class FakeHerd extends Herd
         return $this->secured;
     }
 
-    public function init(string $directory): ProcessResult
+    public function init(string $directory, ?callable $onLine = null): ProcessResult
     {
         $this->ran[] = 'init';
+
+        if ($onLine !== null) {
+            $onLine('Installing PHP 8.3', false);
+            $onLine('Linking marketing.test', false);
+        }
 
         return new ProcessResult(true, 0);
     }
 
-    public function isolate(string $directory, string $php): ProcessResult
+    public function isolate(string $directory, string $php, ?callable $onLine = null): ProcessResult
     {
         $this->ran[] = 'isolate '.$php;
 
         return new ProcessResult(true, 0);
     }
 
-    public function link(string $directory): ProcessResult
+    public function link(string $directory, ?callable $onLine = null): ProcessResult
     {
         $this->ran[] = 'link';
 
         return new ProcessResult(true, 0);
     }
 
-    public function secure(string $site): ProcessResult
+    public function secure(string $site, ?callable $onLine = null): ProcessResult
     {
         $this->ran[] = 'secure '.$site;
 

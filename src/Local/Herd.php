@@ -112,31 +112,46 @@ class Herd extends Tool
         return $this->herd(['services:list'])->successful();
     }
 
-    public function init(string $directory): ProcessResult
+    /**
+     * @param  (callable(string $line, bool $isError): void)|null  $onLine  relay herd's output as it happens
+     */
+    public function init(string $directory, ?callable $onLine = null): ProcessResult
     {
-        return $this->herd(['init', '-n'], $directory);
+        return $this->herd(['init', '-n'], $directory, $onLine);
     }
 
-    public function isolate(string $directory, string $php): ProcessResult
+    /**
+     * @param  (callable(string $line, bool $isError): void)|null  $onLine
+     */
+    public function isolate(string $directory, string $php, ?callable $onLine = null): ProcessResult
     {
-        return $this->herd(['isolate', $php], $directory);
+        return $this->herd(['isolate', $php], $directory, $onLine);
     }
 
-    public function link(string $directory): ProcessResult
+    /**
+     * @param  (callable(string $line, bool $isError): void)|null  $onLine
+     */
+    public function link(string $directory, ?callable $onLine = null): ProcessResult
     {
-        return $this->herd(['link'], $directory);
+        return $this->herd(['link'], $directory, $onLine);
     }
 
-    public function secure(string $site): ProcessResult
+    /**
+     * @param  (callable(string $line, bool $isError): void)|null  $onLine
+     */
+    public function secure(string $site, ?callable $onLine = null): ProcessResult
     {
-        return $this->herd(['secure', $site]);
+        return $this->herd(['secure', $site], null, $onLine);
     }
 
     /**
      * @param  list<string>  $arguments
+     * @param  (callable(string $line, bool $isError): void)|null  $onLine  when given, the step runs without a time cap and streams
      */
-    protected function herd(array $arguments, ?string $cwd = null): ProcessResult
+    protected function herd(array $arguments, ?string $cwd = null, ?callable $onLine = null): ProcessResult
     {
-        return $this->run('herd', $arguments, $cwd ?? $this->cwd);
+        return $onLine === null
+            ? $this->run('herd', $arguments, $cwd ?? $this->cwd)
+            : $this->run('herd', $arguments, $cwd ?? $this->cwd, $onLine, null);
     }
 }

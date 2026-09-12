@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Unolia\Cli\Command\Local;
 
+use Symfony\Component\Console\Formatter\OutputFormatter;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Unolia\Cli\Api\Requests\Servers\ShowServer;
@@ -16,6 +17,7 @@ use Unolia\Cli\Console\ExitCode;
 use Unolia\Cli\Local\Herd;
 use Unolia\Cli\Local\HerdPlanInput;
 use Unolia\Cli\Local\HerdYaml;
+use Unolia\Cli\Local\ProcessResult;
 use Unolia\Cli\Support\Arr;
 
 /**
@@ -267,7 +269,7 @@ final class ConfigureHerdCommand extends BaseCommand
         $php = is_scalar($document['php'] ?? null) ? (string) $document['php'] : null;
 
         if (! $this->optionBool('no-init')) {
-            $result = $herd->init($root);
+            $result = $this->step('herd init -n', fn (?callable $relay): ProcessResult => $herd->init($root, $relay));
             $applied[] = $result->successful() ? 'herd init' : 'failed';
 
             if (! $result->successful() && $result->ran) {
@@ -276,8 +278,8 @@ final class ConfigureHerdCommand extends BaseCommand
         }
 
         if ($php !== null && $herd->isolatedVersion($root) !== $php) {
-            $herd->isolate($root, $php);
-            $herd->link($root);
+            $this->step('herd isolate '.$php, fn (?callable $relay): ProcessResult => $herd->isolate($root, $php, $relay));
+            $this->step('herd link', fn (?callable $relay): ProcessResult => $herd->link($root, $relay));
             $applied[] = 'herd isolate '.$php;
             $applied[] = 'herd link';
         }
@@ -285,11 +287,32 @@ final class ConfigureHerdCommand extends BaseCommand
         $name = is_string($document['name'] ?? null) ? $document['name'] : null;
 
         if (($document['secured'] ?? false) === true && $name !== null && ! in_array($name, $herd->securedSites(), true)) {
-            $herd->secure($name);
+            $this->step('herd secure '.$name, fn (?callable $relay): ProcessResult => $herd->secure($name, $relay));
             $applied[] = 'herd secure '.$name;
         }
 
         return $applied;
+    }
+
+    /**
+     * Run one herd step. On a terminal the command line is announced and
+     * herd's own output is relayed as it happens, so a PHP download is
+     * visibly a download rather than a hang. Elsewhere the step runs quietly
+     * and the report lists it afterwards.
+     *
+     * @param  callable(?callable $relay): ProcessResult  $run
+     */
+    private function step(string $label, callable $run): ProcessResult
+    {
+        if (! $this->out()->face()->interactive || $this->structured()) {
+            return $run(null);
+        }
+
+        $this->out()->line('<fg=gray>$ '.OutputFormatter::escape($label).'</>');
+
+        return $run(function (string $line): void {
+            $this->out()->line('  <fg=gray>'.OutputFormatter::escape($line).'</>');
+        });
     }
 
     /**
