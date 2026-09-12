@@ -8,8 +8,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 use Unolia\Cli\Console\Renderers\CsvRenderer;
 use Unolia\Cli\Console\Renderers\JsonRenderer;
 use Unolia\Cli\Console\Renderers\NdjsonRenderer;
+use Unolia\Cli\Console\Renderers\StyledTableRenderer;
 use Unolia\Cli\Console\Renderers\TableRenderer;
 use Unolia\Cli\Console\Renderers\YamlRenderer;
+use Unolia\Cli\Console\Table\Table;
 use Unolia\Cli\Support\Str;
 
 /**
@@ -77,6 +79,39 @@ final class Out
         }
 
         $this->writeData(array_values($rows), $columns);
+    }
+
+    /**
+     * A list drawn by a Table: the styled face on a terminal, plain aligned text
+     * in a pipe, and the table's data fields on every other format.
+     *
+     * @param  list<array<string, mixed>>  $rows
+     */
+    public function table(array $rows, Table $table, ?string $empty = null): void
+    {
+        if ($this->face->format !== Format::Table) {
+            $this->writeData(array_values($rows), $table->dataFields());
+
+            return;
+        }
+
+        if ($rows === []) {
+            if ($empty !== null) {
+                $this->note($empty);
+            }
+
+            return;
+        }
+
+        $text = (new StyledTableRenderer($this->face))->render($rows, $table);
+
+        if ($this->face->interactive) {
+            $this->stdout->writeln($text);
+
+            return;
+        }
+
+        $this->write($text);
     }
 
     /**
