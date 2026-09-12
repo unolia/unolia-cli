@@ -68,13 +68,16 @@ final class ListCommand extends BaseCommand
     }
 
     /**
-     * By name. A provider that needs attention is amber whatever its state
-     * says, and the reasons the API gives are the word for it. The provider
-     * kind wears its brand colour, the same as in the website list.
+     * By name. A healthy connection says so in green; one that needs attention
+     * is amber whatever its state says, and the reasons the API gives are the
+     * word for it. The provider kind wears its brand colour, the same as in
+     * the website list.
      */
     public static function table(): Table
     {
-        $tone = static fn (array $row): mixed => ($row['needs_attention'] ?? false) === true ? 'warning' : ($row['state'] ?? null);
+        // The status is the API's reading of the connection (ok, expired,
+        // invalid, needs refresh); the raw state is what the provider said.
+        $tone = static fn (array $row): mixed => ($row['needs_attention'] ?? false) === true ? 'warning' : (($row['status'] ?? null) === 'ok' ? 'healthy' : ($row['status'] ?? $row['state'] ?? null));
 
         return Table::make(
             Column::make('id', 'Id')->right()->cell(static fn (array $row): Cell => Cell::text('#'.Str::scalar($row['id'] ?? null))->dim()),
@@ -87,7 +90,7 @@ final class ListCommand extends BaseCommand
             Column::make('synced_at', 'Last synced')->cell(static fn (array $row): Cell => Cell::text(RelativeTime::ago(is_string($row['synced_at'] ?? null) ? $row['synced_at'] : null, null, 'never synced'))->dim()),
             Column::make('state')->cell(static function (array $row): Cell {
                 if (($row['needs_attention'] ?? false) !== true) {
-                    return Status::word($row['state'] ?? null, 'connected');
+                    return Status::word(($row['status'] ?? null) === 'ok' ? 'healthy' : ($row['status'] ?? $row['state'] ?? null), '');
                 }
 
                 $reasons = $row['attention_reasons'] ?? null;
