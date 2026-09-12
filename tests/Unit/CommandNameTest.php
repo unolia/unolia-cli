@@ -55,6 +55,9 @@ it('finds a command through its alias', function () {
         ->and(application()->find('dig')->getName())->toBe('dns:dig')
         ->and(application()->find('domains')->getName())->toBe('domain:list')
         ->and(application()->find('dns')->getName())->toBe('dns:list')
+        ->and(application()->find('providers')->getName())->toBe('provider:list')
+        ->and(application()->find('websites')->getName())->toBe('website:list')
+        ->and(application()->find('deployments')->getName())->toBe('deployment:list')
         ->and(application()->find('ci')->getName())->toBe('ci:list');
 });
 
