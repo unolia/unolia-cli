@@ -132,3 +132,14 @@ it('queues a provider sync and waits for it to land', function () {
     expect($result->exitCode)->toBe(0)
         ->and($result->stdout)->toContain('Synced Forge');
 });
+
+it('queues a provider sync and hands it back in a pipe', function () {
+    $result = infra()
+        ->withApi(api()
+            ->on('GET', 'v1/providers/14', fixture('provider-14.json'))
+            ->on('POST', 'v1/providers/14/sync', fixture('provider-sync-202.json')))
+        ->run('provider', 'sync', '14');
+
+    expect($result->exitCode)->toBe(0)
+        ->and($result->stdout)->toContain('Queued a sync of Forge · unolia provider view 14');
+});

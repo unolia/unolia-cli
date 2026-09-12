@@ -12,6 +12,7 @@ use Unolia\Cli\Command\BaseCommand;
 use Unolia\Cli\Command\Concerns\ResolvesActions;
 use Unolia\Cli\Command\Concerns\Watches;
 use Unolia\Cli\Console\ExitCode;
+use Unolia\Cli\Support\Str;
 use Unolia\Cli\Watch\ActionTarget;
 
 /**
@@ -40,8 +41,7 @@ final class RerunCommand extends BaseCommand
         $this->addOption('repo', null, InputOption::VALUE_REQUIRED, 'Repository id or full name');
         $this->addOption('all-branches', null, InputOption::VALUE_NONE, 'Look at every branch when picking the newest run');
         $this->addOption('failed', null, InputOption::VALUE_NONE, 'Only the failed jobs');
-        $this->addOption('wait', null, InputOption::VALUE_NONE, 'Follow the new attempt');
-        $this->addWatchOptions();
+        $this->addFollowOptions();
     }
 
     public function mutates(): bool
@@ -53,7 +53,9 @@ final class RerunCommand extends BaseCommand
     {
         return [
             'Re-run the newest run' => 'unolia ci rerun',
-            'Only what failed' => 'unolia ci rerun "#1187" --failed --wait',
+            'Only what failed' => 'unolia ci rerun "#1187" --failed',
+            'Queue it and come back later' => 'unolia ci rerun --no-progress',
+            'Block in a script' => 'unolia ci rerun --yes --wait',
         ];
     }
 
@@ -79,24 +81,14 @@ final class RerunCommand extends BaseCommand
         $newId = is_numeric($action['id'] ?? null) ? (int) $action['id'] : $id;
         $this->local()->remember('last_ci_run', $newId);
 
-        if (! $this->optionBool('wait')) {
-            if ($this->structured()) {
-                $this->out()->record($action);
+        $number = (string) ($action['run_number'] ?? $newId);
 
-                return ExitCode::Ok;
-            }
-
-            $this->out()->info(sprintf('Re-running #%s · unolia ci watch', (string) ($action['run_number'] ?? $newId)));
-
-            return ExitCode::Ok;
-        }
-
-        $result = $this->follow(new ActionTarget($this->api(), $newId, $this->waitSeconds()));
-
-        if ($this->structured()) {
-            $this->out()->record($result->state->data);
-        }
-
-        return $result->exitCode;
+        return $this->followByDefault(
+            new ActionTarget($this->api(), $newId, $this->waitSeconds()),
+            sprintf('Re-running #%s %s', $number, Str::scalar($action['name'] ?? null, '')),
+            $action,
+            sprintf('Re-running #%s · unolia ci watch', $number),
+            sprintf('unolia ci logs %d shows the jobs.', $newId),
+        );
     }
 }

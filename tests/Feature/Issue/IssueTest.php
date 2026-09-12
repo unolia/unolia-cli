@@ -74,6 +74,23 @@ it('previews then applies with --yes', function () {
         ->and($cli->api()->calls()[1]['body'])->toBe(['dry_run' => false]);
 });
 
+it('applies the fix then follows the recheck in a task on a terminal', function () {
+    $fixed = fixture('issue-01J9P7-fixed.json');
+
+    $result = issues()
+        ->answers(['Apply this fix?' => true])
+        ->withApi(api()
+            ->on('POST', 'v1/issues/'.ISSUE.'/fix', fixture('issue-fix-dry-run.json'))
+            ->on('POST', 'v1/issues/'.ISSUE.'/fix', fixture('issue-fix-applied.json'))
+            ->on('POST', 'v1/issues/'.ISSUE.'/recheck', $fixed)
+            ->on('GET', 'v1/issues/'.ISSUE, $fixed))
+        ->run('issue', 'fix', ISSUE);
+
+    expect($result->exitCode)->toBe(0)
+        ->and($result->stdout)->toContain('Fix applied')
+        ->and($result->stdout)->toContain('Issue fixed');
+});
+
 it('exits 1 when the fix failed', function () {
     $result = issues()
         ->withApi(api()
