@@ -260,8 +260,8 @@ final class ConfigureHerdCommand extends BaseCommand
 
     /**
      * Run the herd steps inside one task, so a PHP download is visibly a
-     * download: the command line in progress under the label, herd's own
-     * output scrolling, and one line per step kept when it is done.
+     * download: each command line heads its own output in the scrolling
+     * area, and one line per step is kept when it is done.
      *
      * @param  array<string, mixed>  $document
      * @return list<string>
@@ -276,7 +276,7 @@ final class ConfigureHerdCommand extends BaseCommand
             };
 
             if (! $this->optionBool('no-init')) {
-                $log->subLabel('$ herd init -n');
+                $log->line('$ herd init -n');
                 $result = $herd->init($root, $relay);
 
                 if ($result->successful()) {
@@ -289,12 +289,12 @@ final class ConfigureHerdCommand extends BaseCommand
             }
 
             if ($php !== null && $herd->isolatedVersion($root) !== $php) {
-                $log->subLabel('$ herd isolate '.$php);
+                $log->line('$ herd isolate '.$php);
                 $herd->isolate($root, $php, $relay);
                 $log->success('herd isolate '.$php);
                 $applied[] = 'herd isolate '.$php;
 
-                $log->subLabel('$ herd link');
+                $log->line('$ herd link');
                 $herd->link($root, $relay);
                 $log->success('herd link');
                 $applied[] = 'herd link';
@@ -303,13 +303,11 @@ final class ConfigureHerdCommand extends BaseCommand
             $name = is_string($document['name'] ?? null) ? $document['name'] : null;
 
             if (($document['secured'] ?? false) === true && $name !== null && ! in_array($name, $herd->securedSites(), true)) {
-                $log->subLabel('$ herd secure '.$name);
+                $log->line('$ herd secure '.$name);
                 $herd->secure($name, $relay);
                 $log->success('herd secure '.$name);
                 $applied[] = 'herd secure '.$name;
             }
-
-            $log->subLabel('');
 
             return $applied;
         });
