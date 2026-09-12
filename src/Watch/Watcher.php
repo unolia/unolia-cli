@@ -50,9 +50,19 @@ final class Watcher
                 }
             }
 
+            $done = $target->isDone($state);
+            $summary = $done ? $target->summary($state) : null;
+
             foreach ($target->events($previous, $state) as $event) {
                 if ($log === null) {
-                    $this->out->event($event->toArray(), $event->line);
+                    // The header says what is followed and the footer how it
+                    // ended, so neither is repeated as an event line on the
+                    // table face: the summary never is, and the introduction
+                    // is not when the thing had already finished on first look.
+                    $introduces = str_ends_with($event->type, '.started') || str_ends_with($event->type, '.updated');
+                    $repeatsFrame = $table && $done && ($event->line === $summary || ($previous === null && $introduces));
+
+                    $this->out->event($event->toArray(), $repeatsFrame ? '' : $event->line);
                 } elseif (str_ends_with($event->type, '.output')) {
                     $log->line(ltrim($event->line));
                 } elseif (! $target->isDone($state)) {
@@ -60,8 +70,7 @@ final class Watcher
                 }
             }
 
-            if ($target->isDone($state)) {
-                $summary = $target->summary($state);
+            if ($done && $summary !== null) {
 
                 if ($log !== null && $summary !== '') {
                     $log->subLabel('');
