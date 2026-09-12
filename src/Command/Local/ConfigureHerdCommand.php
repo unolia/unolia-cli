@@ -182,7 +182,7 @@ final class ConfigureHerdCommand extends BaseCommand
             name: $name,
             php: $php,
             secured: $this->secured($existing),
-            aliases: $this->aliases($existing),
+            aliases: $this->aliases($existing, $name, is_string($website['domain'] ?? null) ? $website['domain'] : null),
             databaseEngine: is_string(Arr::get($server, 'database.engine')) ? (string) Arr::get($server, 'database.engine') : null,
             databaseVersion: is_scalar(Arr::get($server, 'database.version')) ? (string) Arr::get($server, 'database.version') : null,
             withServices: ! $this->optionBool('no-services') && $herd->isPro(),
@@ -210,11 +210,13 @@ final class ConfigureHerdCommand extends BaseCommand
 
     /**
      * Aliases create local hostnames, so they are only added when someone says yes.
+     * The website's alias domains (ws.example.com next to example.com) become
+     * Herd aliases by their first label, so ws.example.com answers as ws.test.
      *
      * @param  array<string, mixed>  $existing
      * @return list<string>
      */
-    private function aliases(array $existing): array
+    private function aliases(array $existing, string $site, ?string $primary): array
     {
         $current = [];
 
@@ -237,19 +239,31 @@ final class ConfigureHerdCommand extends BaseCommand
 
             $label = explode('.', $domain['domain'])[0];
 
-            if ($label !== '' && ! in_array($label, $current, true)) {
-                $extra[] = $label;
+            if ($label !== '' && ! in_array($label, $current, true) && ! isset($extra[$label])) {
+                $extra[$label] = $domain['domain'];
             }
         }
-
-        $extra = array_values(array_unique($extra));
 
         if ($extra === []) {
             return $current;
         }
 
-        return $this->ask()->confirm(sprintf('Add the local aliases %s?', implode(', ', $extra)), false)
-            ? array_merge($current, $extra)
+        $local = array_map(static fn (string $label): string => $label.'.test', array_keys($extra));
+
+        $this->out()->note(sprintf(
+            '%s also answers on %s.',
+            $primary ?? 'The website',
+            implode(', ', $extra),
+        ));
+
+        $question = sprintf(
+            'Add %s as a local alias of %s.test?',
+            implode(', ', $local),
+            $site,
+        );
+
+        return $this->ask()->confirm($question, false)
+            ? array_merge($current, array_keys($extra))
             : $current;
     }
 
