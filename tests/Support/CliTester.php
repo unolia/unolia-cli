@@ -13,6 +13,7 @@ use Unolia\Cli\Api\Poller;
 use Unolia\Cli\Application;
 use Unolia\Cli\Console\Ask;
 use Unolia\Cli\Console\Face;
+use Unolia\Cli\Console\Out;
 use Unolia\Cli\Context\GitRemote;
 use Unolia\Cli\Context\ProjectConfig;
 use Unolia\Cli\Local\ComposerLock;
@@ -239,7 +240,7 @@ final class CliTester
         )->withInteractive($this->interactive);
 
         $runtime->set(Face::class, $face);
-        $runtime->set(Ask::class, new ScriptedAsk($face, $this->answers));
+        $runtime->set(Ask::class, new ScriptedAsk($face, $this->answers, static fn (): Out => $runtime->out()));
         $runtime->set(ClientFactory::class, new FakeClientFactory($runtime, $this->api));
         $runtime->factory(Client::class, static function (Runtime $runtime): Client {
             $host = $runtime->host();
