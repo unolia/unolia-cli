@@ -123,6 +123,8 @@ final class ConfigureHerdCommand extends BaseCommand
             }
         }
 
+        $this->preview($existing === [], $diff, $yaml);
+
         // Herd is asked to touch the machine either way (isolate, link,
         // secure), so a matching file is not a reason to skip the question: a
         // pipe without --yes is refused here exactly as it is when the file
@@ -182,7 +184,7 @@ final class ConfigureHerdCommand extends BaseCommand
             name: $name,
             php: $php,
             secured: $this->secured($existing),
-            aliases: $this->aliases($existing, $name, is_string($website['domain'] ?? null) ? $website['domain'] : null),
+            aliases: $this->aliases($existing),
             databaseEngine: is_string(Arr::get($server, 'database.engine')) ? (string) Arr::get($server, 'database.engine') : null,
             databaseVersion: is_scalar(Arr::get($server, 'database.version')) ? (string) Arr::get($server, 'database.version') : null,
             withServices: ! $this->optionBool('no-services') && $herd->isPro(),
@@ -209,14 +211,15 @@ final class ConfigureHerdCommand extends BaseCommand
     }
 
     /**
-     * Aliases create local hostnames, so they are only added when someone says yes.
-     * The website's alias domains (ws.example.com next to example.com) become
-     * Herd aliases by their first label, so ws.example.com answers as ws.test.
+     * The aliases herd.yml already has are kept as they are. Offering the
+     * website's alias domains (ws.example.com as ws.test) is parked until
+     * someone asks for it: it created a local hostname most people did not
+     * want and the question read as noise.
      *
      * @param  array<string, mixed>  $existing
      * @return list<string>
      */
-    private function aliases(array $existing, string $site, ?string $primary): array
+    private function aliases(array $existing): array
     {
         $current = [];
 
@@ -226,45 +229,7 @@ final class ConfigureHerdCommand extends BaseCommand
             }
         }
 
-        if (! $this->ask()->interactive()) {
-            return $current;
-        }
-
-        $extra = [];
-
-        foreach ($this->domains() as $domain) {
-            if (($domain['kind'] ?? null) !== 'alias' || ! is_string($domain['domain'] ?? null)) {
-                continue;
-            }
-
-            $label = explode('.', $domain['domain'])[0];
-
-            if ($label !== '' && ! in_array($label, $current, true) && ! isset($extra[$label])) {
-                $extra[$label] = $domain['domain'];
-            }
-        }
-
-        if ($extra === []) {
-            return $current;
-        }
-
-        $local = array_map(static fn (string $label): string => $label.'.test', array_keys($extra));
-
-        $this->out()->note(sprintf(
-            '%s also answers on %s.',
-            $primary ?? 'The website',
-            implode(', ', $extra),
-        ));
-
-        $question = sprintf(
-            'Add %s as a local alias of %s.test?',
-            implode(', ', $local),
-            $site,
-        );
-
-        return $this->ask()->confirm($question, false)
-            ? array_merge($current, array_keys($extra))
-            : $current;
+        return $current;
     }
 
     /**
@@ -364,6 +329,40 @@ final class ConfigureHerdCommand extends BaseCommand
     }
 
     /**
+     * What the confirmation is about, on the table face: the whole file when
+     * herd.yml does not exist yet, the diff when it does, then what herd is
+     * asked to run. A script sees the same in the --json report instead.
+     *
+     * @param  list<array{0: string, 1: string}>  $diff
+     */
+    private function preview(bool $creating, array $diff, string $yaml): void
+    {
+        if ($this->structured()) {
+            return;
+        }
+
+        if ($creating) {
+            $this->out()->note('herd.yml does not exist yet. It would contain:');
+            $this->out()->line('');
+            $this->out()->line(rtrim($yaml));
+            $this->out()->line('');
+        } elseif ($diff !== []) {
+            $this->out()->note('Changes to herd.yml:');
+            $this->out()->line('');
+
+            foreach ($diff as [$sign, $line]) {
+                $this->out()->line($sign.' '.$line);
+            }
+
+            $this->out()->line('');
+        }
+
+        if (! $this->optionBool('no-init')) {
+            $this->out()->note('Then herd init installs and isolates PHP, links and secures the site.');
+        }
+    }
+
+    /**
      * @param  array<string, mixed>  $document
      * @param  list<array<string, mixed>>  $plan
      * @param  list<array{0: string, 1: string}>  $diff
@@ -385,15 +384,15 @@ final class ConfigureHerdCommand extends BaseCommand
             return;
         }
 
-        if ($diff !== []) {
-            $this->out()->line('');
-
-            foreach ($diff as [$sign, $line]) {
-                $this->out()->line($sign.' '.$line);
-            }
-        }
-
         if ($dryRun) {
+            if ($diff !== []) {
+                $this->out()->line('');
+
+                foreach ($diff as [$sign, $line]) {
+                    $this->out()->line($sign.' '.$line);
+                }
+            }
+
             $this->out()->line('');
             $this->out()->line($yaml);
 
