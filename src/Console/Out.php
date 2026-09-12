@@ -267,6 +267,19 @@ final class Out
         $this->write($text);
     }
 
+    /**
+     * Text carrying Symfony style tags: coloured on a terminal, the tags
+     * stripped in a pipe. Escape user data before wrapping it in a tag.
+     */
+    public function formatted(string $text): void
+    {
+        if ($text === '') {
+            return;
+        }
+
+        $this->stdout->writeln($text);
+    }
+
     /** A clickable label in terminals that support OSC 8, the plain URL everywhere else. */
     public function link(string $url, ?string $label = null): string
     {

@@ -13,6 +13,7 @@ use Unolia\Cli\Api\Requests\Websites\ShowWebsite;
 use Unolia\Cli\Command\BaseCommand;
 use Unolia\Cli\Console\CliError;
 use Unolia\Cli\Console\ExitCode;
+use Unolia\Cli\Console\Table\Cell;
 use Unolia\Cli\Context\Need;
 use Unolia\Cli\Context\ProjectConfig;
 use Unolia\Cli\Local\HerdYaml;
@@ -67,13 +68,13 @@ final class StatusCommand extends BaseCommand
         if ($this->structured()) {
             $this->out()->record([
                 'host' => $host,
-                'login' => $login,
+                'login' => $login === null ? null : implode(' ', array_map(static fn (Cell $cell): string => $cell->text, $login)),
                 'team' => $context->team,
                 'project' => $context->project,
                 'project_name' => $project,
                 'website' => $context->website,
                 'website_domain' => $website,
-                'git' => $git,
+                'git' => $git === null ? null : implode(' ', array_map(static fn (Cell $cell): string => $cell->text, $git)),
                 'herd' => $herd,
                 'config_path' => $context->configPath,
                 'sources' => $sources,
@@ -83,21 +84,24 @@ final class StatusCommand extends BaseCommand
         }
 
         $rows = [
-            ['Host', $host, ''],
-            ['Login', $login ?? 'not logged in, run unolia login', $this->sourceLabel($sources['login'] ?? null)],
-            ['Team', $context->team ?? 'not set, run unolia team switch <slug>', $this->sourceLabel($sources['team'] ?? null)],
-            ['Project', $this->idAndName($context->project, $project) ?? 'not linked, run unolia init', $this->sourceLabel($sources['project'] ?? null)],
-            ['Website', $this->idAndName($context->website, $website) ?? 'not linked, run unolia init', $this->sourceLabel($sources['website'] ?? null)],
-            ['Git', $git ?? 'not a git repository', $git === null ? '' : 'remote origin'],
-            ['Herd', $herd ?? 'no herd.yml, run unolia configure herd', $herd === null ? '' : 'herd.yml'],
+            ['Host', [Cell::text($host)], ''],
+            ['Login', $login ?? self::missing('not logged in, run', 'unolia login'), $this->sourceLabel($sources['login'] ?? null)],
+            ['Team', $context->team === null ? self::missing('not set, run', 'unolia team switch <slug>') : [Cell::text($context->team)->bold()], $this->sourceLabel($sources['team'] ?? null)],
+            ['Project', self::idAndName($context->project, $project) ?? self::missing('not linked, run', 'unolia init'), $this->sourceLabel($sources['project'] ?? null)],
+            ['Website', self::idAndName($context->website, $website) ?? self::missing('not linked, run', 'unolia init'), $this->sourceLabel($sources['website'] ?? null)],
+            ['Git', $git ?? [Cell::text('not a git repository')->dim()], $git === null ? '' : 'remote origin'],
+            ['Herd', $herd === null ? self::missing('no herd.yml, run', 'unolia configure herd') : [Cell::text($herd)], $herd === null ? '' : 'herd.yml'],
         ];
 
-        $this->out()->line($this->align($rows));
+        $this->out()->formatted($this->align($rows));
 
         return ExitCode::Ok;
     }
 
-    private function login(): string
+    /**
+     * @return list<Cell>
+     */
+    private function login(): array
     {
         try {
             $token = $this->fetch(new CurrentToken);
@@ -114,41 +118,46 @@ final class StatusCommand extends BaseCommand
         $scopes = $token['scopes'] ?? $this->runtime()->hosts()->scopes($host) ?? [];
         $expires = $token['expires_at'] ?? $this->runtime()->hosts()->expiresAt($host);
 
-        $line = sprintf(
-            '%s (%s token, %s',
-            Str::scalar($principal['name'] ?? null, 'unknown'),
+        $details = sprintf(
+            '(%s token, %s',
             Str::scalar($token['tokenable_type'] ?? null, 'unknown'),
             $this->scopeSummary(is_array($scopes) ? $scopes : []),
         );
+        $cells = [Cell::text(Str::scalar($principal['name'] ?? null, 'unknown'))->bold()];
 
-        if (is_string($expires) && $expires !== '') {
-            $line .= ', expires '.substr($expires, 0, 10);
-            $this->warnAboutExpiry($expires);
+        if (! is_string($expires) || $expires === '') {
+            return [...$cells, Cell::text($details.')')->dim()];
         }
 
-        return $line.')';
+        $days = $this->warnAboutExpiry($expires);
+        $expiry = Cell::text(($days !== null && $days <= 0 ? 'expired ' : 'expires ').substr($expires, 0, 10).')');
+
+        return [...$cells, Cell::text($details.',')->dim(), match (true) {
+            $days === null => $expiry->dim(),
+            $days <= 0 => $expiry->color('red'),
+            $days <= self::EXPIRY_NOTICE_DAYS => $expiry->color('yellow'),
+            default => $expiry->dim(),
+        }];
     }
 
-    /** Two weeks of notice, so a token does not stop a deploy one morning. */
-    private function warnAboutExpiry(string $expires): void
+    /** Two weeks of notice, so a token does not stop a deploy one morning. Returns the days left. */
+    private function warnAboutExpiry(string $expires): ?int
     {
         $timestamp = strtotime($expires);
 
         if ($timestamp === false) {
-            return;
+            return null;
         }
 
         $days = (int) ceil(($timestamp - time()) / 86400);
 
         if ($days <= 0) {
             $this->out()->warn('Your token has expired, run unolia login.');
-
-            return;
-        }
-
-        if ($days <= self::EXPIRY_NOTICE_DAYS) {
+        } elseif ($days <= self::EXPIRY_NOTICE_DAYS) {
             $this->out()->warn(sprintf('Your token expires in %d day%s, run unolia login.', $days, $days === 1 ? '' : 's'));
         }
+
+        return $days;
     }
 
     /**
@@ -200,16 +209,34 @@ final class StatusCommand extends BaseCommand
         };
     }
 
-    private function idAndName(?int $id, ?string $name): ?string
+    /**
+     * @return list<Cell>|null
+     */
+    private static function idAndName(?int $id, ?string $name): ?array
     {
         if ($id === null) {
             return null;
         }
 
-        return $name === null ? (string) $id : $id.' '.$name;
+        $cells = [Cell::text('#'.$id)->dim()];
+
+        return $name === null ? $cells : [...$cells, Cell::text($name)];
     }
 
-    private function gitLine(): ?string
+    /**
+     * Something missing and the command that sets it: the words amber, the command cyan.
+     *
+     * @return list<Cell>
+     */
+    private static function missing(string $words, string $command): array
+    {
+        return [Cell::text($words)->color('yellow'), Cell::text($command)->color('cyan')];
+    }
+
+    /**
+     * @return list<Cell>|null
+     */
+    private function gitLine(): ?array
     {
         $git = $this->runtime()->context()->git();
         $slug = $git->slug();
@@ -218,20 +245,20 @@ final class StatusCommand extends BaseCommand
             return null;
         }
 
-        $line = $slug;
+        $cells = [Cell::text($slug)];
         $branch = $git->branch();
 
         if ($branch !== null) {
-            $line .= ' @ '.$branch;
+            $cells[] = Cell::text('@ '.$branch);
         }
 
         $commit = $git->commit();
 
         if ($commit !== null) {
-            $line .= ' ('.$commit.')';
+            $cells[] = Cell::text('('.$commit.')')->dim();
         }
 
-        return $line;
+        return $cells;
     }
 
     private function herdLine(): ?string
@@ -263,25 +290,49 @@ final class StatusCommand extends BaseCommand
     }
 
     /**
-     * @param  list<array{0: string, 1: string, 2: string}>  $rows
+     * Label, value, source in three aligned columns. The value is a list of
+     * cells joined by spaces, measured on their plain text so colour never
+     * moves a column; the source, the least important, is dim.
+     *
+     * @param  list<array{0: string, 1: list<Cell>, 2: string}>  $rows
      */
     private function align(array $rows): string
     {
         $labelWidth = 0;
         $valueWidth = 0;
 
-        foreach ($rows as [$label, $value, $source]) {
+        foreach ($rows as [$label, $value]) {
             $labelWidth = max($labelWidth, mb_strwidth($label));
-            $valueWidth = max($valueWidth, mb_strwidth($value));
+            $valueWidth = max($valueWidth, self::width($value));
         }
 
         $lines = [];
 
         foreach ($rows as [$label, $value, $source]) {
-            $line = str_pad($label, $labelWidth + 2).str_pad($value, $source === '' ? 0 : $valueWidth + 2).$source;
+            $styled = implode(' ', array_map(static fn (Cell $cell): string => $cell->styled(false), $value));
+            $line = str_pad($label, $labelWidth + 2).$styled;
+
+            if ($source !== '') {
+                $line .= str_repeat(' ', $valueWidth - self::width($value) + 2).'<fg=gray>'.$source.'</>';
+            }
+
             $lines[] = rtrim($line);
         }
 
         return implode("\n", $lines);
+    }
+
+    /**
+     * @param  list<Cell>  $cells
+     */
+    private static function width(array $cells): int
+    {
+        $width = 0;
+
+        foreach ($cells as $cell) {
+            $width += $cell->width();
+        }
+
+        return $width + max(0, count($cells) - 1);
     }
 }
