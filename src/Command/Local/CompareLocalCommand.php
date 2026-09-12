@@ -78,7 +78,7 @@ final class CompareLocalCommand extends BaseCommand
         foreach ($this->wanted() as $name) {
             $components[] = match ($name) {
                 'php' => $this->php($root, $website),
-                'laravel' => $this->laravel($root, $versions),
+                'laravel' => $this->laravel($root, $versions, Arr::get($website, 'repository.id')),
                 'composer' => $this->composer(),
                 'database' => $this->database($root, $server),
                 default => $this->node(),
@@ -215,10 +215,10 @@ final class CompareLocalCommand extends BaseCommand
      * @param  list<array<string, mixed>>  $versions
      * @return array<string, mixed>
      */
-    private function laravel(string $root, array $versions): array
+    private function laravel(string $root, array $versions, mixed $repositoryId): array
     {
         $local = $this->runtime()->get(ComposerLock::class)->packageVersion($root, 'laravel/framework');
-        $production = $this->versionOf($versions, 'laravel/framework');
+        $production = $this->versionOf($versions, 'laravel/framework', is_numeric($repositoryId) ? (int) $repositoryId : null);
 
         return $this->component('laravel', $local, $production, $this->compareSemver($local, $production), 'composer.lock', 'project versions');
     }
@@ -285,12 +285,25 @@ final class CompareLocalCommand extends BaseCommand
     }
 
     /**
+     * The production version of a package, read from the website's own
+     * repository: a project can hold several (the app, its marketing site),
+     * each on its own framework version, and the deployed one is the only
+     * fair comparison for this checkout. Without a known repository, the
+     * first row wins.
+     *
      * @param  list<array<string, mixed>>  $versions
      */
-    private function versionOf(array $versions, string $package): ?string
+    private function versionOf(array $versions, string $package, ?int $repositoryId): ?string
     {
         foreach ($versions as $version) {
-            if (($version['name'] ?? null) === $package && is_string($version['installed_version'] ?? null)) {
+            if (($version['name'] ?? null) !== $package || ! is_string($version['installed_version'] ?? null)) {
+                continue;
+            }
+
+            $subject = is_array($version['subject'] ?? null) ? $version['subject'] : [];
+            $sameRepository = ($subject['type'] ?? null) === 'repository' && (int) ($subject['id'] ?? 0) === $repositoryId;
+
+            if ($repositoryId === null || $sameRepository) {
                 // Composer records tags as they are, `v12.64.0`; the comparison wants numbers.
                 return ltrim($version['installed_version'], 'v');
             }

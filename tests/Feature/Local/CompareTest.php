@@ -109,3 +109,15 @@ it('compares the versions of a project side by side', function () {
         ->and($result->stdout)->toContain('ACME/MARKETING')
         ->and($result->stdout)->not->toContain('! laravel/framework');
 });
+
+it('reads the framework version from the website\'s own repository', function () {
+    $result = compareCli()
+        ->withComposer(['laravel/framework' => '12.28.1'])
+        ->withApi(compareApi()->on('GET', 'v1/projects/12/versions', fixture('project-12-versions-two-repos.json')))
+        ->run('compare', 'local', '--json');
+
+    $laravel = array_values(array_filter($result->json()['components'], fn (array $row): bool => $row['name'] === 'laravel'))[0];
+
+    expect($laravel['production'])->toBe('12.28.1')
+        ->and($laravel['verdict'])->toBe('match');
+});
