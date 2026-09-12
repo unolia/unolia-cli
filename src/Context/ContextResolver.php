@@ -130,6 +130,21 @@ final class ContextResolver
         [$rawProject, $projectSource] = $this->pick('project', 'UNOLIA_PROJECT', $this->config->project());
         [$rawWebsite, $websiteSource] = $this->pick('website', 'UNOLIA_WEBSITE', $this->config->website());
 
+        // A list run from a checkout is about that checkout: when nothing is
+        // configured, the git remote scopes it, quietly. Only a firm need
+        // goes on to ask.
+        if ($need === Need::None && $rawWebsite === null && $rawProject === null) {
+            [$rawWebsite, $rawProject] = $this->fromRemote(null);
+
+            if ($rawWebsite !== null) {
+                $websiteSource = 'resolve';
+            }
+
+            if ($rawProject !== null) {
+                $projectSource = 'resolve';
+            }
+        }
+
         if ($need === Need::Website && $rawWebsite === null) {
             [$rawWebsite, $rawProject] = $this->fromRemote($rawProject);
 

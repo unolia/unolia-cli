@@ -95,7 +95,10 @@ final class Cell
         }
 
         if ($links && $this->url !== null) {
-            $text = "\e]8;;".$this->url."\e\\".$text."\e]8;;\e\\";
+            // BEL ends the OSC 8 sequences. The other terminator, ESC backslash,
+            // leaves a backslash right before the next "<", which Symfony's
+            // formatter reads as an escaped tag and prints as text.
+            $text = "\e]8;;".$this->url."\x07".$text."\e]8;;\x07";
         }
 
         return $text;
