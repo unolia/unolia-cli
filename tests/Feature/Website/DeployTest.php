@@ -26,14 +26,14 @@ it('deploys the linked website with --yes in a pipe', function () {
 });
 
 it('refuses to deploy in a pipe without --yes', function () {
-    $cli = linked()->withApi(api()->on('GET', 'v1/websites/118', fixture('website-118.json')));
+    $cli = linked()->withApi(api()->on('POST', 'v1/websites/118/deployments', fixture('deployment-dry-run.json')));
 
     $result = $cli->run('deploy');
 
     expect($result->exitCode)->toBe(2)
         ->and($result->stderr)->toContain('needs a confirmation')
-        ->and($result->stderr)->toContain('Deploy marketing.acme.com')
-        ->and(array_column($cli->api()->calls(), 'method'))->not->toContain('POST');
+        ->and($result->stderr)->toContain('Deploy marketing.acme.com from main, 3f9c2e1 to a1b2c3d (3 new commits)?')
+        ->and(array_column($cli->api()->calls(), 'body'))->not->toContain(['dry_run' => false]);
 });
 
 it('exits 3 when nothing is linked and you are not logged in', function () {
@@ -47,7 +47,7 @@ it('asks before deploying on a terminal, then follows the deployment in a task',
     $cli = linked()
         ->answers(['Deploy marketing.acme.com' => true])
         ->withApi(api()
-            ->on('GET', 'v1/websites/118', fixture('website-118.json'))
+            ->on('POST', 'v1/websites/118/deployments', fixture('deployment-dry-run.json'))
             ->on('POST', 'v1/websites/118/deployments', fixture('deployment-create-201.json'), 201)
             ->on('GET', 'v1/deployments/4813?wait=0', fixture('deployment-4812-running.json'))
             ->on('GET', 'v1/deployments/4813/output?after=0', fixture('deployment-4812-output-0.json'))
@@ -66,7 +66,7 @@ it('hands the id back at once with --no-progress on a terminal', function () {
     $cli = linked()
         ->answers(['Deploy marketing.acme.com' => true])
         ->withApi(api()
-            ->on('GET', 'v1/websites/118', fixture('website-118.json'))
+            ->on('POST', 'v1/websites/118/deployments', fixture('deployment-dry-run.json'))
             ->on('POST', 'v1/websites/118/deployments', fixture('deployment-create-201.json'), 201));
 
     $result = $cli->run('deploy', '--no-progress');
@@ -79,7 +79,7 @@ it('hands the id back at once with --no-progress on a terminal', function () {
 it('stops when the confirmation is refused', function () {
     $result = linked()
         ->answers(['Deploy marketing.acme.com' => false])
-        ->withApi(api()->on('GET', 'v1/websites/118', fixture('website-118.json')))
+        ->withApi(api()->on('POST', 'v1/websites/118/deployments', fixture('deployment-dry-run.json')))
         ->run('deploy');
 
     expect($result->exitCode)->toBe(2)
@@ -94,7 +94,11 @@ it('previews with --dry-run and changes nothing', function () {
 
     expect($result->exitCode)->toBe(0)
         ->and($cli->api()->lastCall()['body'])->toBe(['dry_run' => true])
-        ->and($result->stdout)->toContain('Would trigger');
+        ->and($result->stdout)->toContain('Website      marketing.acme.com · Forge · main')
+        ->and($result->stdout)->toContain('Live now     3f9c2e1 Fix the footer links · eser ·')
+        ->and($result->stdout)->toContain('Branch head  a1b2c3d Add the pricing page · eser ·')
+        ->and($result->stdout)->toContain('Pending      3 new commits')
+        ->and($result->stdout)->toContain('nothing was triggered');
 });
 
 it('exits 1 when the provider cannot deploy', function () {

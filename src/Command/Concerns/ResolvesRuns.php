@@ -7,9 +7,12 @@ namespace Unolia\Cli\Command\Concerns;
 use Unolia\Cli\Api\Requests\Automations\ListAutomationRuns;
 use Unolia\Cli\Api\Requests\Automations\ListAutomations;
 use Unolia\Cli\Console\CliError;
+use Unolia\Cli\Support\Str;
 
 /**
- * Automation runs are ULIDs. A prefix of six characters or more is enough.
+ * Automation runs are ULIDs: the first characters are a timestamp shared by
+ * every run started around the same time, so the short id every command
+ * takes is the tail of the ULID, the six characters unolia automation runs prints.
  */
 trait ResolvesRuns
 {
@@ -23,12 +26,12 @@ trait ResolvesRuns
 
         if (strlen($reference) < 6) {
             throw CliError::usage(
-                'a run prefix needs at least six characters',
+                'a short run id needs at least six characters',
                 'Run unolia automation runs to see them.',
             );
         }
 
-        $rows = $this->collection(new ListAutomationRuns(['ulid_prefix' => $reference, 'per_page' => 10]));
+        $rows = $this->collection(new ListAutomationRuns(['ulid_suffix' => strtoupper($reference), 'per_page' => 10]));
         $matches = [];
 
         foreach ($rows as $row) {
@@ -42,13 +45,16 @@ trait ResolvesRuns
         }
 
         if ($matches === []) {
-            throw CliError::notFound(sprintf('no run starts with %s', $reference));
+            throw CliError::notFound(
+                sprintf('no run ends with %s', $reference),
+                'The short id is the last six characters of the ULID, as unolia automation runs prints it.',
+            );
         }
 
         throw CliError::usage(
             sprintf('%s matches several runs', $reference),
-            'Use more characters of the ULID.',
-            ['candidates' => array_keys($matches)],
+            'Use more characters from the end of the ULID, or the whole ULID from unolia automation runs --json ulid.',
+            ['candidates' => array_map(Str::shortId(...), array_keys($matches))],
         );
     }
 

@@ -17,6 +17,18 @@ final class Str
         return rtrim(mb_strimwidth($value, 0, $length, '')).$end;
     }
 
+    /**
+     * The short form of a time ordered id (uuid v7, ulid): its last characters,
+     * the random part. The first ones are a timestamp shared by everything
+     * created around the same time, so a prefix tells nothing apart.
+     */
+    public static function shortId(mixed $id, int $length = 6): string
+    {
+        $id = is_scalar($id) ? (string) $id : '';
+
+        return mb_strlen($id) > $length ? mb_substr($id, -$length) : $id;
+    }
+
     public static function headline(string $value): string
     {
         $value = str_replace(['_', '-', '.'], ' ', $value);

@@ -2,13 +2,16 @@
 
 declare(strict_types=1);
 
+use Symfony\Component\Console\Output\BufferedOutput;
 use Unolia\Cli\Console\Face;
 use Unolia\Cli\Console\Format;
+use Unolia\Cli\Console\Out;
 use Unolia\Cli\Console\Renderers\StyledTableRenderer;
 use Unolia\Cli\Console\Table\Cell;
 use Unolia\Cli\Console\Table\Column;
 use Unolia\Cli\Console\Table\Status;
 use Unolia\Cli\Console\Table\Table;
+use Unolia\Cli\Support\Str;
 
 function sampleTable(): Table
 {
@@ -60,4 +63,29 @@ it('gives a pipe plain words instead of glyphs and drops empty columns', functio
         ->and($lines[2])->toBe('  #4  zeta.test   active')
         ->and($output = implode("\n", $lines))->not->toContain('●')
         ->and($output)->not->toContain('<fg');
+});
+
+it('shortens a time ordered id to its tail, where the random part is', function () {
+    expect(Str::shortId('01J9P7QK3M8T5V2N4B6C8D0E1F'))->toBe('8D0E1F')
+        ->and(Str::shortId('019f5633-3c4c-70f1-ab88-844537110248'))->toBe('110248')
+        ->and(Str::shortId('abc'))->toBe('abc')
+        ->and(Str::shortId(null))->toBe('');
+});
+
+it('draws a severity as a glyph for the eye and a word for the pipe', function () {
+    expect(Status::severity('error')->styled(false))->toBe('<fg=red>✕</>')
+        ->and(Status::severity('error')->plainText())->toBe('')
+        ->and(Status::severity('warning')->styled(false))->toBe('<fg=yellow>◐</>')
+        ->and(Status::severity('info')->styled(false))->toBe('<fg=gray>·</>')
+        ->and(Status::severityWord('major')->styled(false))->toBe('<fg=red>major</>')
+        ->and(Status::severityWord('minor')->plainText())->toBe('minor');
+});
+
+it('drops the box: a plain list is drawn by the same renderer with the id on the right', function () {
+    $face = new Face(interactive: false, color: false, format: Format::Table);
+    $out = new Out($face, $stdout = new BufferedOutput, new BufferedOutput);
+
+    $out->list([['id' => 7, 'name' => 'Seven'], ['id' => 12, 'name' => 'Twelve']], ['id' => 'Id', 'name' => 'Name']);
+
+    expect($stdout->fetch())->toBe("ID  NAME\n 7  Seven\n12  Twelve\n");
 });

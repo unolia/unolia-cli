@@ -2,8 +2,40 @@
   "data": {
     "dry_run": true,
     "website_id": 118,
+    "website": {
+      "id": 118,
+      "domain": "marketing.acme.com",
+      "name": "Marketing",
+      "branch": "main",
+      "provider": {"slug": "forge", "label": "Forge"}
+    },
+    "repository": {"id": 57, "full_name": "acme/marketing"},
+    "current": {
+      "id": 4812,
+      "status": "success",
+      "commit": {
+        "hash": "3f9c2e1a7b4c5d6e8f9012345678901234567890",
+        "short": "3f9c2e1",
+        "branch": "main",
+        "author": "eser",
+        "message": "Fix the footer links"
+      },
+      "started_at": "2026-09-03T09:38:00Z",
+      "ended_at": "2026-09-03T09:40:12Z",
+      "url": "https://app.unolia.com/acme/projects/12/websites/118/deployments/4812"
+    },
+    "head": {
+      "hash": "a1b2c3d4e5f60718293a4b5c6d7e8f9012345678",
+      "short": "a1b2c3d",
+      "author": "eser",
+      "message": "Add the pricing page",
+      "committed_at": "2026-09-05T09:30:00Z",
+      "url": "https://github.com/acme/marketing/commit/a1b2c3d4e5f60718293a4b5c6d7e8f9012345678"
+    },
+    "pending_commits": 3,
+    "up_to_date": false,
     "supports_deployments": true,
     "would_trigger": true,
-    "summary": "Forge would redeploy marketing.acme.com from main."
+    "summary": "marketing.acme.com would go from 3f9c2e1 to a1b2c3d on main (3 new commits)."
   }
 }

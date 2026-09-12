@@ -81,12 +81,12 @@ it('exits 7 when a run parks waiting for an answer', function () {
         ->and($result->stdout)->toContain('waiting for an answer');
 });
 
-it('resolves a run from a ULID prefix', function () {
+it('resolves a run from its short id, the tail of the ULID', function () {
     $result = automations()
         ->withApi(api()
-            ->on('GET', 'v1/automation-runs?ulid_prefix=01J9A2', fixture('automation-runs.json'))
+            ->on('GET', 'v1/automation-runs?ulid_suffix=V6W7Y8', fixture('automation-runs.json'))
             ->on('GET', 'v1/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-completed.json')))
-        ->run('automation', 'watch', '01J9A2');
+        ->run('automation', 'watch', 'v6w7y8');
 
     expect($result->exitCode)->toBe(0)
         ->and($result->stdout)->toContain('completed');
@@ -145,9 +145,9 @@ it('lists runs and filters by state', function () {
 it('prints the log of a run', function () {
     $result = automations()
         ->withApi(api()
-            ->on('GET', 'v1/automation-runs?ulid_prefix=01J9A2', fixture('automation-runs.json'))
+            ->on('GET', 'v1/automation-runs?ulid_suffix=V6W7Y8', fixture('automation-runs.json'))
             ->on('GET', 'v1/automation-runs/'.RUN.'/logs', fixture('run-01J9A2-logs.json')))
-        ->run('automation', 'logs', '01J9A2');
+        ->run('automation', 'logs', 'V6W7Y8');
 
     expect($result->exitCode)->toBe(0)
         ->and($result->stdout)->toContain('apt upgrade finished on web-01');

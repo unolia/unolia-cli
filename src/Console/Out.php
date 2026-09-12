@@ -12,6 +12,8 @@ use Unolia\Cli\Console\Renderers\NdjsonRenderer;
 use Unolia\Cli\Console\Renderers\StyledTableRenderer;
 use Unolia\Cli\Console\Renderers\TableRenderer;
 use Unolia\Cli\Console\Renderers\YamlRenderer;
+use Unolia\Cli\Console\Table\Cell;
+use Unolia\Cli\Console\Table\Column;
 use Unolia\Cli\Console\Table\Table;
 use Unolia\Cli\Support\Str;
 
@@ -37,7 +39,7 @@ final class Out
         private readonly OutputInterface $stderr,
         private readonly Jq $jq = new Jq,
     ) {
-        $this->table = new TableRenderer($face, $stdout);
+        $this->table = new TableRenderer;
         $this->json = new JsonRenderer($face->interactive);
         $this->ndjson = new NdjsonRenderer;
         $this->csv = new CsvRenderer;
@@ -50,8 +52,10 @@ final class Out
     }
 
     /**
-     * A list of rows. Keys are stable across formats, $columns maps key to table header,
-     * $decorate returns the display strings for the table face only.
+     * A list of rows drawn without a declared Table: one plain column per key,
+     * ids right aligned and dim, the same styled face as every other list.
+     * Keys are stable across formats, $columns maps key to header, $decorate
+     * returns the display strings for the table face only.
      *
      * @param  list<array<string, mixed>>  $rows
      * @param  array<string, string>  $columns
@@ -59,27 +63,36 @@ final class Out
      */
     public function list(array $rows, array $columns, ?callable $decorate = null, ?string $empty = null): void
     {
-        if ($this->face->format === Format::Table) {
-            if ($rows === []) {
-                if ($empty !== null) {
-                    $this->note($empty);
-                }
-
-                return;
-            }
-
-            $display = [];
-
-            foreach ($rows as $row) {
-                $display[] = $this->displayRow($row, $columns, $decorate);
-            }
-
-            $this->write($this->table->list($display, $columns));
+        if ($this->face->format !== Format::Table) {
+            $this->writeData(array_values($rows), $columns);
 
             return;
         }
 
-        $this->writeData(array_values($rows), $columns);
+        $display = [];
+
+        foreach ($rows as $row) {
+            $display[] = $this->displayRow($row, $columns, $decorate);
+        }
+
+        $this->table($display, self::plainTable($columns), $empty);
+    }
+
+    /**
+     * @param  array<string, string>  $columns
+     */
+    private static function plainTable(array $columns): Table
+    {
+        $list = [];
+
+        foreach ($columns as $key => $header) {
+            $column = Column::make($key, $header);
+            $list[] = $key === 'id'
+                ? $column->right()->cell(static fn (array $row): Cell => Cell::text($row[$key] ?? '')->dim())
+                : $column;
+        }
+
+        return Table::make(...$list);
     }
 
     /**

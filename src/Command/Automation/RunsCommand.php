@@ -10,6 +10,10 @@ use Unolia\Cli\Api\Requests\Automations\ListAutomationRuns;
 use Unolia\Cli\Command\BaseCommand;
 use Unolia\Cli\Command\Concerns\ResolvesRuns;
 use Unolia\Cli\Console\ExitCode;
+use Unolia\Cli\Console\Table\Cell;
+use Unolia\Cli\Console\Table\Column;
+use Unolia\Cli\Console\Table\Status;
+use Unolia\Cli\Console\Table\Table;
 use Unolia\Cli\Support\Arr;
 use Unolia\Cli\Support\RelativeTime;
 use Unolia\Cli\Support\Str;
@@ -17,6 +21,9 @@ use Unolia\Cli\Support\Str;
 final class RunsCommand extends BaseCommand
 {
     use ResolvesRuns;
+
+    /** Summaries are cut here so the row stays on one line. */
+    private const SUMMARY_WIDTH = 48;
 
     protected function canonical(): string
     {
@@ -55,9 +62,31 @@ final class RunsCommand extends BaseCommand
             'since' => $this->optionString('since'),
         ])));
 
-        $this->out()->list(
-            $rows,
-            [
+        $this->out()->table($rows, self::table(), 'No runs yet.');
+
+        return ExitCode::Ok;
+    }
+
+    /**
+     * Newest first, as the API hands them. The run is named by its short id,
+     * the last characters of the ulid, which is what every run command takes.
+     * The state is a glyph with a word unless the run completed.
+     */
+    public static function table(): Table
+    {
+        return Table::make(
+            Column::make('ulid', 'Run')->cell(static fn (array $row): Cell => Cell::text(Str::shortId($row['ulid'] ?? null))
+                ->dim()
+                ->link(is_string($row['url'] ?? null) ? $row['url'] : null)),
+            Column::make('status')->cell(static fn (array $row): Cell => Status::glyph($row['state'] ?? null)),
+            Column::make('automation', 'Automation')->cell(static fn (array $row): Cell => Cell::text(Str::scalar(Arr::get($row, 'automation.name')))),
+            Column::make('trigger', 'Trigger')->cell(static fn (array $row): Cell => Cell::text(Str::scalar(Arr::get($row, 'trigger.kind')))->dim()),
+            Column::make('summary', 'Summary')->cell(static fn (array $row): Cell => Cell::text(Str::limit(is_string($row['summary'] ?? null) ? $row['summary'] : '', self::SUMMARY_WIDTH))),
+            Column::make('started_at', 'Started')->cell(static fn (array $row): Cell => Cell::text(RelativeTime::ago(is_string($row['started_at'] ?? null) ? $row['started_at'] : null))->dim()),
+            Column::make('duration_seconds', 'Took')->right()->cell(static fn (array $row): Cell => Cell::text(RelativeTime::duration(is_numeric($row['duration_seconds'] ?? null) ? (int) $row['duration_seconds'] : null))->dim()),
+            Column::make('state')->cell(static fn (array $row): Cell => Status::word($row['state'] ?? null, 'completed')),
+        )
+            ->fields([
                 'ulid' => 'Run',
                 'automation' => 'Automation',
                 'trigger' => 'Trigger',
@@ -65,18 +94,7 @@ final class RunsCommand extends BaseCommand
                 'started_at' => 'Started',
                 'duration_seconds' => 'Duration',
                 'summary' => 'Summary',
-            ],
-            static fn (array $row): array => [
-                'ulid' => Str::limit(is_string($row['ulid'] ?? null) ? $row['ulid'] : '', 10, ''),
-                'automation' => Str::scalar(Arr::get($row, 'automation.name')),
-                'trigger' => Str::scalar(Arr::get($row, 'trigger.kind')),
-                'started_at' => RelativeTime::ago(is_string($row['started_at'] ?? null) ? $row['started_at'] : null),
-                'duration_seconds' => RelativeTime::duration(is_numeric($row['duration_seconds'] ?? null) ? (int) $row['duration_seconds'] : null),
-                'summary' => Str::limit(is_string($row['summary'] ?? null) ? $row['summary'] : '', 40),
-            ],
-            'No runs yet.',
-        );
-
-        return ExitCode::Ok;
+            ])
+            ->footer(static fn (int $count): string => $count === 1 ? '1 run' : $count.' runs');
     }
 }
