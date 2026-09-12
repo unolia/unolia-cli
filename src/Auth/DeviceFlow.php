@@ -131,12 +131,24 @@ final class DeviceFlow
      *
      * @param  array{client_id: string, device_authorization_endpoint: string, token_endpoint: string, verification_uri: string}  $discovery
      * @param  list<string>  $scopes
+     * @param  ?string  $replaces  id of the token being superseded, shown as a diff on the consent page
      * @return array{access_token: string, expires_at: string|null, client_id: string}
      */
-    public function authorize(string $host, array $discovery, array $scopes, bool $openBrowser = true): array
+    public function authorize(string $host, array $discovery, array $scopes, bool $openBrowser = true, ?string $replaces = null): array
     {
         $oauth = $this->oauth($host);
         $code = $this->requestCode($oauth, $host, $discovery, $scopes);
+
+        if ($replaces !== null && $replaces !== '') {
+            // Straight to the consent page, telling it which token this one
+            // supersedes so it can show what changes instead of everything.
+            $code['verification_uri_complete'] = sprintf(
+                '%s/authorize?user_code=%s&replaces=%s',
+                rtrim($code['verification_uri'], '/'),
+                rawurlencode($code['user_code']),
+                rawurlencode($replaces),
+            );
+        }
 
         $this->present($code, $openBrowser);
 

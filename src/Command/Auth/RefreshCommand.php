@@ -104,7 +104,8 @@ final class RefreshCommand extends BaseCommand
         }
 
         $authenticator = $this->runtime()->get(Authenticator::class);
-        $identity = $authenticator->loginWithDevice($host, $scopes, $hosts->tokenName($host) ?? $authenticator->defaultTokenName(), true, $discovery);
+        $replaces = $hosts->entry($host)['token_id'] ?? null;
+        $identity = $authenticator->loginWithDevice($host, $scopes, $hosts->tokenName($host) ?? $authenticator->defaultTokenName(), true, $discovery, is_string($replaces) ? $replaces : null);
 
         $revoked = $oldToken !== null && $authenticator->revoke($host, $oldToken);
 
