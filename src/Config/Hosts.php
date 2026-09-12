@@ -137,8 +137,8 @@ final class Hosts
     }
 
     /**
-     * Replace the entry for a host. Known keys: token, kind, name, token_name,
-     * expires_at, scopes, client_id. Empty values are dropped.
+     * Replace the entry for a host. Known keys: token, kind, name, token_id,
+     * token_name, expires_at, scopes, client_id. Empty values are dropped.
      *
      * @param  array<string, mixed>  $entry
      */

@@ -25,14 +25,15 @@ final class Authenticator
      *
      * @param  list<string>|null  $requestedScopes  null means the host's defaults
      * @param  array{client_id: string, device_authorization_endpoint: string, token_endpoint: string, verification_uri: string, scopes: list<string>, default_scopes: list<string>}|null  $discovery  when the caller fetched it already
+     * @param  ?string  $replaces  the id of the token this login supersedes, so the consent page can show what changes
      * @return array<string, mixed> the identity
      */
-    public function loginWithDevice(string $host, ?array $requestedScopes, ?string $tokenName, bool $openBrowser = true, ?array $discovery = null): array
+    public function loginWithDevice(string $host, ?array $requestedScopes, ?string $tokenName, bool $openBrowser = true, ?array $discovery = null, ?string $replaces = null): array
     {
         $flow = $this->runtime->get(DeviceFlow::class);
         $discovery ??= $flow->discover($host);
         $scopes = $flow->scopes($host, $discovery, $requestedScopes);
-        $grant = $flow->authorize($host, $discovery, $scopes, $openBrowser);
+        $grant = $flow->authorize($host, $discovery, $scopes, $openBrowser, $replaces);
 
         return $this->store($host, $grant['access_token'], $grant, $tokenName ?? $this->defaultTokenName());
     }
@@ -78,6 +79,7 @@ final class Authenticator
             'id' => $principal['id'] ?? null,
             'name' => $principal['name'] ?? 'unknown',
             'email' => $principal['email'] ?? null,
+            'token_id' => $tokenData['id'] ?? null,
             'token_name' => $tokenData['name'] ?? null,
             'scopes' => self::scopeList($tokenData['scopes'] ?? null),
             'expires_at' => $tokenData['expires_at'] ?? null,
@@ -134,6 +136,7 @@ final class Authenticator
             'token' => $token,
             'kind' => $identity['kind'],
             'name' => $identity['name'],
+            'token_id' => $identity['token_id'],
             'token_name' => $identity['token_name'],
             'expires_at' => $grant['expires_at'] ?? $identity['expires_at'],
             'scopes' => $identity['scopes'],
