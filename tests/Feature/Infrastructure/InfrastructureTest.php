@@ -72,7 +72,36 @@ it('lists providers', function () {
         ->run('provider', 'list');
 
     expect($result->exitCode)->toBe(0)
-        ->and($result->stdout)->toContain('Forge');
+        ->and($result->stdout)->toContain('Forge')
+        ->and($result->stdout)->toContain('invalid')
+        ->and($result->stdout)->toContain('unolia provider fix 39 opens the page that repairs it');
+});
+
+it('refuses to sync a broken provider and points at provider fix', function () {
+    $result = infra()
+        ->withApi(api()
+            ->on('GET', 'v1/providers/39', fixture('provider-39-invalid.json'))
+            ->on('POST', 'v1/providers/39/sync', fixture('error-409-provider-needs-attention.json'), 409))
+        ->run('provider', 'sync', '39');
+
+    expect($result->exitCode)->toBe(1)
+        ->and($result->stderr)->toContain('its connection is invalid')
+        ->and($result->stderr)->toContain('unolia provider fix 39');
+});
+
+it('provider fix prints the page that repairs the connection in a pipe', function () {
+    $result = infra()
+        ->withApi(api()->on('GET', 'v1/providers/39', fixture('provider-39-invalid.json')))
+        ->run('provider', 'fix', '39');
+
+    expect($result->exitCode)->toBe(0)
+        ->and(trim($result->stdout))->toBe('https://app.unolia.com/acme/team/providers/39');
+
+    $json = infra()
+        ->withApi(api()->on('GET', 'v1/providers/39', fixture('provider-39-invalid.json')))
+        ->run('provider', 'fix', '39', '--json');
+
+    expect($json->json()['status'])->toBe('invalid');
 });
 
 it('shows one provider without its credentials', function () {

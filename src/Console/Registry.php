@@ -97,6 +97,7 @@ final class Registry
         'provider:list' => Command\Provider\ListCommand::class,
         'provider:view' => Command\Provider\ViewCommand::class,
         'provider:sync' => Command\Provider\SyncCommand::class,
+        'provider:fix' => Command\Provider\FixCommand::class,
 
         'team:list' => Command\Team\ListCommand::class,
         'team:switch' => Command\Team\SwitchCommand::class,
