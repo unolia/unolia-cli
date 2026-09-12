@@ -89,12 +89,15 @@ final class Client extends Connector implements HasPagination
         $path = $request->resolveEndpoint();
 
         try {
-            $response = parent::send($request, $mockClient, $handleRetry);
+            $response = Interrupt::during(fn (): Response => parent::send($request, $mockClient, $handleRetry));
         } catch (FatalRequestException $exception) {
+            Interrupt::throwIfPending();
             $this->log(sprintf('→ %s /v1/%s failed: %s', $method, ltrim($path, '/'), $exception->getMessage()));
 
             throw ApiException::network($this->host, $exception->getMessage());
         }
+
+        Interrupt::throwIfPending();
 
         $this->log(sprintf(
             '→ %s /v1/%s %d %dms',
@@ -143,6 +146,7 @@ final class Client extends Connector implements HasPagination
             'timeout' => 30,
             'connect_timeout' => 10,
             'verify' => $this->verify,
+            'progress' => Interrupt::progress(),
         ];
     }
 

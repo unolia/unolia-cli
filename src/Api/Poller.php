@@ -97,6 +97,7 @@ class Poller
         }
 
         sleep($seconds);
+        Interrupt::throwIfPending();
     }
 
     private function now(): int
@@ -107,13 +108,6 @@ class Poller
     /** Ctrl+C stops the watch, never the deployment. */
     public function trap(): void
     {
-        if (! function_exists('pcntl_signal') || ! function_exists('pcntl_async_signals')) {
-            return;
-        }
-
-        pcntl_async_signals(true);
-        pcntl_signal(SIGINT, static function (): void {
-            throw CliError::interrupted('stopped watching, the remote work keeps running');
-        });
+        Interrupt::arm();
     }
 }

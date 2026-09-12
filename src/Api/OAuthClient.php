@@ -45,8 +45,9 @@ final class OAuthClient extends Connector
     public function send(Request $request, ?MockClient $mockClient = null, ?callable $handleRetry = null): Response
     {
         try {
-            return parent::send($request, $mockClient, $handleRetry);
+            return Interrupt::during(fn (): Response => parent::send($request, $mockClient, $handleRetry));
         } catch (FatalRequestException $exception) {
+            Interrupt::throwIfPending();
             throw ApiException::network($this->host, $exception->getMessage());
         }
     }
@@ -65,6 +66,7 @@ final class OAuthClient extends Connector
     protected function defaultConfig(): array
     {
         return [
+            'progress' => Interrupt::progress(),
             'timeout' => 30,
             'connect_timeout' => 10,
             'verify' => $this->verify,
