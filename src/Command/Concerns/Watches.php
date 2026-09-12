@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Unolia\Cli\Command\Concerns;
 
 use Symfony\Component\Console\Input\InputOption;
+use Unolia\Cli\Console\StepLog;
 use Unolia\Cli\Support\Notifier;
 use Unolia\Cli\Watch\Target;
 use Unolia\Cli\Watch\Watcher;
@@ -22,7 +23,7 @@ trait Watches
         $this->addOption('notify', null, InputOption::VALUE_NONE, 'Send a desktop notification at the end');
     }
 
-    protected function follow(Target $target): WatchResult
+    protected function follow(Target $target, ?StepLog $log = null): WatchResult
     {
         $watcher = new Watcher(
             $this->out(),
@@ -35,6 +36,7 @@ trait Watches
             $this->duration('interval', 3),
             $this->duration('timeout', 900),
             $this->optionBool('notify'),
+            $log,
         );
     }
 

@@ -6,8 +6,10 @@ namespace Unolia\Cli\Watch;
 
 use Unolia\Cli\Api\Poller;
 use Unolia\Cli\Console\CliError;
+use Unolia\Cli\Console\ExitCode;
 use Unolia\Cli\Console\Format;
 use Unolia\Cli\Console\Out;
+use Unolia\Cli\Console\StepLog;
 use Unolia\Cli\Support\Notifier;
 
 /**
@@ -22,7 +24,12 @@ final class Watcher
         private readonly Notifier $notifier,
     ) {}
 
-    public function run(Target $target, int $interval = 3, ?int $timeout = null, bool $notify = false): WatchResult
+    /**
+     * Follow the target until it is done. With a $log the events go into a
+     * task (the tool's lines scroll, the rest updates the sub-label, the
+     * summary is kept as success or failure) instead of the plain output.
+     */
+    public function run(Target $target, int $interval = 3, ?int $timeout = null, bool $notify = false, ?StepLog $log = null): WatchResult
     {
         $this->poller->trap();
 
@@ -38,19 +45,28 @@ final class Watcher
                 $headerPrinted = true;
                 $header = $target->header($state);
 
-                if ($table && $header !== null) {
+                if ($table && $header !== null && $log === null) {
                     $this->out->line($header);
                 }
             }
 
             foreach ($target->events($previous, $state) as $event) {
-                $this->out->event($event->toArray(), $event->line);
+                if ($log === null) {
+                    $this->out->event($event->toArray(), $event->line);
+                } elseif (str_ends_with($event->type, '.output')) {
+                    $log->line(ltrim($event->line));
+                } elseif (! $target->isDone($state)) {
+                    $log->subLabel($event->line);
+                }
             }
 
             if ($target->isDone($state)) {
                 $summary = $target->summary($state);
 
-                if ($table && $summary !== '') {
+                if ($log !== null && $summary !== '') {
+                    $log->subLabel('');
+                    $target->exitCode($state) === ExitCode::Ok ? $log->success($summary) : $log->error($summary);
+                } elseif ($table && $summary !== '') {
                     $this->out->info($summary);
                 }
 

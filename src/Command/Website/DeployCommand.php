@@ -14,7 +14,10 @@ use Unolia\Cli\Command\Concerns\ResolvesTargets;
 use Unolia\Cli\Command\Concerns\Watches;
 use Unolia\Cli\Console\CliError;
 use Unolia\Cli\Console\ExitCode;
+use Unolia\Cli\Console\StepLog;
+use Unolia\Cli\Support\Arr;
 use Unolia\Cli\Watch\DeploymentTarget;
+use Unolia\Cli\Watch\WatchResult;
 
 /**
  * Deploy a website through its provider, and optionally wait for the result.
@@ -39,7 +42,8 @@ class DeployCommand extends BaseCommand
     protected function define(): void
     {
         $this->addArgument('website', InputArgument::OPTIONAL, 'Website id or domain, the linked one by default');
-        $this->addOption('wait', null, InputOption::VALUE_NONE, 'Block until the deployment finishes');
+        $this->addOption('wait', null, InputOption::VALUE_NONE, 'Block until the deployment finishes, also in a pipe');
+        $this->addOption('no-progress', null, InputOption::VALUE_NONE, 'Return as soon as the deployment is queued instead of following it');
         $this->addWatchOptions();
     }
 
@@ -51,8 +55,9 @@ class DeployCommand extends BaseCommand
     public function examples(): array
     {
         return [
-            'Deploy this directory' => 'unolia deploy',
-            'Deploy and wait' => 'unolia deploy --wait',
+            'Deploy this directory and watch it' => 'unolia deploy',
+            'Queue it and come back later' => 'unolia deploy --no-progress',
+            'Block in a script' => 'unolia deploy --wait --yes',
             'Stream the steps to a script' => 'unolia website deploy 118 --wait --format ndjson',
         ];
     }
@@ -99,7 +104,13 @@ class DeployCommand extends BaseCommand
         $id = (int) $id;
         $this->local()->remember('last_deployment', $id);
 
-        if (! $this->optionBool('wait')) {
+        // On a terminal the deployment is followed in a task by default, the
+        // way herd init is: its output scrolls under the label and the outcome
+        // stays. --no-progress hands the id back at once. A pipe only waits
+        // when told to.
+        $progress = $this->out()->face()->interactive && ! $this->structured() && ! $this->optionBool('no-progress');
+
+        if (! $this->optionBool('wait') && ! $progress) {
             if ($this->structured()) {
                 $this->out()->record($deployment);
 
@@ -111,7 +122,22 @@ class DeployCommand extends BaseCommand
             return ExitCode::Ok;
         }
 
-        $result = $this->follow(new DeploymentTarget($this->api(), $id, $this->waitSeconds()));
+        $target = new DeploymentTarget($this->api(), $id, $this->waitSeconds());
+
+        if ($progress) {
+            $domain = Arr::get($deployment, 'website.domain');
+            $label = sprintf('Deploying %s', is_string($domain) && $domain !== '' ? $domain : 'website '.$websiteId);
+
+            $result = $this->ask()->task($label, fn (StepLog $log): WatchResult => $this->follow($target, $log));
+
+            if ($result->exitCode !== ExitCode::Ok) {
+                $this->out()->note(sprintf('unolia deployment logs %d shows the whole output.', $id));
+            }
+
+            return $result->exitCode;
+        }
+
+        $result = $this->follow($target);
 
         if ($this->structured()) {
             $this->out()->record($result->state->data);
