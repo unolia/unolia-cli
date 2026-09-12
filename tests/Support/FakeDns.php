@@ -18,7 +18,7 @@ final class FakeDns extends Dns
     /**
      * @param  list<array{name: string, type: string, ttl: int, value: string}>  $answers
      */
-    public function __construct(private readonly array $answers = [], private readonly ?string $failure = null)
+    public function __construct(private readonly array $answers = [], private readonly ?string $failure = null, private readonly bool $byType = false)
     {
         parent::__construct();
     }
@@ -31,6 +31,10 @@ final class FakeDns extends Dns
             throw CliError::remoteFailure(sprintf('%s did not answer: %s', $server, $this->failure));
         }
 
-        return $this->answers;
+        // A real resolver only answers the type asked; tests that hand one
+        // set of answers to several queries opt in to that with byType.
+        return $this->byType
+            ? array_values(array_filter($this->answers, static fn (array $row): bool => strcasecmp($row['type'], $typeName) === 0))
+            : $this->answers;
     }
 }

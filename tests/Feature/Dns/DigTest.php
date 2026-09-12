@@ -127,7 +127,7 @@ it('compares SPF as TXT, does not double the priority, skips proxied values and 
 
     $result = cli()
         ->withApi(api()->on('GET', 'v1/domains/acme.com/records', $records))
-        ->withService(Dns::class, new FakeDns($answers))
+        ->withService(Dns::class, new FakeDns($answers, byType: true))
         ->run('dns', 'check', 'acme.com', '--type', 'A,MX,TXT,SPF', '--json');
 
     $byKey = [];
@@ -137,7 +137,7 @@ it('compares SPF as TXT, does not double the priority, skips proxied values and 
     }
 
     expect($byKey['acme.com A']['result'])->toBe('proxied')
-        // The fake resolver answers every query with the same rows, so only Unolia's side is asserted here.
+        ->and($byKey['acme.com MX']['result'])->toBe('match')
         ->and($byKey['acme.com MX']['unolia'])->toBe(['10 mail.acme.com'])
         ->and($byKey['acme.com TXT']['result'])->toBe('differs')
         ->and($byKey['acme.com TXT']['unolia'])->toContain('v=spf1 ~all')
@@ -145,7 +145,7 @@ it('compares SPF as TXT, does not double the priority, skips proxied values and 
 
     $table = cli()
         ->withApi(api()->on('GET', 'v1/domains/acme.com/records', $records))
-        ->withService(Dns::class, new FakeDns($answers))
+        ->withService(Dns::class, new FakeDns($answers, byType: true))
         ->run('dns', 'check', 'acme.com', '--type', 'TXT');
 
     expect($table->stdout)->toContain('Unolia has google=one · resolver has google=two')
