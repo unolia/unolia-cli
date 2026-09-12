@@ -97,8 +97,42 @@ it('previews with --dry-run and changes nothing', function () {
         ->and($result->stdout)->toContain('Website      marketing.acme.com · Forge · main')
         ->and($result->stdout)->toContain('Live now     3f9c2e1 Fix the footer links · eser ·')
         ->and($result->stdout)->toContain('Branch head  a1b2c3d Add the pricing page · eser ·')
-        ->and($result->stdout)->toContain('Pending      3 new commits')
+        ->and($result->stdout)->toContain('· 3 commits ahead of live')
+        ->and($result->stdout)->not->toContain('This checkout')
         ->and($result->stdout)->toContain('nothing was triggered');
+});
+
+it('says where this checkout stands against the live site in --dry-run', function () {
+    $cli = linked()
+        ->withGitRemote()
+        ->withGitAnswers([
+            'head' => 'c0ffee1234567890c0ffee1234567890c0ffee12',
+            'rev-parse --verify --quiet 3f9c2e1a7b4c5d6e8f9012345678901234567890^{commit}' => '3f9c2e1a7b4c5d6e8f9012345678901234567890',
+            'rev-parse --verify --quiet a1b2c3d4e5f60718293a4b5c6d7e8f9012345678^{commit}' => 'a1b2c3d4e5f60718293a4b5c6d7e8f9012345678',
+            'rev-list --count 3f9c2e1a7b4c5d6e8f9012345678901234567890..HEAD' => '5',
+            'rev-list --count HEAD..3f9c2e1a7b4c5d6e8f9012345678901234567890' => '0',
+            'rev-list --count a1b2c3d4e5f60718293a4b5c6d7e8f9012345678..HEAD' => '2',
+        ])
+        ->withApi(api()->on('POST', 'v1/websites/118/deployments', fixture('deployment-dry-run.json')));
+
+    $result = $cli->run('deploy', '--dry-run');
+
+    expect($result->exitCode)->toBe(0)
+        ->and($result->stdout)->toContain('This checkout  c0ffee1 · 5 commits ahead of live · 2 commits not pushed');
+});
+
+it('names a running deployment in --dry-run and in the question', function () {
+    $preview = fixture('deployment-dry-run.json');
+    $preview['data']['in_progress'] = ['id' => 4813, 'status' => 'running', 'commit' => ['hash' => 'a1b2c3d4e5f60718293a4b5c6d7e8f9012345678', 'short' => 'a1b2c3d', 'branch' => 'main', 'author' => 'eser', 'message' => 'Add the pricing page'], 'started_at' => '2026-09-05T09:31:00Z', 'ended_at' => null, 'url' => null];
+
+    $result = linked()->withApi(api()->on('POST', 'v1/websites/118/deployments', $preview))->run('deploy', '--dry-run');
+
+    expect($result->stdout)->toMatch('/Deploying +a1b2c3d Add the pricing page · eser · .* \(running\)/');
+
+    $refused = linked()->withApi(api()->on('POST', 'v1/websites/118/deployments', $preview))->run('deploy');
+
+    expect($refused->exitCode)->toBe(2)
+        ->and($refused->stderr)->toContain('A deployment of marketing.acme.com is already running at a1b2c3d. Start another one?');
 });
 
 it('exits 1 when the provider cannot deploy', function () {

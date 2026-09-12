@@ -39,6 +39,32 @@ class GitRemote
         return $this->cached('commit', ['rev-parse', '--short', 'HEAD']);
     }
 
+    /** The full sha of HEAD. */
+    public function head(): ?string
+    {
+        return $this->cached('head', ['rev-parse', 'HEAD']);
+    }
+
+    /** Whether this checkout has the commit at all; a sha from another repository does not. */
+    public function knows(string $sha): bool
+    {
+        return $this->run(['rev-parse', '--verify', '--quiet', $sha.'^{commit}']) !== null;
+    }
+
+    /** How many commits $to has that $from does not, or null when git cannot tell. */
+    public function countBetween(string $from, string $to): ?int
+    {
+        $count = $this->run(['rev-list', '--count', $from.'..'.$to]);
+
+        return $count !== null && ctype_digit($count) ? (int) $count : null;
+    }
+
+    /** Commits on HEAD that the upstream branch does not have yet, or null without an upstream. */
+    public function unpushed(): ?int
+    {
+        return $this->countBetween('@{u}', 'HEAD');
+    }
+
     /** owner/name read out of the remote URL, whichever form it takes. */
     public function slug(): ?string
     {

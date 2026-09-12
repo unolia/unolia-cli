@@ -14,6 +14,7 @@ use Unolia\Cli\Command\Concerns\Watches;
 use Unolia\Cli\Console\CliError;
 use Unolia\Cli\Console\ExitCode;
 use Unolia\Cli\Console\StepLog;
+use Unolia\Cli\Context\GitRemote;
 use Unolia\Cli\Support\Arr;
 use Unolia\Cli\Support\RelativeTime;
 use Unolia\Cli\Support\Str;
@@ -153,20 +154,22 @@ class DeployCommand extends BaseCommand
         if ($this->structured()) {
             $this->out()->record($preview);
         } else {
-            $this->out()->record(self::previewLines($preview));
+            $this->out()->record(self::previewLines($preview, $this->runtime()->context()->git()));
         }
 
         return ($preview['would_trigger'] ?? false) === true ? ExitCode::Ok : ExitCode::RemoteFailure;
     }
 
     /**
-     * The preview as a person reads it: what is live, what the branch holds,
-     * how far apart they are. Each line is skipped when the API does not know.
+     * The preview as a person reads it: what is live, what may be deploying,
+     * what the branch holds and how many commits apart they are, and where
+     * this checkout stands against the live site. A line is skipped when the
+     * API does not know.
      *
      * @param  array<string, mixed>  $preview
      * @return array<string, string>
      */
-    public static function previewLines(array $preview): array
+    public static function previewLines(array $preview, ?GitRemote $git = null): array
     {
         $lines = [];
         $branch = Arr::get($preview, 'website.branch');
@@ -184,20 +187,30 @@ class DeployCommand extends BaseCommand
         }
 
         $current = Arr::get($preview, 'current');
-        $lines['Live now'] = is_array($current) ? self::commitLine($current['commit'] ?? null, $current['ended_at'] ?? $current['started_at'] ?? null, $current['status'] ?? null) : 'no deployment yet';
+        $lines['Live now'] = is_array($current) ? self::commitLine($current['commit'] ?? null, $current['ended_at'] ?? $current['started_at'] ?? null, $current['status'] ?? null) : 'no successful deployment yet';
 
-        $head = Arr::get($preview, 'head');
+        $running = Arr::get($preview, 'in_progress');
 
-        if (is_array($head)) {
-            $lines['Branch head'] = self::commitLine($head, $head['committed_at'] ?? null, null);
+        if (is_array($running)) {
+            $lines['Deploying'] = self::commitLine($running['commit'] ?? null, $running['started_at'] ?? null, $running['status'] ?? null);
         }
 
+        $head = Arr::get($preview, 'head');
         $pending = $preview['pending_commits'] ?? null;
 
-        if (($preview['up_to_date'] ?? null) === true) {
-            $lines['Pending'] = 'nothing new, the live site is at the branch head';
-        } elseif (is_numeric($pending)) {
-            $lines['Pending'] = (int) $pending === 1 ? '1 new commit' : $pending.' new commits';
+        if (is_array($head)) {
+            $distance = match (true) {
+                ($preview['up_to_date'] ?? null) === true => 'same as live',
+                is_numeric($pending) => self::commits((int) $pending).' ahead of live',
+                default => '',
+            };
+            $lines['Branch head'] = self::commitLine($head, $head['committed_at'] ?? null, null).($distance === '' ? '' : ' · '.$distance);
+        }
+
+        $local = self::localLine($git, Arr::get($preview, 'current.commit.hash'), Arr::get($preview, 'head.hash'));
+
+        if ($local !== null) {
+            $lines['This checkout'] = $local;
         }
 
         $lines['Dry run'] = ($preview['would_trigger'] ?? false) === true
@@ -205,6 +218,52 @@ class DeployCommand extends BaseCommand
             : Str::scalar($preview['summary'] ?? null, 'this website cannot be deployed from Unolia');
 
         return $lines;
+    }
+
+    /**
+     * Where HEAD stands: how many commits it has that the live site does not,
+     * how many the branch head does not (not pushed yet), or that the live
+     * commit is unknown here. Nothing outside a checkout.
+     */
+    private static function localLine(?GitRemote $git, mixed $liveHash, mixed $headHash): ?string
+    {
+        $sha = $git?->head();
+
+        if ($git === null || $sha === null) {
+            return null;
+        }
+
+        $parts = [substr($sha, 0, 7)];
+
+        if (is_string($liveHash) && $liveHash !== '') {
+            if (! $git->knows($liveHash)) {
+                $parts[] = 'the live commit is not in this checkout';
+            } else {
+                $ahead = $git->countBetween($liveHash, 'HEAD');
+                $behind = $git->countBetween('HEAD', $liveHash);
+                $parts[] = match (true) {
+                    $ahead === null => 'cannot compare with live',
+                    $ahead === 0 && $behind === 0 => 'same as live',
+                    $ahead === 0 => self::commits((int) $behind).' behind live',
+                    default => self::commits($ahead).' ahead of live'.($behind > 0 ? ', '.self::commits($behind).' behind' : ''),
+                };
+            }
+        }
+
+        $unpushed = is_string($headHash) && $headHash !== '' && $git->knows($headHash)
+            ? $git->countBetween($headHash, 'HEAD')
+            : $git->unpushed();
+
+        if ($unpushed !== null && $unpushed > 0) {
+            $parts[] = self::commits($unpushed).' not pushed';
+        }
+
+        return implode(' · ', $parts);
+    }
+
+    private static function commits(int $count): string
+    {
+        return $count === 1 ? '1 commit' : $count.' commits';
     }
 
     /**
@@ -220,6 +279,12 @@ class DeployCommand extends BaseCommand
         $from = Arr::get($preview, 'current.commit.short');
         $to = Arr::get($preview, 'head.short');
         $pending = $preview['pending_commits'] ?? null;
+
+        $running = Arr::get($preview, 'in_progress.commit.short');
+
+        if (is_array($preview['in_progress'] ?? null)) {
+            return sprintf('A deployment of %s is already %s%s. Start another one?', $domain, Str::scalar(Arr::get($preview, 'in_progress.status'), 'running'), is_string($running) ? ' at '.$running : '');
+        }
 
         if (($preview['up_to_date'] ?? null) === true && is_string($to)) {
             return sprintf('%s is already at %s. Deploy it again?', $domain, $to);

@@ -33,7 +33,7 @@ final class ListCommand extends BaseCommand
 
     protected function define(): void
     {
-        $this->addOption('state', null, InputOption::VALUE_REQUIRED, 'Filter by state');
+        $this->addOption('state', null, InputOption::VALUE_REQUIRED, 'Filter by state; every state but archived by default, any for all');
         $this->addOption('recipe', null, InputOption::VALUE_REQUIRED, 'Filter by recipe slug');
         $this->addOption('q', null, InputOption::VALUE_REQUIRED, 'Filter by name');
     }
@@ -41,8 +41,9 @@ final class ListCommand extends BaseCommand
     public function examples(): array
     {
         return [
-            'Every automation' => 'unolia automation list',
-            'Active ones' => 'unolia automation list --state active',
+            'Every automation but the archived' => 'unolia automation list',
+            'The archived ones too' => 'unolia automation list --state any',
+            'Paused ones' => 'unolia automation list --state paused',
         ];
     }
 
@@ -60,9 +61,9 @@ final class ListCommand extends BaseCommand
     }
 
     /**
-     * By name. The name opens the automation page, the recipe is dim because
-     * the name usually says the same, the state is a glyph with a word only
-     * when the automation is not ready to run.
+     * Newest first. The name opens the automation page, the recipe is dim
+     * because the name usually says the same, the state is a glyph with a
+     * word only when the automation is not ready to run.
      */
     public static function table(): Table
     {
@@ -86,7 +87,7 @@ final class ListCommand extends BaseCommand
                 'last_triggered_at' => 'Last run',
                 'next_scheduled_at' => 'Next run',
             ])
-            ->sort(static fn (array $a, array $b): int => strcasecmp(Str::scalar($a['name'] ?? null), Str::scalar($b['name'] ?? null)))
+            ->sort(static fn (array $a, array $b): int => (int) ($b['id'] ?? 0) <=> (int) ($a['id'] ?? 0))
             ->footer(static fn (int $count): string => $count === 1 ? '1 automation' : $count.' automations');
     }
 
