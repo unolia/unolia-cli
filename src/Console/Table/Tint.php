@@ -49,6 +49,13 @@ final class Tint
             'namecheap' => '#de3723',
             'ionos' => '#003d8f',
             'bunny' => '#ff7f2a',
+            'bento' => '#8b5a2b',
+            'domainchief' => '#2563eb',
+            'mailgun' => '#f06b66',
+            'postmark' => '#ffde00',
+            'ohdear' => '#5b6cff',
+            'uptimerobot' => '#3bd671',
+            'slack' => '#4a154b',
             default => null,
         };
     }
