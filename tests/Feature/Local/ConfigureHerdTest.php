@@ -173,3 +173,30 @@ it('shows the file it would create before asking', function () {
         ->and($result->stdout)->toContain('Nothing was written')
         ->and($cli->home->read('herd.yml'))->toBeNull();
 });
+
+it('relays what herd prints while a step runs on a terminal', function () {
+    $cli = cli()->withConfig(['team' => 'acme', 'project' => 12, 'website' => 118])
+        ->answers(['Write herd.yml and run herd init?' => true]);
+    $herd = new FakeHerd($cli->home->cwd);
+    $cli = $cli->withHerd($herd)->withApi(herdApi());
+
+    $result = $cli->run('configure', 'herd', '--site', 'marketing');
+
+    expect($result->exitCode)->toBe(0)
+        ->and($result->stdout)->toContain('$ herd init -n')
+        ->and($result->stdout)->toContain('Installing PHP 8.3')
+        ->and($result->stdout)->toContain('Linking marketing.test')
+        ->and($herd->ran)->toContain('init');
+});
+
+it('runs herd quietly in a pipe', function () {
+    $cli = cli()->withConfig(['team' => 'acme', 'project' => 12, 'website' => 118]);
+    $herd = new FakeHerd($cli->home->cwd);
+    $cli = $cli->withHerd($herd)->withApi(herdApi());
+
+    $result = $cli->run('configure', 'herd', '--site', 'marketing', '--yes');
+
+    expect($result->exitCode)->toBe(0)
+        ->and($result->stdout)->not->toContain('Installing PHP')
+        ->and($herd->ran)->toContain('init');
+});
