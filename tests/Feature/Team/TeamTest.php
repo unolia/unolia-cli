@@ -58,5 +58,5 @@ it('prints the team tokens page', function () {
         ->withConfig(['team' => 'acme'])
         ->run('team', 'tokens', '--print');
 
-    expect(trim($result->stdout))->toBe('https://app.unolia.com/acme/settings/api-tokens');
+    expect(trim($result->stdout))->toBe('https://app.unolia.com/acme/team/api-tokens');
 });
