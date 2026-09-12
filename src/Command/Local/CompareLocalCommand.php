@@ -66,7 +66,8 @@ final class CompareLocalCommand extends BaseCommand
         $serverId = Arr::get($website, 'managed_server.id');
         $server = is_numeric($serverId) ? $this->fetch(new ShowServer((int) $serverId)) : [];
         $projectId = Arr::get($website, 'project.id');
-        $versions = is_numeric($projectId) ? $this->collection(new ProjectVersions((int) $projectId)) : [];
+        // Only the framework row is compared; the runtime comes from the website itself.
+        $versions = is_numeric($projectId) ? $this->collection(new ProjectVersions((int) $projectId, ['name' => 'laravel/framework'])) : [];
 
         $root = $this->runtime()->context()->config()->rootDir()
             ?? $this->runtime()->context()->git()->root()
@@ -290,7 +291,8 @@ final class CompareLocalCommand extends BaseCommand
     {
         foreach ($versions as $version) {
             if (($version['name'] ?? null) === $package && is_string($version['installed_version'] ?? null)) {
-                return $version['installed_version'];
+                // Composer records tags as they are, `v12.64.0`; the comparison wants numbers.
+                return ltrim($version['installed_version'], 'v');
             }
         }
 
@@ -327,7 +329,9 @@ final class CompareLocalCommand extends BaseCommand
             }
 
             if ($mismatch['name'] === 'laravel') {
-                $suggestions[] = 'Run composer update laravel/framework to match production.';
+                $suggestions[] = version_compare((string) ($mismatch['local'] ?? '0'), (string) ($mismatch['production'] ?? '0'), '>')
+                    ? 'Local runs a newer Laravel than production. Deploy, or pin composer.json to what production runs.'
+                    : 'Run composer update laravel/framework to match production.';
             }
         }
 
