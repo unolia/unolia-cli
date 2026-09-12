@@ -22,12 +22,12 @@ $rows = [
     ['id' => 2, 'domain' => 'acme.dev', 'team' => ['name' => 'Acme']],
 ];
 
-it('renders aligned columns when piped', function () use ($rows) {
+it('renders aligned columns with the id on the right when piped', function () use ($rows) {
     [$out, $stdout] = outFor(Format::Table);
 
     $out->list($rows, ['id' => 'Id', 'domain' => 'Domain']);
 
-    expect($stdout->fetch())->toContain('ID  DOMAIN')->toContain('1   acme.com');
+    expect($stdout->fetch())->toContain('ID  DOMAIN')->toContain(' 1  acme.com');
 });
 
 it('renders a JSON array', function () use ($rows) {

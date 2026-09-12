@@ -9,12 +9,19 @@ use Symfony\Component\Console\Input\InputOption;
 use Unolia\Cli\Api\Requests\Issues\ListIssues;
 use Unolia\Cli\Command\BaseCommand;
 use Unolia\Cli\Console\ExitCode;
+use Unolia\Cli\Console\Table\Cell;
+use Unolia\Cli\Console\Table\Column;
+use Unolia\Cli\Console\Table\Status;
+use Unolia\Cli\Console\Table\Table;
 use Unolia\Cli\Context\Need;
 use Unolia\Cli\Support\Arr;
 use Unolia\Cli\Support\Str;
 
 final class ListCommand extends BaseCommand
 {
+    /** Messages are cut here so the row stays on one line. */
+    private const MESSAGE_WIDTH = 56;
+
     protected function canonical(): string
     {
         return 'issue:list';
@@ -56,25 +63,40 @@ final class ListCommand extends BaseCommand
             'domain' => $this->optionString('domain'),
         ])));
 
-        $this->out()->list(
-            $rows,
-            [
+        $this->out()->table($rows, self::table(), 'No open issues here.');
+
+        return ExitCode::Ok;
+    }
+
+    /**
+     * Most severe first, as the API orders them. The issue is named by its
+     * short id, the last characters of the uuid, which is what every issue
+     * command takes. The severity is a glyph and a word, the fix column names
+     * what unolia issue fix would do and stays empty when nothing can.
+     */
+    public static function table(): Table
+    {
+        return Table::make(
+            Column::make('id', 'Id')->cell(static fn (array $row): Cell => Cell::text(Str::shortId($row['id'] ?? null))
+                ->dim()
+                ->link(is_string($row['url'] ?? null) ? $row['url'] : null)),
+            Column::make('glyph')->cell(static fn (array $row): Cell => Status::severity($row['severity'] ?? null)),
+            Column::make('severity', 'Severity')->cell(static fn (array $row): Cell => Status::severityWord($row['severity'] ?? null)),
+            Column::make('check', 'Check')->cell(static fn (array $row): Cell => Cell::text(Str::scalar($row['check'] ?? null))->dim()),
+            Column::make('concern', 'Concern')->cell(static fn (array $row): Cell => Cell::text(Str::scalar(Arr::get($row, 'concern.name')))),
+            Column::make('message', 'Message')->cell(static fn (array $row): Cell => Cell::text(Str::limit(is_string($row['message'] ?? null) ? $row['message'] : '', self::MESSAGE_WIDTH))),
+            Column::make('fix', 'Fix')->cell(static fn (array $row): Cell => Cell::text(Arr::get($row, 'fix.available') === true ? Str::scalar(Arr::get($row, 'fix.name'), 'yes') : '')),
+            Column::make('state')->cell(static fn (array $row): Cell => Status::word($row['state'] ?? null, 'open')),
+        )
+            ->fields([
                 'id' => 'Id',
                 'severity' => 'Severity',
+                'state' => 'State',
                 'check' => 'Check',
                 'concern' => 'Concern',
                 'message' => 'Message',
                 'fix' => 'Fix',
-            ],
-            static fn (array $row): array => [
-                'id' => substr((string) ($row['id'] ?? ''), 0, 6),
-                'concern' => Str::scalar(Arr::get($row, 'concern.name')),
-                'message' => Str::limit(is_string($row['message'] ?? null) ? $row['message'] : '', 50),
-                'fix' => Arr::get($row, 'fix.available') === true ? (string) (Arr::get($row, 'fix.name') ?? 'yes') : '-',
-            ],
-            'No open issues here.',
-        );
-
-        return ExitCode::Ok;
+            ])
+            ->footer(static fn (int $count): string => $count === 1 ? '1 issue' : $count.' issues');
     }
 }

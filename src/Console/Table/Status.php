@@ -54,6 +54,46 @@ final class Status
         };
     }
 
+    /**
+     * A severity as a glyph: red for what is broken or urgent, amber for what
+     * should be looked at, dim for the merely informative.
+     */
+    public static function severity(mixed $severity): Cell
+    {
+        return (match (self::severityTone($severity)) {
+            'bad' => Cell::text('✕')->color(self::RED),
+            'busy' => Cell::text('◐')->color(self::AMBER),
+            'low' => Cell::text('·')->dim(),
+            default => Cell::text('·')->dim(),
+        })->plain('');
+    }
+
+    /** The severity as a word in the glyph's colour, always shown: it is what the row is about. */
+    public static function severityWord(mixed $severity): Cell
+    {
+        if (! is_string($severity) || $severity === '') {
+            return Cell::empty();
+        }
+
+        $cell = Cell::text($severity)->plain($severity);
+
+        return match (self::severityTone($severity)) {
+            'bad' => $cell->color(self::RED),
+            'busy' => $cell->color(self::AMBER),
+            default => $cell->dim(),
+        };
+    }
+
+    private static function severityTone(mixed $severity): string
+    {
+        return match (is_string($severity) ? strtolower($severity) : '') {
+            'critical', 'major', 'error', 'high', 'urgent' => 'bad',
+            'warning', 'medium', 'minor' => 'busy',
+            'info', 'low', 'notice' => 'low',
+            default => 'unknown',
+        };
+    }
+
     private static function tone(mixed $status): string
     {
         if (! is_string($status)) {
@@ -61,10 +101,10 @@ final class Status
         }
 
         return match (strtolower($status)) {
-            'active', 'success', 'succeeded', 'healthy', 'ok', 'up', 'passed', 'resolved', 'connected' => 'ok',
-            'running', 'pending', 'queued', 'deploying', 'in_progress', 'waiting', 'maintenance', 'degraded', 'warning', 'awaiting_input' => 'busy',
-            'failed', 'error', 'errored', 'offline', 'down', 'broken', 'expired', 'timed_out' => 'bad',
-            'inactive', 'disabled', 'paused', 'archived', 'cancelled', 'canceled', 'skipped', 'revoked' => 'off',
+            'active', 'success', 'succeeded', 'completed', 'ready', 'healthy', 'ok', 'up', 'passed', 'resolved', 'connected', 'verified', 'fixed' => 'ok',
+            'running', 'pending', 'queued', 'deploying', 'in_progress', 'waiting', 'maintenance', 'degraded', 'warning', 'awaiting_input', 'syncing', 'stale' => 'busy',
+            'failed', 'failure', 'error', 'errored', 'offline', 'down', 'broken', 'expired', 'timed_out', 'open' => 'bad',
+            'inactive', 'disabled', 'paused', 'archived', 'cancelled', 'canceled', 'skipped', 'revoked', 'ignored' => 'off',
             default => 'unknown',
         };
     }

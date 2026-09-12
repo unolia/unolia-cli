@@ -16,7 +16,8 @@ it('lists the open issues of the linked project', function () {
     $result = $cli->run('issue', 'list');
 
     expect($result->exitCode)->toBe(0)
-        ->and($result->stdout)->toContain('01J9P7')
+        ->and($result->stdout)->toContain('8D0E1F')
+        ->and($result->stdout)->not->toContain('01J9P7QK3M8T5V2N4B6C8D0E1F')
         ->and($result->stdout)->toContain('Publish a DMARC record');
 });
 
@@ -36,12 +37,12 @@ it('filters to what can be fixed', function () {
     expect($cli->api()->lastCall()['query'])->toMatchArray(['fixable' => '1']);
 });
 
-it('shows one issue from a prefix', function () {
+it('shows one issue from its short id, the tail of the uuid', function () {
     $result = issues()
         ->withApi(api()
-            ->on('GET', 'v1/issues?id_prefix=01J9P7', fixture('issues.json'))
+            ->on('GET', 'v1/issues?id_suffix=8d0e1f', fixture('issues.json'))
             ->on('GET', 'v1/issues/'.ISSUE, fixture('issue-01J9P7.json')))
-        ->run('issue', 'view', '01J9P7');
+        ->run('issue', 'view', '8D0E1F');
 
     expect($result->exitCode)->toBe(0)
         ->and($result->stdout)->toContain('No DMARC record at _dmarc.acme.dev')

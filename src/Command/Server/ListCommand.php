@@ -9,6 +9,11 @@ use Symfony\Component\Console\Input\InputOption;
 use Unolia\Cli\Api\Requests\Servers\ListServers;
 use Unolia\Cli\Command\BaseCommand;
 use Unolia\Cli\Console\ExitCode;
+use Unolia\Cli\Console\Table\Cell;
+use Unolia\Cli\Console\Table\Column;
+use Unolia\Cli\Console\Table\Status;
+use Unolia\Cli\Console\Table\Table;
+use Unolia\Cli\Console\Table\Tint;
 use Unolia\Cli\Context\Need;
 use Unolia\Cli\Support\Arr;
 use Unolia\Cli\Support\Str;
@@ -50,9 +55,32 @@ final class ListCommand extends BaseCommand
             'q' => $this->optionString('q'),
         ])));
 
-        $this->out()->list(
-            $rows,
-            [
+        $this->out()->table($rows, self::table(), 'No managed servers here.');
+
+        return ExitCode::Ok;
+    }
+
+    /**
+     * By name. The name opens the server page, the provider wears its brand
+     * colour, the versions are dim because they only matter when they differ.
+     */
+    public static function table(): Table
+    {
+        return Table::make(
+            Column::make('id', 'Id')->right()->cell(static fn (array $row): Cell => Cell::text('#'.Str::scalar($row['id'] ?? null))->dim()),
+            Column::make('status')->cell(static fn (array $row): Cell => Status::glyph($row['status'] ?? null)),
+            Column::make('name', 'Server')->cell(static fn (array $row): Cell => Cell::text(Str::scalar($row['name'] ?? null))
+                ->link(is_string($row['url'] ?? null) ? $row['url'] : null)),
+            Column::make('provider', 'Provider')->cell(static fn (array $row): Cell => Cell::text(Str::scalar(Arr::get($row, 'provider.slug')))
+                ->color(Tint::provider(Arr::get($row, 'provider.slug')))),
+            Column::make('type', 'Type')->cell(static fn (array $row): Cell => Cell::text(Str::scalar($row['type'] ?? null))->dim()),
+            Column::make('public_ipv4', 'IP')->cell(static fn (array $row): Cell => Cell::text(Str::scalar($row['public_ipv4'] ?? null))),
+            Column::make('php_version', 'PHP')->cell(static fn (array $row): Cell => Cell::text(Str::scalar($row['php_version'] ?? null))->dim()),
+            Column::make('database', 'Database')->cell(static fn (array $row): Cell => Cell::text(self::database($row))->dim()),
+            Column::make('ubuntu_version', 'Ubuntu')->cell(static fn (array $row): Cell => Cell::text(Str::scalar($row['ubuntu_version'] ?? null))->dim()),
+            Column::make('state')->cell(static fn (array $row): Cell => Status::word($row['status'] ?? null, 'connected')),
+        )
+            ->fields([
                 'id' => 'Id',
                 'name' => 'Name',
                 'provider' => 'Provider',
@@ -62,15 +90,9 @@ final class ListCommand extends BaseCommand
                 'database' => 'Database',
                 'ubuntu_version' => 'Ubuntu',
                 'status' => 'Status',
-            ],
-            static fn (array $row): array => [
-                'provider' => Str::scalar(Arr::get($row, 'provider.slug')),
-                'database' => self::database($row),
-            ],
-            'No managed servers here.',
-        );
-
-        return ExitCode::Ok;
+            ])
+            ->sort(static fn (array $a, array $b): int => strcasecmp(Str::scalar($a['name'] ?? null), Str::scalar($b['name'] ?? null)))
+            ->footer(static fn (int $count): string => $count === 1 ? '1 server' : $count.' servers');
     }
 
     /**
@@ -82,7 +104,7 @@ final class ListCommand extends BaseCommand
         $version = Arr::get($row, 'database.version');
 
         if (! is_string($engine)) {
-            return Str::scalar(Arr::get($row, 'database.raw'));
+            return Str::scalar(Arr::get($row, 'database.raw'), '');
         }
 
         return is_scalar($version) ? $engine.' '.$version : $engine;
