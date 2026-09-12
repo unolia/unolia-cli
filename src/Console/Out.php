@@ -208,7 +208,7 @@ final class Out
             return $url;
         }
 
-        return "\e]8;;".$url."\e\\".$label."\e]8;;\e\\";
+        return "\e]8;;".$url."\x07".$label."\e]8;;\x07";
     }
 
     /**

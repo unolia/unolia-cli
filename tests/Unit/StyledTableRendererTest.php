@@ -47,7 +47,7 @@ it('wraps links in OSC 8 only when the terminal has colour', function () {
 
     $output = (new StyledTableRenderer($face))->render(sampleRows(), sampleTable());
 
-    expect($output)->toContain("\e]8;;https://alpha.test\e\\alpha.test\e]8;;\e\\");
+    expect($output)->toContain("\e]8;;https://alpha.test\x07alpha.test\e]8;;\x07");
 });
 
 it('gives a pipe plain words instead of glyphs and drops empty columns', function () {

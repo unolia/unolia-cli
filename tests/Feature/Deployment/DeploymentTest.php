@@ -18,6 +18,18 @@ it('lists the deployments of the linked website', function () {
         ->and($result->stdout)->toContain('52s');
 });
 
+it('scopes to the website the git remote maps to when nothing is linked', function () {
+    $cli = cli()->withGitRemote()
+        ->withApi(api()
+            ->on('GET', 'v1/resolve', fixture('resolve-exact.json'))
+            ->on('GET', 'v1/deployments?website=118', fixture('deployments.json')));
+
+    $result = $cli->run('deployment', 'list');
+
+    expect($result->exitCode)->toBe(0)
+        ->and($result->stdout)->toContain('4812');
+});
+
 it('filters by status and branch', function () {
     $cli = deployments()->withApi(api()->on('GET', 'v1/deployments?status=failed&branch=main', fixture('deployments.json')));
 
