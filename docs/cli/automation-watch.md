@@ -7,7 +7,7 @@ USAGE
   unolia automation watch <run> [flags]
 
 ARGUMENTS
-  run  Run ULID or a prefix of it
+  run  Run ULID or its short id, the last six characters
 
 FLAGS
       --interval <value>  Seconds between checks (default 3)
@@ -29,9 +29,9 @@ INHERITED FLAGS
 
 EXAMPLES
   # Follow a run
-  $ unolia automation watch 01J9A2
+  $ unolia automation watch PC0XCA
   # As events
-  $ unolia automation watch 01J9A2 --format ndjson
+  $ unolia automation watch PC0XCA --format ndjson
 
 LEARN MORE
   https://unolia.com/docs/cli/automation-watch

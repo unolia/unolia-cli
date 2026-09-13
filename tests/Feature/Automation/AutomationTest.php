@@ -93,17 +93,67 @@ it('shows a run as one task per step on a terminal', function () {
         ->and(strpos($out, 'apt update'))->toBeLessThan(strpos($out, 'Reboot'));
 });
 
-it('stops the step list on the step waiting for an answer, on a terminal', function () {
-    $result = automations()
-        ->answers(['Run this automation now?' => true])
+it('asks the question where the run stopped and carries on, on a terminal', function () {
+    $cli = automations()
+        ->answers(['Run this automation now?' => true, 'has a new kernel' => false])
         ->withApi(api()
             ->on('POST', 'v1/automations/7/runs', fixture('automation-run-create-201.json'), 201)
-            ->on('GET', 'v1/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-awaiting-input.json')))
-        ->run('automation', 'run', '7');
+            ->on('GET', 'v1/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-awaiting-input.json'))
+            ->on('POST', 'v1/automation-runs/'.RUN.'/resume', fixture('run-01J9A2-completed.json')));
 
-    expect($result->exitCode)->toBe(7)
-        ->and($result->stdout)->toContain('waiting for an answer')
-        ->and($result->stdout)->toContain('unolia automation resume');
+    $result = $cli->run('automation', 'run', '7');
+
+    $out = $result->stdout;
+
+    expect($result->exitCode)->toBe(0)
+        ->and($result->stderr)->toContain('waiting for an answer')
+        ->and($out)->toContain('answering')
+        ->and($out)->toContain('Run '.substr(RUN, -6).' completed')
+        // The step shows twice: once stopping at the question, once answering it.
+        ->and(substr_count($out, 'Reboot if the kernel changed'))->toBe(2)
+        ->and(strpos($out, 'answering'))->toBeLessThan(strpos($out, 'completed'))
+        ->and($cli->api()->lastCall()['body'])->toBe(['inputs' => ['reboot' => false]]);
+});
+
+it('pre-ticks the default choices and sends the ids picked, not their names', function () {
+    $cli = automations()
+        ->answers(['Pick the servers to reboot' => ['102', '2']])
+        ->withApi(api()
+            ->on('GET', 'v1/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-awaiting-servers.json'))
+            ->on('POST', 'v1/automation-runs/'.RUN.'/resume', fixture('run-01J9A2-rebooted.json')));
+
+    $result = $cli->run('automation', 'watch', RUN);
+
+    expect($result->exitCode)->toBe(0)
+        ->and($result->stdout)->toContain('Reboot which servers?')
+        ->and($result->stdout)->toContain('2 servers rebooted')
+        ->and($cli->api()->lastCall()['body'])->toBe(['inputs' => ['selected_server_ids' => ['102', '2']]]);
+});
+
+it('asks again when the API refuses the answer', function () {
+    // The first answer names a server out of scope. The second ask has no
+    // scripted answer and falls back to the block's default.
+    $cli = automations()
+        ->answers(['Pick the servers to reboot' => ['3']])
+        ->withApi(api()
+            ->on('GET', 'v1/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-awaiting-servers.json'))
+            ->on('POST', 'v1/automation-runs/'.RUN.'/resume', fixture('run-resume-422.json'), 422)
+            ->on('POST', 'v1/automation-runs/'.RUN.'/resume', fixture('run-01J9A2-rebooted.json')));
+
+    $result = $cli->run('automation', 'watch', RUN);
+
+    expect($result->exitCode)->toBe(0)
+        ->and($result->stderr)->toContain('cache-01 is not in scope')
+        ->and($cli->api()->lastCall()['body'])->toBe(['inputs' => ['selected_server_ids' => ['2']]]);
+});
+
+it('does not take --yes for an answer', function () {
+    $result = automations()
+        ->withApi(api()->on('GET', 'v1/automation-runs/'.RUN, fixture('run-01J9A2-awaiting-input.json')))
+        ->run('automation', 'resume', RUN, '--yes');
+
+    expect($result->exitCode)->toBe(2)
+        ->and($result->stderr)->toContain('missing --input');
 });
 
 it('exits 7 when a run parks waiting for an answer', function () {
@@ -135,7 +185,7 @@ it('refuses a prefix that is too short', function () {
         ->and($result->stderr)->toContain('six characters');
 });
 
-it('answers a parked run from a flag', function () {
+it('answers a parked run from a flag and hands it back', function () {
     $cli = automations()->withApi(api()
         ->on('GET', 'v1/automation-runs/'.RUN, fixture('run-01J9A2-awaiting-input.json'))
         ->on('POST', 'v1/automation-runs/'.RUN.'/resume', fixture('run-01J9A2-completed.json')));
@@ -143,7 +193,30 @@ it('answers a parked run from a flag', function () {
     $result = $cli->run('automation', 'resume', RUN, '--input', 'reboot=true');
 
     expect($result->exitCode)->toBe(0)
+        ->and($result->stdout)->toContain('Run '.substr(RUN, -6).' resumed · unolia automation watch '.substr(RUN, -6))
         ->and($cli->api()->lastCall()['body'])->toBe(['inputs' => ['reboot' => true]]);
+});
+
+it('takes choices by label in a flag and waits with --wait', function () {
+    $cli = automations()->withApi(api()
+        ->on('GET', 'v1/automation-runs/'.RUN, fixture('run-01J9A2-awaiting-servers.json'))
+        ->on('POST', 'v1/automation-runs/'.RUN.'/resume', fixture('run-01J9A2-rebooted.json'))
+        ->on('GET', 'v1/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-rebooted.json')));
+
+    $result = $cli->run('automation', 'resume', RUN, '--input', 'selected_server_ids=web-01, 2', '--wait');
+
+    expect($result->exitCode)->toBe(0)
+        ->and($cli->api()->calls()[1]['body'])->toBe(['inputs' => ['selected_server_ids' => ['102', '2']]]);
+});
+
+it('sends an empty list when nothing is picked', function () {
+    $cli = automations()->withApi(api()
+        ->on('GET', 'v1/automation-runs/'.RUN, fixture('run-01J9A2-awaiting-servers.json'))
+        ->on('POST', 'v1/automation-runs/'.RUN.'/resume', fixture('run-01J9A2-rebooted.json')));
+
+    $cli->run('automation', 'resume', RUN, '--input', 'selected_server_ids=');
+
+    expect($cli->api()->lastCall()['body'])->toBe(['inputs' => ['selected_server_ids' => []]]);
 });
 
 it('lists the expected keys when a pipe resumes without inputs', function () {
@@ -156,7 +229,7 @@ it('lists the expected keys when a pipe resumes without inputs', function () {
         ->and($result->stderr)->toContain('reboot');
 });
 
-it('renders the input blocks as prompts on a terminal', function () {
+it('replays the steps down to the question, asks it, and follows the rest, on a terminal', function () {
     $cli = automations()
         ->answers(['has a new kernel' => true])
         ->withApi(api()
@@ -165,7 +238,12 @@ it('renders the input blocks as prompts on a terminal', function () {
 
     $result = $cli->run('automation', 'resume', RUN);
 
+    $out = $result->stdout;
+
     expect($result->exitCode)->toBe(0)
+        ->and($out)->toContain('Select servers')
+        ->and($out)->toContain('Reboot if the kernel changed')
+        ->and($out)->toContain('Run '.substr(RUN, -6).' completed')
         ->and($cli->api()->lastCall()['body'])->toBe(['inputs' => ['reboot' => true]]);
 });
 

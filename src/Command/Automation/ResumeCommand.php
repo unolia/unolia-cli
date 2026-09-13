@@ -10,19 +10,25 @@ use Symfony\Component\Console\Input\InputOption;
 use Unolia\Cli\Api\Requests\Automations\ResumeAutomationRun;
 use Unolia\Cli\Api\Requests\Automations\ShowAutomationRun;
 use Unolia\Cli\Command\BaseCommand;
+use Unolia\Cli\Command\Concerns\FollowsAutomationRuns;
 use Unolia\Cli\Command\Concerns\ResolvesRuns;
-use Unolia\Cli\Command\Concerns\Watches;
 use Unolia\Cli\Console\CliError;
 use Unolia\Cli\Console\ExitCode;
+use Unolia\Cli\Support\Arr;
+use Unolia\Cli\Support\Str;
 use Unolia\Cli\Watch\AutomationRunTarget;
+use Unolia\Cli\Watch\TargetState;
 
 /**
- * Answer the question a parked run is waiting on.
+ * Answer the question a parked run is waiting on. On a terminal the run's
+ * steps replay as tasks down to the one that is asking, the question is
+ * asked there, and the list carries on once answered. A pipe answers from
+ * --input flags and hands the run back, or waits with --wait.
  */
 final class ResumeCommand extends BaseCommand
 {
+    use FollowsAutomationRuns;
     use ResolvesRuns;
-    use Watches;
 
     protected function canonical(): string
     {
@@ -38,10 +44,9 @@ final class ResumeCommand extends BaseCommand
 
     protected function define(): void
     {
-        $this->addArgument('run', InputArgument::REQUIRED, 'Run ULID or a prefix of it');
-        $this->addOption('input', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'A key=value answer');
-        $this->addOption('wait', null, InputOption::VALUE_NONE, 'Follow the run after answering');
-        $this->addWatchOptions();
+        $this->addArgument('run', InputArgument::REQUIRED, 'Run ULID or its short id, the last six characters');
+        $this->addOption('input', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'A field=value answer. A choice by value or label, several separated by commas');
+        $this->addFollowOptions();
     }
 
     public function mutates(): bool
@@ -52,8 +57,9 @@ final class ResumeCommand extends BaseCommand
     public function examples(): array
     {
         return [
-            'Answer and continue' => 'unolia automation resume 01J9A2 --input reboot=true --wait',
-            'Answer from a terminal' => 'unolia automation resume 01J9A2',
+            'Answer from a terminal' => 'unolia automation resume PC0XCA',
+            'Answer yes or no' => 'unolia automation resume PC0XCA --input reboot=yes',
+            'Pick several' => 'unolia automation resume PC0XCA --input selected_server_ids=web-01,db-01 --wait',
         ];
     }
 
@@ -61,163 +67,41 @@ final class ResumeCommand extends BaseCommand
     {
         $ulid = $this->runUlid((string) $this->argumentString('run'));
         $run = $this->fetch(new ShowAutomationRun($ulid));
-        $blocks = $this->inputBlocks($run);
+        $step = self::awaitingStep($run);
 
-        $answers = $this->answers($blocks);
+        if ($step === null) {
+            throw CliError::usage(
+                'this run is not waiting for anything',
+                sprintf('unolia automation watch %s follows it.', Str::shortId($ulid)),
+            );
+        }
+
+        $blocks = self::blocksOf($step);
+        $answers = self::answersFromFlags($this->optionList('input'), $blocks);
+        $progress = $this->out()->face()->interactive && ! $this->structured() && ! $this->optionBool('no-progress');
 
         if ($this->dryRun()) {
-            $this->out()->record(['run' => $ulid, 'inputs' => $answers]);
+            $this->out()->record(['run' => $ulid, 'inputs' => $answers ?? $this->askBlocks($blocks, $ulid)]);
 
             return ExitCode::Ok;
         }
 
+        // A terminal answers where the step stopped, flags or not, and
+        // watches the rest of the run from there.
+        if ($progress) {
+            return $this->followRunSteps($ulid, new TargetState($run), $answers);
+        }
+
+        $answers ??= $this->askBlocks($blocks, $ulid);
         $resumed = $this->fetch(new ResumeAutomationRun($ulid, ['inputs' => $answers]));
+        $short = Str::shortId($ulid);
 
-        if (! $this->optionBool('wait')) {
-            if ($this->structured()) {
-                $this->out()->record($resumed);
-
-                return ExitCode::Ok;
-            }
-
-            $this->out()->info(sprintf('Run %s resumed', $ulid));
-
-            return ExitCode::Ok;
-        }
-
-        $result = $this->follow(new AutomationRunTarget($this->api(), $ulid, $this->waitSeconds()));
-
-        if ($this->structured()) {
-            $this->out()->record($result->state->data);
-        }
-
-        return $result->exitCode;
-    }
-
-    /**
-     * @param  array<string, mixed>  $run
-     * @return list<array<string, mixed>>
-     */
-    private function inputBlocks(array $run): array
-    {
-        foreach (is_array($run['steps'] ?? null) ? $run['steps'] : [] as $step) {
-            if (! is_array($step) || ($step['state'] ?? null) !== 'awaiting_input') {
-                continue;
-            }
-
-            $blocks = [];
-
-            foreach (is_array($step['input_blocks'] ?? null) ? $step['input_blocks'] : [] as $block) {
-                if (is_array($block)) {
-                    $blocks[] = $block;
-                }
-            }
-
-            return $blocks;
-        }
-
-        throw CliError::usage(
-            'this run is not waiting for anything',
-            'Check it with unolia automation view.',
+        return $this->followByDefault(
+            new AutomationRunTarget($this->api(), $ulid, $this->waitSeconds()),
+            sprintf('Resuming %s', Str::scalar(Arr::get($resumed, 'automation.name'), 'the run')),
+            $resumed,
+            sprintf('Run %s resumed · unolia automation watch %s', $short, $short),
+            sprintf('unolia automation logs %s shows the whole run.', $short),
         );
-    }
-
-    /**
-     * @param  list<array<string, mixed>>  $blocks
-     * @return array<string, mixed>
-     */
-    private function answers(array $blocks): array
-    {
-        $given = [];
-
-        foreach ($this->optionList('input') as $pair) {
-            if (! str_contains($pair, '=')) {
-                throw CliError::usage(sprintf('--input %s is not a key=value pair', $pair));
-            }
-
-            [$key, $value] = explode('=', $pair, 2);
-            $given[trim($key)] = $value;
-        }
-
-        if ($given !== []) {
-            return $this->cast($blocks, $given);
-        }
-
-        if (! $this->ask()->interactive()) {
-            $expected = [];
-
-            foreach ($blocks as $block) {
-                if (is_string($block['field'] ?? null)) {
-                    $expected[$block['field']] = (string) ($block['label'] ?? '');
-                }
-            }
-
-            throw CliError::missingInput('--input', $expected);
-        }
-
-        $answers = [];
-
-        foreach ($blocks as $block) {
-            $field = $block['field'] ?? null;
-
-            if (! is_string($field)) {
-                continue;
-            }
-
-            $label = (string) ($block['label'] ?? $field);
-            $answers[$field] = match ((string) ($block['kind'] ?? 'text')) {
-                'confirm' => $this->ask()->confirm($label),
-                'select' => $this->ask()->select($label, $this->options($block), '--input'),
-                'password' => $this->ask()->password($label, '--input'),
-                default => $this->ask()->text($label, '--input'),
-            };
-        }
-
-        return $answers;
-    }
-
-    /**
-     * @param  array<string, mixed>  $block
-     * @return array<string, string>
-     */
-    private function options(array $block): array
-    {
-        $options = [];
-
-        foreach (is_array($block['options'] ?? null) ? $block['options'] : [] as $key => $label) {
-            if (is_scalar($label)) {
-                $options[is_int($key) ? (string) $label : (string) $key] = (string) $label;
-            }
-        }
-
-        return $options;
-    }
-
-    /**
-     * Turn the strings a script passed into the types the blocks declare.
-     *
-     * @param  list<array<string, mixed>>  $blocks
-     * @param  array<string, string>  $given
-     * @return array<string, mixed>
-     */
-    private function cast(array $blocks, array $given): array
-    {
-        $kinds = [];
-
-        foreach ($blocks as $block) {
-            if (is_string($block['field'] ?? null)) {
-                $kinds[$block['field']] = (string) ($block['kind'] ?? 'text');
-            }
-        }
-
-        $answers = [];
-
-        foreach ($given as $field => $value) {
-            $answers[$field] = ($kinds[$field] ?? 'text') === 'confirm'
-                ? in_array(strtolower($value), ['1', 'true', 'yes', 'y'], true)
-                : $value;
-        }
-
-        return $answers;
     }
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Unolia\Cli\Command\Concerns;
 
+use Unolia\Cli\Api\ApiException;
+use Unolia\Cli\Api\Requests\Automations\ResumeAutomationRun;
 use Unolia\Cli\Console\CliError;
 use Unolia\Cli\Console\ExitCode;
 use Unolia\Cli\Console\StepLog;
@@ -17,15 +19,21 @@ use Unolia\Cli\Watch\TargetState;
  * An automation is a list of steps run one after the other, so a terminal
  * shows it as one task per step: the label, what the step reports while it
  * runs, and how it ended, each kept on screen. A run that parks waiting for
- * an answer stops the list on that step and says how to resume.
+ * an answer asks its question right there, under the step, sends the answer
+ * while the step's task spins, and carries on down the list.
  */
 trait FollowsAutomationRuns
 {
+    use AnswersRuns;
     use Watches;
 
     private const STEP_DONE = ['completed', 'failed', 'skipped', 'cancelled', 'awaiting_input', 'rolled_back'];
 
-    protected function followRunSteps(string $ulid): ExitCode
+    /**
+     * @param  TargetState|null  $initial  a reading already in hand, so the list starts without a fetch
+     * @param  array<string, mixed>|null  $answers  what to send when the step that is asking is reached, before asking
+     */
+    protected function followRunSteps(string $ulid, ?TargetState $initial = null, ?array $answers = null): ExitCode
     {
         $target = new AutomationRunTarget($this->api(), $ulid, $this->waitSeconds());
         $poller = $this->runtime()->poller();
@@ -34,7 +42,8 @@ trait FollowsAutomationRuns
         $timeout = $this->duration('timeout', 900);
         $started = time();
         $interval = $this->duration('interval', 3);
-        $state = Patience::fetch($target, $poller, $interval);
+        $state = $initial ?? Patience::fetch($target, $poller, $interval);
+        $pending = $answers;
 
         $this->out()->intro(sprintf(
             '%s · run %s',
@@ -64,12 +73,38 @@ trait FollowsAutomationRuns
             $shown[] = $id;
             $label = Str::scalar($step['label'] ?? $step['slug'] ?? null, 'Step '.count($shown));
 
-            $outcome = $this->ask()->task($label, function (StepLog $log) use (&$state, $target, $poller, $interval, $id, $timeout, $started): string {
+            $outcome = $this->ask()->task($label, function (StepLog $log) use (&$state, &$pending, $ulid, $target, $poller, $interval, $id, $timeout, $started): string {
                 $seen = null;
 
                 while (true) {
                     $current = self::step($state, $id);
                     $stepState = Str::scalar($current['state'] ?? null, 'pending');
+
+                    // The answer goes out under this step's spinner: the API
+                    // runs the resumed step before it answers, which can take
+                    // a while. A refused answer closes the task so the
+                    // question can be asked again, outside it.
+                    if ($stepState === 'awaiting_input' && $pending !== null) {
+                        $log->subLabel('answering');
+                        $inputs = $pending;
+                        $pending = null;
+
+                        try {
+                            $state = new TargetState($this->fetch(new ResumeAutomationRun($ulid, ['inputs' => $inputs])), $state->meta);
+                        } catch (ApiException $e) {
+                            if ($e->status !== 422) {
+                                throw $e;
+                            }
+
+                            $log->warning($e->toCliError()->getMessage());
+
+                            return 'rejected';
+                        }
+
+                        $seen = null;
+
+                        continue;
+                    }
 
                     if (in_array($stepState, self::STEP_DONE, true)) {
                         return $this->closeStep($log, $current, $stepState);
@@ -91,6 +126,15 @@ trait FollowsAutomationRuns
                     $state = Patience::fetch($target, $poller, $interval);
                 }
             });
+
+            // The question, asked where the step stopped. The step then
+            // re-enters the list as a fresh task that sends the answer.
+            if (($outcome === 'awaiting_input' || $outcome === 'rejected') && $this->ask()->interactive()) {
+                $pending = $this->askBlocks(self::blocksOf(self::step($state, $id)), $ulid);
+                $shown = array_values(array_filter($shown, static fn (mixed $shownId): bool => $shownId !== $id));
+
+                continue;
+            }
 
             if ($outcome === 'awaiting_input' || ($outcome !== 'completed' && $outcome !== 'skipped' && $target->isDone($state))) {
                 break;

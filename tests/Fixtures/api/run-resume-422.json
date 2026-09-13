@@ -1,0 +1,14 @@
+{
+  "message": "The given data was invalid.",
+  "errors": {
+    "selected_server_ids": [
+      "cache-01 is not in scope for this run."
+    ]
+  },
+  "error": {
+    "code": "validation_failed",
+    "message": "The given data was invalid.",
+    "status": 422,
+    "hint": null
+  }
+}

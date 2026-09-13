@@ -13,6 +13,7 @@ use function Laravel\Prompts\search;
 use function Laravel\Prompts\select;
 use function Laravel\Prompts\task;
 use function Laravel\Prompts\text;
+use function Laravel\Prompts\textarea;
 
 /**
  * Every prompt goes through here. On a pipe the prompt becomes an exit 2 that names the
@@ -27,13 +28,22 @@ class Ask
         return $this->face->interactive;
     }
 
-    public function text(string $label, string $flag, string $placeholder = '', string $default = '', string $hint = ''): string
+    public function text(string $label, string $flag, string $placeholder = '', string $default = '', string $hint = '', bool $required = true): string
     {
         if (! $this->face->interactive) {
             throw CliError::missingInput($flag);
         }
 
-        return text(label: $label, placeholder: $placeholder, default: $default, required: true, hint: $hint);
+        return text(label: $label, placeholder: $placeholder, default: $default, required: $required, hint: $hint);
+    }
+
+    public function textarea(string $label, string $flag, string $default = '', string $hint = '', bool $required = true): string
+    {
+        if (! $this->face->interactive) {
+            throw CliError::missingInput($flag);
+        }
+
+        return textarea(label: $label, default: $default, required: $required, hint: $hint);
     }
 
     public function password(string $label, string $flag, string $hint = ''): string
@@ -62,13 +72,13 @@ class Ask
      * @param  list<int|string>  $default
      * @return list<string>
      */
-    public function multiselect(string $label, array $options, string $flag, array $default = [], string $hint = ''): array
+    public function multiselect(string $label, array $options, string $flag, array $default = [], string $hint = '', bool $required = true): array
     {
         if (! $this->face->interactive) {
             throw CliError::missingInput($flag, $options);
         }
 
-        $selected = multiselect(label: $label, options: $options, default: $default, scroll: 10, required: true, hint: $hint);
+        $selected = multiselect(label: $label, options: $options, default: $default, scroll: 10, required: $required, hint: $hint);
 
         return array_values(array_map(static fn (int|string $value): string => (string) $value, $selected));
     }
@@ -97,6 +107,21 @@ class Ask
         }
 
         return confirm(label: $question, default: $default);
+    }
+
+    /**
+     * A yes-or-no question whose answer is data, not consent: whether to reboot
+     * a server, say, asked by a run that stopped to ask. --yes says nothing
+     * about it, so this never takes --yes for an answer, and a pipe is told
+     * which flag carries one.
+     */
+    public function yesNo(string $question, string $flag, bool $default = true, string $hint = ''): bool
+    {
+        if (! $this->face->interactive) {
+            throw CliError::missingInput($flag);
+        }
+
+        return confirm(label: $question, default: $default, hint: $hint);
     }
 
     /**
