@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Unolia\Cli\Command\Automation;
 
-use Lorisleiva\CronTranslator\CronTranslator;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Unolia\Cli\Api\Requests\Automations\ListAutomations;
@@ -15,6 +14,7 @@ use Unolia\Cli\Console\Table\Column;
 use Unolia\Cli\Console\Table\Status;
 use Unolia\Cli\Console\Table\Table;
 use Unolia\Cli\Support\Arr;
+use Unolia\Cli\Support\Cron;
 use Unolia\Cli\Support\RelativeTime;
 use Unolia\Cli\Support\Str;
 
@@ -96,19 +96,10 @@ final class ListCommand extends BaseCommand
     }
 
     /** "0 4 * * 1" as "every Monday at 4:00am"; the expression itself when it cannot be read. */
-    private static function cron(string $expression): string
-    {
-        try {
-            return lcfirst(CronTranslator::translate($expression));
-        } catch (\Throwable) {
-            return $expression;
-        }
-    }
-
     /**
      * @param  array<string, mixed>  $row
      */
-    private static function triggers(array $row): string
+    public static function triggers(array $row): string
     {
         $parts = [];
 
@@ -119,7 +110,7 @@ final class ListCommand extends BaseCommand
         $cron = Arr::get($row, 'triggers.cron');
 
         if (is_string($cron) && $cron !== '') {
-            $parts[] = self::cron($cron);
+            $parts[] = Cron::describe($cron);
         }
 
         $events = Arr::get($row, 'triggers.events');

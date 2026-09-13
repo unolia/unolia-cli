@@ -56,7 +56,9 @@ it('shows the plan under --dry-run and starts nothing', function () {
 });
 
 it('refuses to start a run in a pipe without --yes', function () {
-    $result = automations()->run('automation', 'run', '7');
+    $result = automations()
+        ->withApi(api()->on('POST', 'v1/automations/7/runs', fixture('automation-run-dry-run.json')))
+        ->run('automation', 'run', '7');
 
     expect($result->exitCode)->toBe(2)
         ->and($result->stderr)->toContain('needs a confirmation');
@@ -64,7 +66,9 @@ it('refuses to start a run in a pipe without --yes', function () {
 
 it('starts a run', function () {
     $result = automations()
-        ->withApi(api()->on('POST', 'v1/automations/7/runs', fixture('automation-run-create-201.json'), 201))
+        ->withApi(api()
+            ->on('POST', 'v1/automations/7/runs', fixture('automation-run-dry-run.json'))
+            ->on('POST', 'v1/automations/7/runs', fixture('automation-run-create-201.json'), 201))
         ->run('automation', 'run', '7', '--yes');
 
     expect($result->exitCode)->toBe(0)
@@ -73,8 +77,9 @@ it('starts a run', function () {
 
 it('shows a run as one task per step on a terminal', function () {
     $result = automations()
-        ->answers(['Run this automation now?' => true])
+        ->answers(['now?' => true])
         ->withApi(api()
+            ->on('POST', 'v1/automations/7/runs', fixture('automation-run-dry-run.json'))
             ->on('POST', 'v1/automations/7/runs', fixture('automation-run-create-201.json'), 201)
             ->on('GET', 'v1/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-running.json'))
             ->on('GET', 'v1/automation-runs/'.RUN.'?wait=20', fixture('run-01J9A2-completed.json')))
@@ -83,6 +88,11 @@ it('shows a run as one task per step on a terminal', function () {
     $out = $result->stdout;
 
     expect($result->exitCode)->toBe(0)
+        // What is about to start, above the question.
+        ->and($out)->toContain('Update Ubuntu servers #7')
+        ->and($out)->toContain('Schedule  manual, every Monday at 4:00am (Europe/Paris) · last run')
+        ->and($out)->toContain('Targets   1 server · web-01')
+        ->and($out)->toContain('Steps     2 · Select servers, apt update, apt upgrade')
         ->and($out)->toContain('Select servers')
         ->and($out)->toContain('2 servers')
         // What the step wrote for a reader sits under its line: a table with
@@ -107,8 +117,9 @@ it('shows a run as one task per step on a terminal', function () {
 
 it('asks the question where the run stopped and carries on, on a terminal', function () {
     $cli = automations()
-        ->answers(['Run this automation now?' => true, 'has a new kernel' => false])
+        ->answers(['now?' => true, 'has a new kernel' => false])
         ->withApi(api()
+            ->on('POST', 'v1/automations/7/runs', fixture('automation-run-dry-run.json'))
             ->on('POST', 'v1/automations/7/runs', fixture('automation-run-create-201.json'), 201)
             ->on('GET', 'v1/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-awaiting-input.json'))
             ->on('POST', 'v1/automation-runs/'.RUN.'/resume', fixture('run-01J9A2-completed.json')));
@@ -217,6 +228,7 @@ it('does not take --yes for an answer', function () {
 it('exits 7 when a run parks waiting for an answer', function () {
     $result = automations()
         ->withApi(api()
+            ->on('POST', 'v1/automations/7/runs', fixture('automation-run-dry-run.json'))
             ->on('POST', 'v1/automations/7/runs', fixture('automation-run-create-201.json'), 201)
             ->on('GET', 'v1/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-awaiting-input.json')))
         ->run('automation', 'run', '7', '--wait', '--yes');
@@ -365,9 +377,11 @@ it('follows a log until the run settles, not until a poll is quiet', function ()
 
 it('says which run is already going when the automation refuses another', function () {
     $result = automations()
-        ->withApi(api()->on('POST', 'v1/automations/7/runs', [
-            'error' => ['code' => 'run_rejected', 'message' => 'Max concurrent runs reached for this Automation.', 'status' => 409, 'details' => ['running' => [RUN]]],
-        ], 409))
+        ->withApi(api()
+            ->on('POST', 'v1/automations/7/runs', fixture('automation-run-dry-run.json'))
+            ->on('POST', 'v1/automations/7/runs', [
+                'error' => ['code' => 'run_rejected', 'message' => 'Max concurrent runs reached for this Automation.', 'status' => 409, 'details' => ['running' => [RUN]]],
+            ], 409))
         ->run('automation', 'run', '7', '--yes');
 
     expect($result->exitCode)->toBe(1)
