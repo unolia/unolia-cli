@@ -31,7 +31,10 @@ trait ResolvesRuns
             );
         }
 
-        $rows = $this->collection(new ListAutomationRuns(['ulid_suffix' => strtoupper($reference), 'per_page' => 10]));
+        $rows = $this->ask()->spin(
+            sprintf('Finding run %s', strtoupper($reference)),
+            fn (): array => $this->collection(new ListAutomationRuns(['ulid_suffix' => strtoupper($reference), 'per_page' => 10])),
+        );
         $matches = [];
 
         foreach ($rows as $row) {

@@ -38,8 +38,10 @@ final class Watcher
         $previous = null;
         $headerPrinted = false;
 
+        $patience = new Patience($target, $this->poller, $interval);
+
         while (true) {
-            $state = Patience::fetch($target, $this->poller, $interval);
+            $state = $patience->fetch();
 
             if (! $headerPrinted) {
                 $headerPrinted = true;

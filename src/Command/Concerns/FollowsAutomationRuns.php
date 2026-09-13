@@ -8,7 +8,6 @@ use Unolia\Cli\Api\ApiException;
 use Unolia\Cli\Api\Requests\Automations\ResumeAutomationRun;
 use Unolia\Cli\Console\CliError;
 use Unolia\Cli\Console\ExitCode;
-use Unolia\Cli\Console\StepLog;
 use Unolia\Cli\Support\RelativeTime;
 use Unolia\Cli\Support\Str;
 use Unolia\Cli\Watch\AutomationRunTarget;
@@ -17,10 +16,11 @@ use Unolia\Cli\Watch\TargetState;
 
 /**
  * An automation is a list of steps run one after the other, so a terminal
- * shows it as one task per step: the label, what the step reports while it
- * runs, and how it ended, each kept on screen. A run that parks waiting for
- * an answer asks its question right there, under the step, sends the answer
- * while the step's task spins, and carries on down the list.
+ * shows it as a checklist: one line per step, with what the step reported
+ * and how long it took, and a spinner on the step that is going. A run that
+ * parks waiting for an answer asks its question right there, under the
+ * step, sends the answer under the same spinner, and carries on down the
+ * list.
  */
 trait FollowsAutomationRuns
 {
@@ -41,8 +41,9 @@ trait FollowsAutomationRuns
 
         $timeout = $this->duration('timeout', 900);
         $started = time();
-        $interval = $this->duration('interval', 3);
-        $state = $initial ?? Patience::fetch($target, $poller, $interval);
+        $patience = new Patience($target, $poller, $this->duration('interval', 3));
+        $short = Str::shortId($ulid);
+        $state = $initial ?? $this->ask()->spin(sprintf('Reading run %s', $short), $patience->fetch(...));
         $pending = $answers;
 
         $this->out()->intro(sprintf(
@@ -64,7 +65,7 @@ trait FollowsAutomationRuns
                 }
 
                 $this->waitABit($started, $timeout, $state);
-                $state = Patience::fetch($target, $poller, $interval);
+                $state = $patience->fetch();
 
                 continue;
             }
@@ -72,63 +73,61 @@ trait FollowsAutomationRuns
             $id = $step['id'] ?? null;
             $shown[] = $id;
             $label = Str::scalar($step['label'] ?? $step['slug'] ?? null, 'Step '.count($shown));
+            $outcome = null;
 
-            $outcome = $this->ask()->task($label, function (StepLog $log) use (&$state, &$pending, $ulid, $target, $poller, $interval, $id, $timeout, $started): string {
-                $seen = null;
+            // The step's line is written once it is over. Until then a spinner
+            // carries the label and what the step says about itself.
+            while ($outcome === null) {
+                $current = self::step($state, $id);
+                $stepState = Str::scalar($current['state'] ?? null, 'pending');
 
-                while (true) {
-                    $current = self::step($state, $id);
-                    $stepState = Str::scalar($current['state'] ?? null, 'pending');
+                if ($stepState === 'awaiting_input' && $pending !== null) {
+                    // The API runs the resumed step before it answers, which
+                    // can take a while: the answer goes out under the spinner.
+                    $inputs = $pending;
+                    $pending = null;
 
-                    // The answer goes out under this step's spinner: the API
-                    // runs the resumed step before it answers, which can take
-                    // a while. A refused answer closes the task so the
-                    // question can be asked again, outside it.
-                    if ($stepState === 'awaiting_input' && $pending !== null) {
-                        $log->subLabel('answering');
-                        $inputs = $pending;
-                        $pending = null;
-
-                        try {
-                            $state = new TargetState($this->fetch(new ResumeAutomationRun($ulid, ['inputs' => $inputs])), $state->meta);
-                        } catch (ApiException $e) {
-                            if ($e->status !== 422) {
-                                throw $e;
-                            }
-
-                            $log->warning($e->toCliError()->getMessage());
-
-                            return 'rejected';
+                    try {
+                        $state = $this->ask()->spin(
+                            sprintf('%s · answering', $label),
+                            fn (): TargetState => new TargetState($this->fetch(new ResumeAutomationRun($ulid, ['inputs' => $inputs])), $state->meta),
+                        );
+                    } catch (ApiException $e) {
+                        if ($e->status !== 422) {
+                            throw $e;
                         }
 
-                        $seen = null;
-
-                        continue;
+                        $this->out()->warn($e->toCliError()->getMessage());
+                        $outcome = 'rejected';
                     }
 
-                    if (in_array($stepState, self::STEP_DONE, true)) {
-                        return $this->closeStep($log, $current, $stepState);
-                    }
-
-                    // The run ended without this step: nothing more will happen to it.
-                    if ($target->isDone($state)) {
-                        $log->line('not run');
-
-                        return 'not_run';
-                    }
-
-                    if ($stepState !== $seen) {
-                        $log->subLabel($stepState === 'running' ? self::progress($current) : $stepState);
-                        $seen = $stepState;
-                    }
-
-                    $this->waitABit($started, $timeout, $state);
-                    $state = Patience::fetch($target, $poller, $interval);
+                    continue;
                 }
-            });
 
-            // The question, asked where the step stopped. The step then
-            // re-enters the list as a fresh task that sends the answer.
+                if (in_array($stepState, self::STEP_DONE, true)) {
+                    $this->stepLine($label, $current, $stepState);
+                    $outcome = $stepState;
+
+                    continue;
+                }
+
+                // The run ended without this step: nothing more will happen to it.
+                if ($target->isDone($state)) {
+                    $this->out()->formatted(sprintf(' <fg=gray>○ %s · not run</>', $label));
+                    $outcome = 'not_run';
+
+                    continue;
+                }
+
+                $this->waitABit($started, $timeout, $state);
+                $state = $this->ask()->spin(
+                    sprintf('%s · %s', $label, $stepState === 'running' ? self::progress($current) : $stepState),
+                    $patience->fetch(...),
+                );
+            }
+
+            // The question, asked where the step stopped. The step then goes
+            // back on the list, to send the answer and be written once over.
             if (($outcome === 'awaiting_input' || $outcome === 'rejected') && $this->ask()->interactive()) {
                 $pending = $this->askBlocks(self::blocksOf(self::step($state, $id)), $ulid);
                 $shown = array_values(array_filter($shown, static fn (mixed $shownId): bool => $shownId !== $id));
@@ -144,13 +143,13 @@ trait FollowsAutomationRuns
         // The run's own last word, once every step has had its say.
         while (! $target->isDone($state)) {
             $this->waitABit($started, $timeout, $state);
-            $state = Patience::fetch($target, $poller, $interval);
+            $state = $this->ask()->spin(sprintf('Run %s · %s', $short, Str::scalar($state->string('state'), 'running')), $patience->fetch(...));
         }
 
         $summary = $target->summary($state);
 
         if ($state->string('state') === 'awaiting_input') {
-            $this->out()->failure(sprintf('Run %s is waiting for an answer · unolia automation resume %s', Str::shortId($state->string('ulid')), Str::shortId($state->string('ulid'))));
+            $this->out()->failure(sprintf('Run %s is waiting for an answer · unolia automation resume %s', $short, $short));
         } elseif ($target->exitCode($state) === ExitCode::Ok) {
             $this->out()->outro($summary);
         } else {
@@ -186,29 +185,39 @@ trait FollowsAutomationRuns
     }
 
     /**
+     * One line for a step that is over: a glyph in the colour of how it
+     * ended, the label, then what it reported and how long it took, dim.
+     * The servers it touched follow, one per line, indented.
+     *
      * @param  array<string, mixed>  $step
      */
-    private function closeStep(StepLog $log, array $step, string $stepState): string
+    private function stepLine(string $label, array $step, string $stepState): void
     {
         $summary = Str::scalar($step['output_summary'] ?? null, '');
         $took = RelativeTime::between(is_string($step['started_at'] ?? null) ? $step['started_at'] : null, is_string($step['finished_at'] ?? null) ? $step['finished_at'] : null);
-        $duration = $took === null ? '' : ' in '.RelativeTime::duration($took);
+        $tail = array_values(array_filter([$summary, $took === null ? '' : RelativeTime::duration($took)], static fn (string $part): bool => $part !== ''));
+
+        $this->out()->formatted(match ($stepState) {
+            'completed' => sprintf(' <fg=green>✓</> %s%s', $label, self::dim($tail)),
+            'skipped' => sprintf(' <fg=gray>○ %s · skipped%s</>', $label, $summary === '' ? '' : ': '.$summary),
+            'awaiting_input' => sprintf(' <fg=yellow>◐</> %s <fg=gray>· waiting for an answer</>', $label),
+            default => sprintf(' <fg=red>✕</> %s <fg=gray>·</> <fg=red>%s</>', $label, Str::scalar($step['error_message'] ?? null, $summary === '' ? str_replace('_', ' ', $stepState) : $summary)),
+        });
 
         foreach (is_array($step['resources'] ?? null) ? $step['resources'] : [] as $resource) {
             if (is_array($resource) && is_string($resource['name'] ?? null)) {
                 $seconds = $resource['duration_seconds'] ?? null;
-                $log->line($resource['name'].(is_numeric($seconds) ? ' · '.RelativeTime::duration((int) $seconds) : ''));
+                $this->out()->formatted(sprintf('   <fg=gray>%s%s</>', $resource['name'], is_numeric($seconds) ? ' · '.RelativeTime::duration((int) $seconds) : ''));
             }
         }
+    }
 
-        match ($stepState) {
-            'completed' => $log->success(($summary === '' ? 'done' : $summary).$duration),
-            'skipped' => $log->line('skipped'.($summary === '' ? '' : ': '.$summary)),
-            'awaiting_input' => $log->warning('waiting for an answer'.($summary === '' ? '' : ': '.$summary)),
-            default => $log->error(Str::scalar($step['error_message'] ?? null, $summary === '' ? $stepState : $summary)),
-        };
-
-        return $stepState;
+    /**
+     * @param  list<string>  $parts
+     */
+    private static function dim(array $parts): string
+    {
+        return $parts === [] ? '' : sprintf(' <fg=gray>· %s</>', implode(' · ', $parts));
     }
 
     /**

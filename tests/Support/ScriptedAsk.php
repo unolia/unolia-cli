@@ -32,6 +32,16 @@ final class ScriptedAsk extends Ask
         parent::__construct($face);
     }
 
+    /** A spinner without a terminal: the message as a plain line, so a test can see what was waited for. */
+    public function spin(string $message, callable $callback): mixed
+    {
+        if ($this->face->interactive && $this->out !== null) {
+            ($this->out)()->line($message);
+        }
+
+        return $callback();
+    }
+
     /** A task without a terminal: the label, then every line and outcome as plain output. */
     public function task(string $label, callable $callback): mixed
     {

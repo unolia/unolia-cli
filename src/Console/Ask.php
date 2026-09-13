@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Unolia\Cli\Console;
 
 use Laravel\Prompts\Support\Logger;
+use Unolia\Cli\Api\Interrupt;
 
 use function Laravel\Prompts\confirm;
 use function Laravel\Prompts\multiselect;
 use function Laravel\Prompts\password;
 use function Laravel\Prompts\search;
 use function Laravel\Prompts\select;
+use function Laravel\Prompts\spin;
 use function Laravel\Prompts\task;
 use function Laravel\Prompts\text;
 use function Laravel\Prompts\textarea;
@@ -122,6 +124,30 @@ class Ask
         }
 
         return confirm(label: $question, default: $default, hint: $hint);
+    }
+
+    /**
+     * Something short to wait for, said in one line that goes away once it is
+     * done: a spinner with the message on a terminal, nothing elsewhere. The
+     * caller prints the outcome itself, so what stays on screen is its line.
+     *
+     * @template T
+     *
+     * @param  callable(): T  $callback
+     * @return T
+     */
+    public function spin(string $message, callable $callback): mixed
+    {
+        if (! $this->face->interactive) {
+            return $callback();
+        }
+
+        return spin(static function () use ($callback): mixed {
+            // The spinner takes Ctrl+C for itself while it runs.
+            Interrupt::rearm();
+
+            return $callback();
+        }, $message);
     }
 
     /**

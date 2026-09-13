@@ -106,11 +106,12 @@ it('asks the question where the run stopped and carries on, on a terminal', func
     $out = $result->stdout;
 
     expect($result->exitCode)->toBe(0)
-        ->and($result->stderr)->toContain('waiting for an answer')
+        ->and($out)->toContain('waiting for an answer')
         ->and($out)->toContain('answering')
         ->and($out)->toContain('Run '.substr(RUN, -6).' completed')
-        // The step shows twice: once stopping at the question, once answering it.
-        ->and(substr_count($out, 'Reboot if the kernel changed'))->toBe(2)
+        // The step shows three times: stopping at the question, the spinner
+        // while answering (a plain line here, erased on a real terminal), done.
+        ->and(substr_count($out, 'Reboot if the kernel changed'))->toBe(3)
         ->and(strpos($out, 'answering'))->toBeLessThan(strpos($out, 'completed'))
         ->and($cli->api()->lastCall()['body'])->toBe(['inputs' => ['reboot' => false]]);
 });
