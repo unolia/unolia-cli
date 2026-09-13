@@ -43,6 +43,17 @@ final class Interrupt
         });
     }
 
+    /**
+     * Install the handler again after something else took the signal: a
+     * Prompts spinner answers Ctrl+C with a bare exit while it runs, which
+     * would lose the exit code and the goodbye line.
+     */
+    public static function rearm(): void
+    {
+        self::$armed = false;
+        self::arm();
+    }
+
     /** Run a request, letting a Ctrl+C during it abort the transfer rather than wait for it. */
     public static function during(callable $request): mixed
     {
