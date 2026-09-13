@@ -1,6 +1,33 @@
 {
   "data": {
     "dry_run": true,
+    "automation": {
+      "id": 7,
+      "name": "Update Ubuntu servers",
+      "recipe": {
+        "slug": "update-ubuntu-servers",
+        "name": "Update Ubuntu servers",
+        "category": "servers"
+      },
+      "description": null,
+      "state": "ready",
+      "triggers": {
+        "manual": true,
+        "cron": "0 4 * * 1",
+        "timezone": "Europe/Paris",
+        "events": []
+      },
+      "last_triggered_at": "2026-09-01T04:00:00Z",
+      "next_scheduled_at": "2026-09-08T04:00:00Z",
+      "max_runs_concurrently": 1,
+      "auto_accept_inputs": false,
+      "runs_summary": {
+        "completed": 12,
+        "failed": 1,
+        "running": 0
+      },
+      "url": "https://app.unolia.com/acme/automations/7"
+    },
     "steps": [
       {
         "position": 1,
