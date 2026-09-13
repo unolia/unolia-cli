@@ -75,10 +75,19 @@ final class ScriptedAsk extends Ask
         });
     }
 
-    public function text(string $label, string $flag, string $placeholder = '', string $default = '', string $hint = ''): string
+    public function text(string $label, string $flag, string $placeholder = '', string $default = '', string $hint = '', bool $required = true): string
     {
         if (! $this->face->interactive) {
-            return parent::text($label, $flag, $placeholder, $default, $hint);
+            return parent::text($label, $flag, $placeholder, $default, $hint, $required);
+        }
+
+        return (string) $this->answer($label, $flag, $default === '' ? null : $default);
+    }
+
+    public function textarea(string $label, string $flag, string $default = '', string $hint = '', bool $required = true): string
+    {
+        if (! $this->face->interactive) {
+            return parent::textarea($label, $flag, $default, $hint, $required);
         }
 
         return (string) $this->answer($label, $flag, $default === '' ? null : $default);
@@ -102,10 +111,10 @@ final class ScriptedAsk extends Ask
         return (string) $this->answer($label, $flag, $default);
     }
 
-    public function multiselect(string $label, array $options, string $flag, array $default = [], string $hint = ''): array
+    public function multiselect(string $label, array $options, string $flag, array $default = [], string $hint = '', bool $required = true): array
     {
         if (! $this->face->interactive) {
-            return parent::multiselect($label, $options, $flag, $default, $hint);
+            return parent::multiselect($label, $options, $flag, $default, $hint, $required);
         }
 
         /** @var mixed $answer */
@@ -134,6 +143,15 @@ final class ScriptedAsk extends Ask
         }
 
         return (bool) $this->answer($question, '--yes', $default);
+    }
+
+    public function yesNo(string $question, string $flag, bool $default = true, string $hint = ''): bool
+    {
+        if (! $this->face->interactive) {
+            return parent::yesNo($question, $flag, $default, $hint);
+        }
+
+        return (bool) $this->answer($question, $flag, $default);
     }
 
     /**

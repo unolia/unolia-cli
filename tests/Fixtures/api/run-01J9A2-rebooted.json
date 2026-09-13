@@ -15,15 +15,15 @@
       "id": 1,
       "name": "eser"
     },
-    "state": "awaiting_input",
+    "state": "completed",
     "summary": null,
     "error_message": null,
     "started_at": "2026-09-05T10:00:00Z",
-    "paused_at": "2026-09-05T10:04:10Z",
+    "paused_at": null,
     "pause_expires_at": null,
-    "completed_at": null,
+    "completed_at": "2026-09-05T10:06:00Z",
     "failed_at": null,
-    "duration_seconds": 250,
+    "duration_seconds": 360,
     "steps": [
       {
         "id": 901,
@@ -55,21 +55,10 @@
       {
         "id": 903,
         "position": 3,
-        "slug": "reboot-if-needed",
-        "label": "Reboot if the kernel changed",
-        "state": "awaiting_input",
-        "input_blocks": [
-          {
-            "field": "reboot",
-            "kind": "confirm",
-            "input_kind": "checkbox",
-            "label": "web-01 has a new kernel. Reboot now?",
-            "help": null,
-            "required": true,
-            "options": null,
-            "default": null
-          }
-        ]
+        "slug": "choose-servers-to-reboot",
+        "label": "Reboot which servers?",
+        "state": "completed",
+        "output_summary": "2 servers rebooted"
       }
     ],
     "resources": [

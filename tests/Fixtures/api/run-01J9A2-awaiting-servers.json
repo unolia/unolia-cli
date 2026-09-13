@@ -20,7 +20,7 @@
     "error_message": null,
     "started_at": "2026-09-05T10:00:00Z",
     "paused_at": "2026-09-05T10:04:10Z",
-    "pause_expires_at": null,
+    "pause_expires_at": "2026-09-06T10:04:10Z",
     "completed_at": null,
     "failed_at": null,
     "duration_seconds": 250,
@@ -55,19 +55,34 @@
       {
         "id": 903,
         "position": 3,
-        "slug": "reboot-if-needed",
-        "label": "Reboot if the kernel changed",
+        "slug": "choose-servers-to-reboot",
+        "label": "Reboot which servers?",
         "state": "awaiting_input",
         "input_blocks": [
           {
-            "field": "reboot",
-            "kind": "confirm",
-            "input_kind": "checkbox",
-            "label": "web-01 has a new kernel. Reboot now?",
-            "help": null,
-            "required": true,
-            "options": null,
-            "default": null
+            "field": "selected_server_ids",
+            "kind": "multiselect",
+            "input_kind": "checkbox_group",
+            "label": "Pick the servers to reboot",
+            "help": "Pre-checked: servers with a newer kernel installed but not booted.",
+            "required": false,
+            "options": [
+              {
+                "value": "102",
+                "label": "web-01"
+              },
+              {
+                "value": "2",
+                "label": "db-01"
+              },
+              {
+                "value": "3",
+                "label": "cache-01"
+              }
+            ],
+            "default": [
+              "2"
+            ]
           }
         ]
       }
