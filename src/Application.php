@@ -152,6 +152,7 @@ final class Application extends SymfonyApplication
             new InputOption('dry-run', null, InputOption::VALUE_NONE, 'Show the plan without changing anything'),
             new InputOption('paginate', null, InputOption::VALUE_NONE, 'Follow every page'),
             new InputOption('limit', null, InputOption::VALUE_REQUIRED, 'Page size, up to 100', '30'),
+            new InputOption('page', null, InputOption::VALUE_REQUIRED, 'The page to show, when a list says there is more'),
         ]);
 
         return $definition;

@@ -16,6 +16,7 @@ use Unolia\Cli\Console\Face;
 use Unolia\Cli\Console\Format;
 use Unolia\Cli\Console\Groups;
 use Unolia\Cli\Console\Out;
+use Unolia\Cli\Console\Table\Page;
 use Unolia\Cli\Context\Context;
 use Unolia\Cli\Context\LocalState;
 use Unolia\Cli\Context\Need;
@@ -265,11 +266,29 @@ abstract class BaseCommand extends Command
      */
     protected function listQuery(array $filters = []): array
     {
-        return array_merge($filters, ['per_page' => $this->limit()]);
+        return array_merge($filters, ['per_page' => $this->limit(), 'page' => $this->page()]);
+    }
+
+    /** The page asked for with --page, null for the first. */
+    protected function page(): ?int
+    {
+        $value = $this->optionString('page');
+
+        if ($value === null) {
+            return null;
+        }
+
+        if (! ctype_digit($value) || (int) $value < 1) {
+            throw CliError::usage('--page must be a whole number from 1');
+        }
+
+        return (int) $value === 1 ? null : (int) $value;
     }
 
     /**
-     * The rows of a list endpoint, one page by default and every page under --paginate.
+     * The rows of a list endpoint, one page by default and every page under
+     * --paginate. Where the page stands is left with Out, so the table that
+     * follows can say there is more and how to see it.
      *
      * @return list<array<string, mixed>>
      */
@@ -278,11 +297,23 @@ abstract class BaseCommand extends Command
         if ($this->paginate()) {
             $paginator = $this->api()->paginate($request);
             $paginator->setPerPageLimit($this->limit());
+            $this->out()->paged(null);
 
             return $paginator->rows();
         }
 
-        return $this->collection($request);
+        $body = $this->body($request);
+        $rows = [];
+
+        foreach (is_array($body['data'] ?? null) ? $body['data'] : [] as $row) {
+            if (is_array($row)) {
+                $rows[] = $row;
+            }
+        }
+
+        $this->out()->paged(Page::fromMeta(is_array($body['meta'] ?? null) ? $body['meta'] : [], count($rows)));
+
+        return $rows;
     }
 
     /**

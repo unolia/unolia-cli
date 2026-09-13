@@ -60,8 +60,10 @@ final class ListCommand extends BaseCommand
     }
 
     /**
-     * By full name. The name opens the repository at its host, the source
-     * wears the host's colour, the default branch and the last push are dim.
+     * Linked repositories first, then by full name: the ones a project knows
+     * about are the ones being worked on, the rest is the host's whole
+     * account. The name opens the repository at its host, the source wears
+     * the host's colour, the projects, branch and last push are dim.
      */
     public static function table(): Table
     {
@@ -70,6 +72,7 @@ final class ListCommand extends BaseCommand
             Column::make('full_name', 'Repository')->cell(static fn (array $row): Cell => Cell::text(Str::scalar($row['full_name'] ?? null))
                 ->link(is_string($row['full_url'] ?? null) ? $row['full_url'] : (is_string($row['url'] ?? null) ? $row['url'] : null))),
             Column::make('source', 'Source')->cell(static fn (array $row): Cell => Cell::text(Str::scalar($row['source'] ?? null))->color(Tint::provider($row['source'] ?? null))),
+            Column::make('projects', 'Project')->cell(static fn (array $row): Cell => Cell::text(self::projectNames($row))->dim()),
             Column::make('default_branch', 'Branch')->cell(static fn (array $row): Cell => Cell::text(Str::scalar($row['default_branch'] ?? null))->dim()),
             Column::make('last_pushed_at', 'Last push')->cell(static fn (array $row): Cell => Cell::text(RelativeTime::ago(is_string($row['last_pushed_at'] ?? null) ? $row['last_pushed_at'] : null))->dim()),
             Column::make('websites_count', 'Websites')->right()->cell(static fn (array $row): Cell => Cell::text(Str::scalar($row['websites_count'] ?? null, '0'))),
@@ -79,12 +82,30 @@ final class ListCommand extends BaseCommand
                 'id' => 'Id',
                 'full_name' => 'Repository',
                 'source' => 'Source',
+                'projects' => 'Projects',
                 'default_branch' => 'Default branch',
                 'last_pushed_at' => 'Last push',
                 'websites_count' => 'Websites',
                 'private' => 'Private',
             ])
-            ->sort(static fn (array $a, array $b): int => strcasecmp(Str::scalar($a['full_name'] ?? null), Str::scalar($b['full_name'] ?? null)))
+            ->sort(static fn (array $a, array $b): int => [self::projectNames($a) === '', strtolower(Str::scalar($a['full_name'] ?? null))]
+                <=> [self::projectNames($b) === '', strtolower(Str::scalar($b['full_name'] ?? null))])
             ->footer(static fn (int $count): string => $count === 1 ? '1 repository' : $count.' repositories');
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     */
+    private static function projectNames(array $row): string
+    {
+        $names = [];
+
+        foreach (is_array($row['projects'] ?? null) ? $row['projects'] : [] as $project) {
+            if (is_array($project) && is_string($project['name'] ?? null)) {
+                $names[] = $project['name'];
+            }
+        }
+
+        return implode(', ', $names);
     }
 }

@@ -174,6 +174,29 @@ it('lists repositories', function () {
         ->and($result->stdout)->toContain('acme/marketing');
 });
 
+it('puts linked repositories first and says when there is more', function () {
+    $cli = cli()
+        ->withConfig(['team' => 'acme', 'project' => 12])
+        ->withApi(api()->on('GET', 'v1/repositories?per_page=2', fixture('repositories-page.json')));
+
+    $result = $cli->run('repo', 'list', '--all-projects', '--limit', '2');
+
+    expect($result->exitCode)->toBe(0)
+        ->and(strpos($result->stdout, 'acme/marketing'))->toBeLessThan(strpos($result->stdout, 'acme/design-system'))
+        ->and($result->stdout)->toContain('Marketing site')
+        ->and($result->stdout)->toContain('2 of 5 repositories · page 1 of 3 · --page 2 for the next, all: --paginate');
+});
+
+it('asks for a page', function () {
+    $cli = cli()
+        ->withConfig(['team' => 'acme', 'project' => 12])
+        ->withApi(api()->on('GET', 'v1/repositories?page=2', fixture('repositories.json')));
+
+    $cli->run('repo', 'list', '--all-projects', '--page', '2');
+
+    expect($cli->api()->lastCall()['query']['page'])->toBe(2);
+});
+
 it('shows the repository of this directory', function () {
     $result = repo()
         ->withApi(withRepository(api())->on('GET', 'v1/repositories/57', fixture('repository-57.json')))
