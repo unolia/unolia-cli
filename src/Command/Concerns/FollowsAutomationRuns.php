@@ -26,7 +26,7 @@ use Unolia\Cli\Watch\TargetState;
  */
 trait FollowsAutomationRuns
 {
-    use AnswersRuns;
+    use AsksInputBlocks;
     use Watches;
 
     private const STEP_DONE = ['completed', 'failed', 'skipped', 'cancelled', 'awaiting_input', 'rolled_back'];
@@ -131,7 +131,7 @@ trait FollowsAutomationRuns
             // The question, asked where the step stopped. The step then goes
             // back on the list, to send the answer and be written once over.
             if (($outcome === 'awaiting_input' || $outcome === 'rejected') && $this->ask()->interactive()) {
-                $pending = $this->askBlocks(self::blocksOf(self::step($state, $id)), $ulid);
+                $pending = $this->askBlocks(self::blocksOf(self::step($state, $id)), sprintf('the run is still waiting · unolia automation resume %s answers it', $short));
                 $shown = array_values(array_filter($shown, static fn (mixed $shownId): bool => $shownId !== $id));
 
                 continue;

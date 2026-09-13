@@ -153,6 +153,26 @@ final class ViewCommand extends BaseCommand
             $lines[] = $indent.'<fg=gray>'.OutputFormatter::escape(implode(' · ', $traits)).'</>';
         }
 
+        // What the fix asks before it acts, and which answers it cannot do without.
+        $asks = [];
+        $required = [];
+
+        foreach (is_array(Arr::get($issue, 'fix.inputs')) ? Arr::get($issue, 'fix.inputs') : [] as $block) {
+            if (! is_array($block) || ! is_string($block['field'] ?? null)) {
+                continue;
+            }
+
+            $asks[] = Str::scalar($block['label'] ?? null, $block['field']).(($block['required'] ?? false) === true ? '' : ' (optional)');
+
+            if (($block['required'] ?? false) === true) {
+                $required[] = '--input '.$block['field'].'=…';
+            }
+        }
+
+        if ($asks !== []) {
+            $lines[] = $indent.'<fg=gray>asks for</> '.OutputFormatter::escape(implode(', ', $asks));
+        }
+
         foreach (['create' => ['+', 'green'], 'update' => ['~', 'yellow'], 'delete' => ['-', 'red']] as $operation => [$sign, $color]) {
             $records = Arr::get($issue, 'data.proposal.'.$operation);
 
@@ -177,8 +197,9 @@ final class ViewCommand extends BaseCommand
             return $lines;
         }
 
+        $with = $required === [] ? '' : ' '.implode(' ', $required);
         $lines[] = '';
-        $lines[] = self::MARGIN.'<fg=gray>Preview with</> <fg=cyan>unolia issue fix '.$short.' --dry-run</><fg=gray>, apply with</> <fg=cyan>unolia issue fix '.$short.'</>';
+        $lines[] = self::MARGIN.'<fg=gray>Preview with</> <fg=cyan>unolia issue fix '.$short.' --dry-run</><fg=gray>, apply with</> <fg=cyan>unolia issue fix '.$short.$with.'</>';
 
         return $lines;
     }

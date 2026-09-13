@@ -1,0 +1,89 @@
+{
+  "data": {
+    "dry_run": true,
+    "issue": {
+      "id": "01J9P8QK3M8T5V2N4B6C8D0E2A",
+      "severity": "info",
+      "state": "open",
+      "check": "bimi-ready-opportunity",
+      "check_title": "Ready for a brand logo",
+      "message": "This domain already meets the BIMI bar, DMARC is at enforcement, so it qualifies to show a brand logo next to its mail. Publish a BIMI record pointing at an SVG Tiny PS logo to claim it.",
+      "project": {
+        "id": 12,
+        "name": "Marketing site"
+      },
+      "concern": {
+        "type": "zone",
+        "id": 9,
+        "name": "acme.dev"
+      },
+      "fix": {
+        "available": true,
+        "name": "Publish a BIMI record",
+        "type_slug": "bimi-ready-opportunity",
+        "blast_radius": "low",
+        "reversible": true,
+        "required_ability": "zone:write",
+        "supports_auto_fix": false,
+        "inputs": [
+          {
+            "field": "logo_url",
+            "kind": "text",
+            "input_kind": "text",
+            "label": "Logo URL (SVG Tiny PS)",
+            "help": "An HTTPS URL serving your logo as an SVG Tiny Portable/Secure file. It is validated before anything is published.",
+            "required": true,
+            "options": null,
+            "default": null
+          },
+          {
+            "field": "evidence_url",
+            "kind": "text",
+            "input_kind": "text",
+            "label": "Mark Certificate URL",
+            "help": "The PEM chain of your Verified or Common Mark Certificate. Gmail and Apple Mail only display logos backed by one.",
+            "required": false,
+            "options": null,
+            "default": null
+          }
+        ]
+      },
+      "first_detected_at": "2026-09-01T00:00:00Z",
+      "fixed_at": null,
+      "created_at": "2026-09-01T00:00:00Z",
+      "url": "https://app.unolia.com/acme/issues/01J9P8QK3M8T5V2N4B6C8D0E2A"
+    },
+    "fixable": true,
+    "inputs": [
+      {
+        "field": "logo_url",
+        "kind": "text",
+        "input_kind": "text",
+        "label": "Logo URL (SVG Tiny PS)",
+        "help": "An HTTPS URL serving your logo as an SVG Tiny Portable/Secure file. It is validated before anything is published.",
+        "required": true,
+        "options": null,
+        "default": null
+      },
+      {
+        "field": "evidence_url",
+        "kind": "text",
+        "input_kind": "text",
+        "label": "Mark Certificate URL",
+        "help": "The PEM chain of your Verified or Common Mark Certificate. Gmail and Apple Mail only display logos backed by one.",
+        "required": false,
+        "options": null,
+        "default": null
+      }
+    ],
+    "changes": [
+      {
+        "op": "add",
+        "type": "BIMI",
+        "name": "default._bimi.acme.dev",
+        "value": "v=BIMI1; l=https://acme.dev/logo.svg;",
+        "ttl": null
+      }
+    ]
+  }
+}

@@ -81,7 +81,7 @@ final class ResumeCommand extends BaseCommand
         $progress = $this->out()->face()->interactive && ! $this->structured() && ! $this->optionBool('no-progress');
 
         if ($this->dryRun()) {
-            $this->out()->record(['run' => $ulid, 'inputs' => $answers ?? $this->askBlocks($blocks, $ulid)]);
+            $this->out()->record(['run' => $ulid, 'inputs' => $answers ?? $this->askBlocks($blocks, sprintf('the run is still waiting · unolia automation resume %s answers it', Str::shortId($ulid)))]);
 
             return ExitCode::Ok;
         }
@@ -92,7 +92,7 @@ final class ResumeCommand extends BaseCommand
             return $this->followRunSteps($ulid, new TargetState($run), $answers);
         }
 
-        $answers ??= $this->askBlocks($blocks, $ulid);
+        $answers ??= $this->askBlocks($blocks, sprintf('the run is still waiting · unolia automation resume %s answers it', Str::shortId($ulid)));
         $resumed = $this->fetch(new ResumeAutomationRun($ulid, ['inputs' => $answers]));
         $short = Str::shortId($ulid);
 

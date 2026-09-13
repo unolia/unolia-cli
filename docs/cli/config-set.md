@@ -22,6 +22,7 @@ INHERITED FLAGS
       --dry-run          Show the plan without changing anything
       --paginate         Follow every page
       --limit <value>    Page size, up to 100 (default 30)
+      --page <value>     The page to show, when a list says there is more
 
 EXAMPLES
   # Always use JSON

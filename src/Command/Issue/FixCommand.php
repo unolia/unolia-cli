@@ -7,10 +7,12 @@ namespace Unolia\Cli\Command\Issue;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
+use Unolia\Cli\Api\ApiException;
 use Unolia\Cli\Api\Requests\Issues\FixIssue;
 use Unolia\Cli\Api\Requests\Issues\RecheckIssue;
 use Unolia\Cli\Api\Requests\Issues\ShowIssue;
 use Unolia\Cli\Command\BaseCommand;
+use Unolia\Cli\Command\Concerns\AsksInputBlocks;
 use Unolia\Cli\Command\Concerns\ResolvesIssues;
 use Unolia\Cli\Console\ExitCode;
 use Unolia\Cli\Console\StepLog;
@@ -19,10 +21,12 @@ use Unolia\Cli\Support\Str;
 
 /**
  * Apply the fix an issue carries. The preview always runs first, so nothing changes
- * before the plan has been shown.
+ * before the plan has been shown. A fix that asks first, a logo URL, a certificate
+ * authority, is answered before the preview, so the preview shows the real record.
  */
 final class FixCommand extends BaseCommand
 {
+    use AsksInputBlocks;
     use ResolvesIssues;
 
     protected function canonical(): string
@@ -40,6 +44,7 @@ final class FixCommand extends BaseCommand
     protected function define(): void
     {
         $this->addArgument('issue', InputArgument::REQUIRED, 'Issue id, or the six characters unolia issue list prints');
+        $this->addOption('input', null, InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'A field=value answer, for a fix that asks first. A choice by value or label');
         $this->addOption('wait', null, InputOption::VALUE_NONE, 'Recheck the issue and wait for the new state, also in a pipe');
         $this->addOption('no-progress', null, InputOption::VALUE_NONE, 'Apply the fix and return without rechecking');
     }
@@ -54,6 +59,7 @@ final class FixCommand extends BaseCommand
         return [
             'See what it would change' => 'unolia issue fix 8d0e1f --dry-run',
             'Fix it and watch the recheck' => 'unolia issue fix 8d0e1f',
+            'Answer what the fix asks, in a pipe' => 'unolia issue fix 8d0e2a --input logo_url=https://acme.dev/logo.svg --yes',
             'Block in a script' => 'unolia issue fix 8d0e1f --yes --wait',
         ];
     }
@@ -61,15 +67,50 @@ final class FixCommand extends BaseCommand
     protected function handle(InputInterface $input): ExitCode
     {
         $id = $this->issueId((string) $this->argumentString('issue'));
+        $short = Str::shortId($id);
         $preview = $this->fetch(new FixIssue($id, ['dry_run' => true]));
 
+        // A fix that asks first says so in the preview. Its questions are
+        // answered from --input or as prompts, then the preview is read again
+        // with the answers, so what it shows is what will be published. An
+        // answer the fixer refuses, a logo that fails its audit, is asked again.
+        $blocks = self::fixInputs($preview);
+        $answers = null;
+
+        // A dry run from a pipe with no answers keeps the preview as the API
+        // gave it, which says what the fix asks: that is how a script finds out.
+        $discovering = $this->dryRun() && ! $this->ask()->interactive() && $this->optionList('input') === [];
+
+        if ($blocks !== [] && ! $discovering) {
+            $answers = self::answersFromFlags($this->optionList('input'), $blocks);
+
+            while (true) {
+                $answers ??= $this->askBlocks($blocks, sprintf('nothing was changed · unolia issue fix %s asks again', $short));
+
+                try {
+                    $preview = $this->fetch(new FixIssue($id, ['dry_run' => true, 'inputs' => $answers]));
+
+                    break;
+                } catch (ApiException $e) {
+                    if ($e->status !== 422 || ! $this->ask()->interactive() || $this->optionList('input') !== []) {
+                        throw $e;
+                    }
+
+                    $this->out()->warn($e->toCliError()->getMessage());
+                    $answers = null;
+                }
+            }
+        }
+
+        $body = static fn (bool $dryRun): array => ['dry_run' => $dryRun] + ($answers === null ? [] : ['inputs' => $answers]);
+
         if ($this->dryRun()) {
-            $this->showPreview($preview);
+            $this->showPreview($preview, $blocks, $answers);
 
             return ExitCode::Ok;
         }
 
-        $this->showPreview($preview);
+        $this->showPreview($preview, $blocks, $answers);
 
         if (! $this->ask()->confirm('Apply this fix?')) {
             $this->out()->note('Nothing was changed.');
@@ -77,7 +118,7 @@ final class FixCommand extends BaseCommand
             return ExitCode::Ok;
         }
 
-        $outcome = $this->fetch(new FixIssue($id, ['dry_run' => false]));
+        $outcome = $this->fetch(new FixIssue($id, $body(false)));
         $result = (string) ($outcome['outcome'] ?? 'failed');
         $message = is_string($outcome['message'] ?? null) && $outcome['message'] !== '' ? $outcome['message'] : null;
 
@@ -125,9 +166,24 @@ final class FixCommand extends BaseCommand
     }
 
     /**
+     * The questions a fix asks, as the preview carries them.
+     *
      * @param  array<string, mixed>  $preview
+     * @return list<array<string, mixed>>
      */
-    private function showPreview(array $preview): void
+    private static function fixInputs(array $preview): array
+    {
+        $inputs = Arr::get($preview, 'inputs') ?? Arr::get($preview, 'issue.fix.inputs');
+
+        return self::blocksOf(['input_blocks' => is_array($inputs) ? $inputs : []]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $preview
+     * @param  list<array<string, mixed>>  $blocks
+     * @param  array<string, mixed>|null  $answers
+     */
+    private function showPreview(array $preview, array $blocks = [], ?array $answers = null): void
     {
         if ($this->structured()) {
             if ($this->dryRun()) {
@@ -137,15 +193,37 @@ final class FixCommand extends BaseCommand
             return;
         }
 
-        $this->out()->record([
+        $record = [
             'fix' => Arr::get($preview, 'issue.fix.name') ?? Arr::get($preview, 'fix.name'),
             'blast_radius' => Arr::get($preview, 'issue.fix.blast_radius') ?? Arr::get($preview, 'fix.blast_radius'),
             'reversible' => Arr::get($preview, 'issue.fix.reversible') ?? Arr::get($preview, 'fix.reversible'),
-        ], [
+        ];
+        $labels = [
             'fix' => 'Fix',
             'blast_radius' => 'Blast radius',
             'reversible' => 'Reversible',
-        ]);
+        ];
+
+        // What the fix asks, when nothing answered it yet.
+        if ($answers === null && $blocks !== []) {
+            $record['asks'] = implode(', ', array_map(static fn (array $block): string => Str::scalar($block['label'] ?? null, Str::scalar($block['field'] ?? null, '')).(($block['required'] ?? false) === true ? '' : ' (optional)'), $blocks));
+            $labels['asks'] = 'Asks for';
+        }
+
+        // The answers, under the labels the questions had. A password stays hidden.
+        foreach ($blocks as $block) {
+            $field = Str::scalar($block['field'] ?? null, '');
+            $answer = $answers[$field] ?? null;
+
+            if ($answer === null || $answer === '' || $answer === []) {
+                continue;
+            }
+
+            $record[$field] = ($block['kind'] ?? null) === 'password' ? '••••••' : Str::scalar($answer, '');
+            $labels[$field] = Str::scalar($block['label'] ?? null, $field);
+        }
+
+        $this->out()->record($record, $labels);
 
         $changes = [];
 
@@ -158,6 +236,10 @@ final class FixCommand extends BaseCommand
         if ($changes !== []) {
             $this->out()->line('');
             $this->out()->list($changes, ['op' => 'Change', 'type' => 'Type', 'name' => 'Name', 'value' => 'Value', 'ttl' => 'TTL']);
+        }
+
+        if ($answers === null && $blocks !== []) {
+            $this->out()->note(sprintf('Answer with --input %s, or run it in a terminal.', implode(' --input ', array_map(static fn (array $block): string => Str::scalar($block['field'] ?? null, '').'=…', array_filter($blocks, static fn (array $block): bool => ($block['required'] ?? false) === true)))));
         }
     }
 
