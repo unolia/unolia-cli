@@ -1,0 +1,14 @@
+{
+  "message": "The given data was invalid.",
+  "errors": {
+    "logo_url": [
+      "The logo cannot be used: the URL answered HTTP 404."
+    ]
+  },
+  "error": {
+    "code": "validation_failed",
+    "message": "The given data was invalid.",
+    "status": 422,
+    "hint": null
+  }
+}

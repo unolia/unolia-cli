@@ -9,15 +9,15 @@ use Unolia\Cli\Console\CliError;
 use Unolia\Cli\Support\Str;
 
 /**
- * A run that stopped to ask something carries its question as input blocks
- * on the step that is asking. This turns those blocks into prompts on a
+ * A question the API asks travels as input blocks: on the step a run stopped
+ * at, on the fix an issue carries. This turns those blocks into prompts on a
  * terminal and into typed answers from --input flags in a pipe, the same way
- * for every command that meets a parked run.
+ * for every command that meets one.
  *
  * A question's answer is data, never consent: --yes says nothing about which
- * servers to reboot, so no block is ever answered by it.
+ * servers to reboot or where a logo lives, so no block is ever answered by it.
  */
-trait AnswersRuns
+trait AsksInputBlocks
 {
     /**
      * The step a run stopped at, or null when nothing is waiting.
@@ -54,21 +54,20 @@ trait AnswersRuns
     }
 
     /**
-     * One prompt per block. Ctrl-C leaves the run parked and says how to come
-     * back to it, rather than the bare exit a prompt does on its own.
+     * One prompt per block. Ctrl-C leaves things as they were and says how to
+     * come back, $cancelHint, rather than the bare exit a prompt does on its own.
      *
      * @param  list<array<string, mixed>>  $blocks
      * @return array<string, mixed>
      */
-    protected function askBlocks(array $blocks, string $ulid): array
+    protected function askBlocks(array $blocks, string $cancelHint): array
     {
         if (! $this->ask()->interactive()) {
             throw CliError::missingInput('--input', self::expectedInputs($blocks));
         }
 
-        $short = Str::shortId($ulid);
-        Prompt::cancelUsing(static function () use ($short): never {
-            throw CliError::interrupted(sprintf('the run is still waiting · unolia automation resume %s answers it', $short));
+        Prompt::cancelUsing(static function () use ($cancelHint): never {
+            throw CliError::interrupted($cancelHint);
         });
 
         try {
