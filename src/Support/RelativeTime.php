@@ -30,8 +30,10 @@ final class RelativeTime
 
     /** A compact duration such as 52s, 4m 10s or 2h 5m. */
     /**
-     * A full date and time in a zone, the way a schedule is read: "Mon 14 Sep 2026, 09:00 Europe/Paris".
-     * The zone is the one given, falling back to the machine's; a bad zone name falls back too.
+     * A full date and time the way a schedule is read, in this machine's zone:
+     * "Mon 14 Sep 2026, 11:00 Europe/Paris". When the thing scheduled lives in
+     * another zone, its own clock follows in brackets, so a cron written for
+     * UTC still makes sense next to it.
      */
     public static function at(?string $timestamp, ?string $timezone = null, string $null = ''): string
     {
@@ -41,13 +43,54 @@ final class RelativeTime
             return $null;
         }
 
-        try {
-            $zone = new DateTimeZone($timezone !== null && $timezone !== '' ? $timezone : date_default_timezone_get());
-        } catch (\Exception) {
-            $zone = new DateTimeZone(date_default_timezone_get());
+        $local = self::localZone();
+        $line = $moment->setTimezone($local)->format('D j M Y, H:i').' '.$local->getName();
+        $other = self::zone($timezone);
+
+        if ($other !== null && $other->getName() !== $local->getName()) {
+            $line .= ' ('.$moment->setTimezone($other)->format('H:i').' '.$other->getName().')';
         }
 
-        return $moment->setTimezone($zone)->format('D j M Y, H:i').' '.$zone->getName();
+        return $line;
+    }
+
+    /**
+     * The zone the person is in: TZ when set, the system clock's zone on a
+     * Mac or Linux, PHP's default (often UTC in php.ini) as the last resort.
+     */
+    public static function localZone(): DateTimeZone
+    {
+        $candidates = [getenv('TZ') ?: null];
+        $link = @readlink('/etc/localtime');
+
+        if (is_string($link) && preg_match('#zoneinfo/(.+)$#', $link, $matches) === 1) {
+            $candidates[] = $matches[1];
+        }
+
+        $candidates[] = date_default_timezone_get();
+
+        foreach ($candidates as $candidate) {
+            $zone = self::zone($candidate);
+
+            if ($zone !== null) {
+                return $zone;
+            }
+        }
+
+        return new DateTimeZone('UTC');
+    }
+
+    private static function zone(?string $name): ?DateTimeZone
+    {
+        if ($name === null || $name === '') {
+            return null;
+        }
+
+        try {
+            return new DateTimeZone($name);
+        } catch (\Exception) {
+            return null;
+        }
     }
 
     public static function duration(?int $seconds): string

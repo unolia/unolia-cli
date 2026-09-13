@@ -11,6 +11,7 @@ use Unolia\Cli\Console\Table\Cell;
 use Unolia\Cli\Console\Table\Column;
 use Unolia\Cli\Console\Table\Status;
 use Unolia\Cli\Console\Table\Table;
+use Unolia\Cli\Support\RelativeTime;
 use Unolia\Cli\Support\Str;
 
 function sampleTable(): Table
@@ -88,4 +89,17 @@ it('drops the box: a plain list is drawn by the same renderer with the id on the
     $out->list([['id' => 7, 'name' => 'Seven'], ['id' => 12, 'name' => 'Twelve']], ['id' => 'Id', 'name' => 'Name']);
 
     expect($stdout->fetch())->toBe("ID  NAME\n 7  Seven\n12  Twelve\n");
+});
+
+it('prints a schedule in the local zone and adds the schedule zone when it differs', function () {
+    $previous = getenv('TZ');
+    putenv('TZ=Europe/Paris');
+
+    try {
+        expect(RelativeTime::at('2026-09-14T09:00:00Z', 'UTC'))->toBe('Mon 14 Sep 2026, 11:00 Europe/Paris (09:00 UTC)')
+            ->and(RelativeTime::at('2026-09-14T09:00:00Z', 'Europe/Paris'))->toBe('Mon 14 Sep 2026, 11:00 Europe/Paris')
+            ->and(RelativeTime::at(null, 'UTC', '-'))->toBe('-');
+    } finally {
+        putenv($previous === false ? 'TZ' : 'TZ='.$previous);
+    }
 });
