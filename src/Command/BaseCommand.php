@@ -266,11 +266,11 @@ abstract class BaseCommand extends Command
      */
     protected function listQuery(array $filters = []): array
     {
-        return array_merge($filters, ['per_page' => $this->limit(), 'page' => $this->page()]);
+        return array_merge($filters, ['per_page' => $this->limit(), 'page' => $this->pageNumber()]);
     }
 
     /** The page asked for with --page, null for the first. */
-    protected function page(): ?int
+    protected function pageNumber(): ?int
     {
         $value = $this->optionString('page');
 
