@@ -33,6 +33,36 @@ it('shows one automation with its last runs', function () {
         ->and($result->stdout)->toContain('01J9A2K7Q4');
 });
 
+it('finds an automation from part of its name', function () {
+    $cli = automations()->withApi(api()
+        ->on('GET', 'v1/automations?q=ubuntu', fixture('automations.json'))
+        ->on('POST', 'v1/automations/7/runs', fixture('automation-run-dry-run.json')));
+
+    $result = $cli->run('automation', 'run', 'ubuntu', '--dry-run', '--json');
+
+    expect($result->exitCode)->toBe(0)
+        ->and($result->json()['automation']['name'])->toBe('Update Ubuntu servers');
+});
+
+it('asks which automation when several match, and lists them in a pipe', function () {
+    $cli = automations()
+        ->answers(['Which automation?' => '8'])
+        ->withApi(api()
+            ->on('GET', 'v1/automations?q=servers', fixture('automations-two.json'))
+            ->on('GET', 'v1/automations/8', fixture('automation-7.json'))
+            ->on('GET', 'v1/automation-runs?automation=8&per_page=5', fixture('automation-runs.json')));
+
+    expect($cli->run('automation', 'view', 'servers')->exitCode)->toBe(0);
+
+    $piped = automations()
+        ->withApi(api()->on('GET', 'v1/automations?q=servers', fixture('automations-two.json')))
+        ->run('automation', 'view', 'servers');
+
+    expect($piped->exitCode)->toBe(2)
+        ->and($piped->stderr)->toContain('servers matches several automations')
+        ->and($piped->stderr)->toContain('8 Update Debian servers');
+});
+
 it('finds an automation by name', function () {
     $result = automations()
         ->withApi(api()

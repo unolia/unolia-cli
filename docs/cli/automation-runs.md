@@ -7,7 +7,7 @@ USAGE
   unolia automation runs [flags]
 
 FLAGS
-      --automation <value>  Only runs of this automation
+      --automation <value>  Only runs of this automation, by id or any part of its name
       --state <value>       Filter by state
       --since <value>       Only runs since, such as 7d
 

@@ -40,7 +40,7 @@ final class RunCommand extends BaseCommand
 
     protected function define(): void
     {
-        $this->addArgument('automation', InputArgument::REQUIRED, 'Automation id or exact name');
+        $this->addArgument('automation', InputArgument::REQUIRED, 'Automation id, or any part of its name');
         $this->addFollowOptions();
     }
 
