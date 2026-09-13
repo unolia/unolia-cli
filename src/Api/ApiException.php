@@ -10,6 +10,7 @@ use Unolia\Cli\Config\Hosts;
 use Unolia\Cli\Console\CliError;
 use Unolia\Cli\Console\ExitCode;
 use Unolia\Cli\Support\Arr;
+use Unolia\Cli\Support\Str;
 
 /**
  * Every non 2xx answer and every connection failure. Turned into a CliError in one place
@@ -90,6 +91,13 @@ final class ApiException extends RuntimeException
                 ExitCode::RemoteFailure,
             ),
             $this->status === 422 => CliError::usage($this->validationMessage(), null, $this->details()),
+            $this->status === 409 && $this->errorCode() === 'run_rejected' => new CliError(
+                'run_rejected',
+                $this->message('the automation refused to start a run'),
+                ExitCode::RemoteFailure,
+                $this->runningHint(),
+                $this->details(),
+            ),
             $this->status === 409 && $this->errorCode() === 'provider_needs_attention' => new CliError(
                 'provider_needs_attention',
                 $this->message('the provider connection needs to be repaired first'),
@@ -190,6 +198,17 @@ final class ApiException extends RuntimeException
     /**
      * The command that widens the token, with the scope the API named when it did.
      */
+    /** The run already going, when the refusal names one, is what to follow instead. */
+    private function runningHint(): ?string
+    {
+        $running = Arr::get($this->body, 'error.details.running');
+        $first = is_array($running) ? ($running[0] ?? null) : null;
+
+        return is_string($first) && $first !== ''
+            ? sprintf('A run is already going: unolia automation watch %s follows it.', Str::shortId($first))
+            : null;
+    }
+
     private function scopeHint(): string
     {
         $scope = Arr::get($this->body, 'error.details.required_scope');
@@ -246,7 +265,7 @@ final class ApiException extends RuntimeException
         return implode("\n", $lines);
     }
 
-    private function header(string $name): ?string
+    public function header(string $name): ?string
     {
         foreach ($this->headers as $key => $value) {
             if (strcasecmp((string) $key, $name) === 0) {

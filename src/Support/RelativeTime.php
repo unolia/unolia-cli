@@ -6,6 +6,7 @@ namespace Unolia\Cli\Support;
 
 use DateTimeImmutable;
 use DateTimeInterface;
+use DateTimeZone;
 use Throwable;
 
 final class RelativeTime
@@ -28,6 +29,27 @@ final class RelativeTime
     }
 
     /** A compact duration such as 52s, 4m 10s or 2h 5m. */
+    /**
+     * A full date and time in a zone, the way a schedule is read: "Mon 14 Sep 2026, 09:00 Europe/Paris".
+     * The zone is the one given, falling back to the machine's; a bad zone name falls back too.
+     */
+    public static function at(?string $timestamp, ?string $timezone = null, string $null = ''): string
+    {
+        $moment = self::parse($timestamp);
+
+        if ($moment === null) {
+            return $null;
+        }
+
+        try {
+            $zone = new DateTimeZone($timezone !== null && $timezone !== '' ? $timezone : date_default_timezone_get());
+        } catch (\Exception) {
+            $zone = new DateTimeZone(date_default_timezone_get());
+        }
+
+        return $moment->setTimezone($zone)->format('D j M Y, H:i').' '.$zone->getName();
+    }
+
     public static function duration(?int $seconds): string
     {
         if ($seconds === null) {

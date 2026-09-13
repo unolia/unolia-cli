@@ -21,6 +21,7 @@
         "ext-mbstring": "*",
         "laravel-zero/phar-updater": "^1.4",
         "laravel/prompts": "^0.3.21",
+        "lorisleiva/cron-translator": "^0.5.2",
         "react/dns": "^1.12",
         "saloonphp/pagination-plugin": "^2.0",
         "saloonphp/saloon": "^4.0",
