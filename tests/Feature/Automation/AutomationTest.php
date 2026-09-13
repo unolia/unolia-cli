@@ -85,8 +85,20 @@ it('shows a run as one task per step on a terminal', function () {
     expect($result->exitCode)->toBe(0)
         ->and($out)->toContain('Select servers')
         ->and($out)->toContain('2 servers')
+        // What the step wrote for a reader sits under its line: a table with
+        // a header, a note with its markdown marks dropped.
+        ->and($out)->toContain('Server  Current kernel     Pending kernel')
+        ->and($out)->toContain('web-01  6.8.0-136-generic  6.8.0-139-generic')
+        ->and($out)->toContain('Packages upgraded on web-01: linux-image-6.8.0-139-generic, openssl.')
         ->and($out)->toContain('apt update, apt upgrade')
         ->and($out)->toContain('web-01 · 1m 12s')
+        // A fan-out's children sit one level in with the shared start of
+        // their labels lifted off. One that went well keeps its note to
+        // itself, one that failed shows its error and its note.
+        ->and($out)->toContain('   ✓ web-01 · 1m 12s')
+        ->and($out)->not->toContain('Upgraded 12 packages')
+        ->and($out)->toContain('   ✕ db-01 · apt-get exited with 100')
+        ->and($out)->toContain('dpkg was interrupted')
         ->and($out)->toContain('Reboot if the kernel changed')
         ->and($out)->toContain('Run '.substr(RUN, -6).' completed')
         ->and(strpos($out, 'Select servers'))->toBeLessThan(strpos($out, 'apt update'))
@@ -146,6 +158,51 @@ it('asks again when the API refuses the answer', function () {
     expect($result->exitCode)->toBe(0)
         ->and($result->stderr)->toContain('cache-01 is not in scope')
         ->and($cli->api()->lastCall()['body'])->toBe(['inputs' => ['selected_server_ids' => ['2']]]);
+});
+
+it('follows the one run going when none is named', function () {
+    $cli = automations()
+        ->answers(['has a new kernel' => true])
+        ->withApi(api()
+            ->on('GET', 'v1/automation-runs?per_page=20', fixture('automation-runs-one-live.json'))
+            ->on('GET', 'v1/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-awaiting-input.json'))
+            ->on('POST', 'v1/automation-runs/'.RUN.'/resume', fixture('run-01J9A2-completed.json')));
+
+    $result = $cli->run('automation', 'watch');
+
+    expect($result->exitCode)->toBe(0)
+        ->and($result->stdout)->toContain('Run '.substr(RUN, -6).' completed');
+});
+
+it('reads the last run back when nothing is going', function () {
+    $result = automations()
+        ->answers([])
+        ->withApi(api()
+            ->on('GET', 'v1/automation-runs?per_page=20', fixture('automation-runs.json'))
+            ->on('GET', 'v1/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-completed.json')))
+        ->run('automation', 'watch');
+
+    expect($result->exitCode)->toBe(0)
+        ->and($result->stdout)->toContain('Select servers')
+        ->and($result->stdout)->toContain('Run '.substr(RUN, -6).' completed');
+});
+
+it('asks which run when several are going, and lists them in a pipe', function () {
+    $cli = automations()
+        ->answers(['Which run?' => RUN])
+        ->withApi(api()
+            ->on('GET', 'v1/automation-runs?per_page=20', fixture('automation-runs-two-live.json'))
+            ->on('GET', 'v1/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-completed.json')));
+
+    expect($cli->run('automation', 'watch')->exitCode)->toBe(0);
+
+    $piped = automations()
+        ->withApi(api()->on('GET', 'v1/automation-runs?per_page=20', fixture('automation-runs-two-live.json')))
+        ->run('automation', 'watch');
+
+    expect($piped->exitCode)->toBe(2)
+        ->and($piped->stderr)->toContain('Rotate SSH keys · V6W8Z9')
+        ->and($piped->stderr)->toContain('awaiting input');
 });
 
 it('does not take --yes for an answer', function () {

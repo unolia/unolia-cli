@@ -35,7 +35,31 @@
         "finished_at": "2026-09-05T10:00:04Z",
         "error_message": null,
         "attempts": 1,
-        "output_summary": "2 servers"
+        "output_summary": "2 servers",
+        "output_blocks": [
+          {
+            "kind": "table",
+            "headers": [
+              "Server",
+              "Current kernel",
+              "Pending kernel"
+            ],
+            "rows": [
+              [
+                "web-01",
+                "6.8.0-136-generic",
+                "6.8.0-139-generic"
+              ],
+              [
+                "db-01",
+                "6.8.0-139-generic",
+                ""
+              ]
+            ],
+            "caption": null
+          }
+        ],
+        "parent_id": null
       },
       {
         "id": 902,
@@ -50,6 +74,51 @@
             "name": "web-01",
             "duration_seconds": 72
           }
+        ],
+        "output_blocks": [
+          {
+            "kind": "markdown",
+            "body": "Packages upgraded on `web-01`: **linux-image-6.8.0-139-generic**, openssl."
+          }
+        ],
+        "parent_id": null
+      },
+      {
+        "id": 9021,
+        "position": 2.01,
+        "parent_id": 902,
+        "slug": "apt-upgrade-server",
+        "label": "Upgrade packages on web-01",
+        "state": "completed",
+        "started_at": "2026-09-05T10:00:05Z",
+        "finished_at": "2026-09-05T10:01:17Z",
+        "error_message": null,
+        "attempts": 1,
+        "output_summary": null,
+        "output_blocks": [
+          {
+            "kind": "markdown",
+            "body": "Upgraded 12 packages on `web-01`."
+          }
+        ]
+      },
+      {
+        "id": 9022,
+        "position": 2.02,
+        "parent_id": 902,
+        "slug": "apt-upgrade-server",
+        "label": "Upgrade packages on db-01",
+        "state": "failed",
+        "started_at": "2026-09-05T10:00:05Z",
+        "finished_at": "2026-09-05T10:00:40Z",
+        "error_message": "apt-get exited with 100",
+        "attempts": 1,
+        "output_summary": null,
+        "output_blocks": [
+          {
+            "kind": "markdown",
+            "body": "dpkg was interrupted, you must manually run `dpkg --configure -a`."
+          }
         ]
       },
       {
@@ -58,7 +127,9 @@
         "slug": "choose-servers-to-reboot",
         "label": "Reboot which servers?",
         "state": "completed",
-        "output_summary": "2 servers rebooted"
+        "output_summary": "2 servers rebooted",
+        "output_blocks": [],
+        "parent_id": null
       }
     ],
     "resources": [

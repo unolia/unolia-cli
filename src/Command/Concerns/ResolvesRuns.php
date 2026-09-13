@@ -7,6 +7,8 @@ namespace Unolia\Cli\Command\Concerns;
 use Unolia\Cli\Api\Requests\Automations\ListAutomationRuns;
 use Unolia\Cli\Api\Requests\Automations\ListAutomations;
 use Unolia\Cli\Console\CliError;
+use Unolia\Cli\Support\Arr;
+use Unolia\Cli\Support\RelativeTime;
 use Unolia\Cli\Support\Str;
 
 /**
@@ -59,6 +61,48 @@ trait ResolvesRuns
             'Use more characters from the end of the ULID, or the whole ULID from unolia automation runs --json ulid.',
             ['candidates' => array_map(Str::shortId(...), array_keys($matches))],
         );
+    }
+
+    /** A run that is still going, or waiting: the ones worth following without being named. */
+    private const LIVE_RUN = ['pending', 'running', 'awaiting_input', 'failing', 'cancelling'];
+
+    /**
+     * The run to follow when none is named: the one going now, or waiting for
+     * an answer. Several of them are a choice on a terminal and exit 2 with
+     * the candidates in a pipe. None means the last run, to read it back.
+     */
+    protected function pickRun(): string
+    {
+        $rows = $this->ask()->spin('Looking for a run', fn (): array => $this->collection(new ListAutomationRuns(['per_page' => 20])));
+        $live = [];
+
+        foreach ($rows as $row) {
+            if (is_string($row['ulid'] ?? null) && in_array($row['state'] ?? null, self::LIVE_RUN, true)) {
+                $live[$row['ulid']] = sprintf(
+                    '%s · %s · %s%s',
+                    Str::scalar(Arr::get($row, 'automation.name'), 'Automation'),
+                    Str::shortId($row['ulid']),
+                    str_replace('_', ' ', Str::scalar($row['state'] ?? null, '')),
+                    is_string($row['started_at'] ?? null) ? ', started '.RelativeTime::ago($row['started_at']) : '',
+                );
+            }
+        }
+
+        if (count($live) === 1) {
+            return (string) array_key_first($live);
+        }
+
+        if (count($live) > 1) {
+            return $this->ask()->select('Which run?', $live, 'run');
+        }
+
+        foreach ($rows as $row) {
+            if (is_string($row['ulid'] ?? null)) {
+                return $row['ulid'];
+            }
+        }
+
+        throw CliError::notFound('no run yet', 'unolia automation run <automation> starts one.');
     }
 
     protected function automationId(string $reference): int

@@ -80,6 +80,16 @@ class Ask
             throw CliError::missingInput($flag, $options);
         }
 
+        // PHP keeps a numeric key as an int, and the prompt compares a picked
+        // key with the defaults strictly: a default given as the string the
+        // API sent could be ticked but never unticked. Match each default to
+        // the key as PHP holds it.
+        $keys = array_keys($options);
+        $default = array_values(array_filter(array_map(
+            static fn (int|string $value): int|string|null => $keys[array_search((string) $value, array_map(strval(...), $keys), true)] ?? null,
+            $default,
+        ), static fn (int|string|null $key): bool => $key !== null));
+
         $selected = multiselect(label: $label, options: $options, default: $default, scroll: 10, required: $required, hint: $hint);
 
         return array_values(array_map(static fn (int|string $value): string => (string) $value, $selected));

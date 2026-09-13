@@ -31,13 +31,14 @@ final class WatchCommand extends BaseCommand
 
     protected function define(): void
     {
-        $this->addArgument('run', InputArgument::REQUIRED, 'Run ULID or its short id, the last six characters');
+        $this->addArgument('run', InputArgument::OPTIONAL, 'Run ULID or its short id, the last six characters. The run going now, or the last one, by default');
         $this->addWatchOptions();
     }
 
     public function examples(): array
     {
         return [
+            'Follow the run going now, or read the last one back' => 'unolia automation watch',
             'Follow a run' => 'unolia automation watch PC0XCA',
             'As events' => 'unolia automation watch PC0XCA --format ndjson',
         ];
@@ -45,7 +46,8 @@ final class WatchCommand extends BaseCommand
 
     protected function handle(InputInterface $input): ExitCode
     {
-        $ulid = $this->runUlid((string) $this->argumentString('run'));
+        $reference = $this->argumentString('run');
+        $ulid = $reference === null ? $this->pickRun() : $this->runUlid($reference);
 
         // A terminal reads the run as one task per step, and answers a
         // question where the run stopped to ask it.

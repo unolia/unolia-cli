@@ -4,10 +4,10 @@ Follow an automation run
 
 ```
 USAGE
-  unolia automation watch <run> [flags]
+  unolia automation watch [<run>] [flags]
 
 ARGUMENTS
-  run  Run ULID or its short id, the last six characters
+  run  Run ULID or its short id, the last six characters. The run going now, or the last one, by default
 
 FLAGS
       --interval <value>  Seconds between checks (default 3)
@@ -28,6 +28,8 @@ INHERITED FLAGS
       --limit <value>    Page size, up to 100 (default 30)
 
 EXAMPLES
+  # Follow the run going now, or read the last one back
+  $ unolia automation watch
   # Follow a run
   $ unolia automation watch PC0XCA
   # As events

@@ -8,7 +8,7 @@ USAGE
 
 ARGUMENTS
   kind  deployment, ci, automation or record
-  id    The id of the thing to watch. For a deployment, the running or next one by default
+  id    The id of the thing to watch. For a deployment, the running or next one by default. For an automation, the run going now or the last one
 
 FLAGS
       --last              Follow the latest deployment even when it has finished

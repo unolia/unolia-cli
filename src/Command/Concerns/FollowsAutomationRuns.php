@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Unolia\Cli\Command\Concerns;
 
+use Symfony\Component\Console\Formatter\OutputFormatter;
+use Symfony\Component\Console\Terminal;
 use Unolia\Cli\Api\ApiException;
 use Unolia\Cli\Api\Requests\Automations\ResumeAutomationRun;
 use Unolia\Cli\Console\CliError;
@@ -72,7 +74,7 @@ trait FollowsAutomationRuns
 
             $id = $step['id'] ?? null;
             $shown[] = $id;
-            $label = Str::scalar($step['label'] ?? $step['slug'] ?? null, 'Step '.count($shown));
+            $label = self::labelFor($step, $state, 'Step '.count($shown));
             $outcome = null;
 
             // The step's line is written once it is over. Until then a spinner
@@ -105,7 +107,7 @@ trait FollowsAutomationRuns
                 }
 
                 if (in_array($stepState, self::STEP_DONE, true)) {
-                    $this->stepLine($label, $current, $stepState);
+                    $this->stepLine($label, $current, $stepState, self::isChild($current));
                     $outcome = $stepState;
 
                     continue;
@@ -113,7 +115,7 @@ trait FollowsAutomationRuns
 
                 // The run ended without this step: nothing more will happen to it.
                 if ($target->isDone($state)) {
-                    $this->out()->formatted(sprintf(' <fg=gray>○ %s · not run</>', $label));
+                    $this->out()->formatted(sprintf('%s<fg=gray>○ %s · not run</>', self::indent($current), $label));
                     $outcome = 'not_run';
 
                     continue;
@@ -135,7 +137,9 @@ trait FollowsAutomationRuns
                 continue;
             }
 
-            if ($outcome === 'awaiting_input' || ($outcome !== 'completed' && $outcome !== 'skipped' && $target->isDone($state))) {
+            // A step that failed ends the list only when it took the run
+            // down with it: a fan-out may lose a child and carry on.
+            if ($outcome === 'awaiting_input' || ($outcome !== 'completed' && $outcome !== 'skipped' && in_array($state->string('state'), ['failed', 'cancelled', 'rolled_back'], true))) {
                 break;
             }
         }
@@ -187,28 +191,180 @@ trait FollowsAutomationRuns
     /**
      * One line for a step that is over: a glyph in the colour of how it
      * ended, the label, then what it reported and how long it took, dim.
-     * The servers it touched follow, one per line, indented.
+     * The servers it touched follow, one per line, indented, then what it
+     * wrote for a reader. A child of a fan-out sits one level in under its
+     * parent and, when it went well, keeps its notes to itself, the way the
+     * run page folds them: six servers that each say the key went in is one
+     * line of information, not six paragraphs.
      *
      * @param  array<string, mixed>  $step
      */
-    private function stepLine(string $label, array $step, string $stepState): void
+    private function stepLine(string $label, array $step, string $stepState, bool $child): void
     {
+        $indent = self::indent($step);
         $summary = Str::scalar($step['output_summary'] ?? null, '');
         $took = RelativeTime::between(is_string($step['started_at'] ?? null) ? $step['started_at'] : null, is_string($step['finished_at'] ?? null) ? $step['finished_at'] : null);
         $tail = array_values(array_filter([$summary, $took === null ? '' : RelativeTime::duration($took)], static fn (string $part): bool => $part !== ''));
 
-        $this->out()->formatted(match ($stepState) {
-            'completed' => sprintf(' <fg=green>✓</> %s%s', $label, self::dim($tail)),
-            'skipped' => sprintf(' <fg=gray>○ %s · skipped%s</>', $label, $summary === '' ? '' : ': '.$summary),
-            'awaiting_input' => sprintf(' <fg=yellow>◐</> %s <fg=gray>· waiting for an answer</>', $label),
-            default => sprintf(' <fg=red>✕</> %s <fg=gray>·</> <fg=red>%s</>', $label, Str::scalar($step['error_message'] ?? null, $summary === '' ? str_replace('_', ' ', $stepState) : $summary)),
+        $this->out()->formatted($indent.match ($stepState) {
+            'completed' => sprintf('<fg=green>✓</> %s%s', $label, self::dim($tail)),
+            'skipped' => sprintf('<fg=gray>○ %s · skipped%s</>', $label, $summary === '' ? '' : ': '.$summary),
+            'awaiting_input' => sprintf('<fg=yellow>◐</> %s <fg=gray>· waiting for an answer</>', $label),
+            default => sprintf('<fg=red>✕</> %s <fg=gray>·</> <fg=red>%s</>', $label, Str::scalar($step['error_message'] ?? null, $summary === '' ? str_replace('_', ' ', $stepState) : $summary)),
         });
 
         foreach (is_array($step['resources'] ?? null) ? $step['resources'] : [] as $resource) {
             if (is_array($resource) && is_string($resource['name'] ?? null)) {
                 $seconds = $resource['duration_seconds'] ?? null;
-                $this->out()->formatted(sprintf('   <fg=gray>%s%s</>', $resource['name'], is_numeric($seconds) ? ' · '.RelativeTime::duration((int) $seconds) : ''));
+                $this->out()->formatted(sprintf('%s  <fg=gray>%s%s</>', $indent, $resource['name'], is_numeric($seconds) ? ' · '.RelativeTime::duration((int) $seconds) : ''));
             }
+        }
+
+        if ($child && ($stepState === 'completed' || $stepState === 'skipped')) {
+            return;
+        }
+
+        foreach (is_array($step['output_blocks'] ?? null) ? $step['output_blocks'] : [] as $block) {
+            if (is_array($block)) {
+                $this->outputBlock($block, $indent);
+            }
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $step
+     */
+    private static function isChild(array $step): bool
+    {
+        return ($step['parent_id'] ?? null) !== null;
+    }
+
+    /**
+     * Where a step's line starts: one space, two more for a child.
+     *
+     * @param  array<string, mixed>  $step
+     */
+    private static function indent(array $step): string
+    {
+        return self::isChild($step) ? '   ' : ' ';
+    }
+
+    /**
+     * A step's label as the list shows it. The children of a fan-out all ran
+     * the same thing on different targets, so their labels differ only in
+     * the last words: the shared start is lifted off and each line carries
+     * what varies, "web-01" rather than "Install temp SSH key on web-01".
+     * Only a word boundary is cut, and only when there are siblings to
+     * compare with.
+     *
+     * @param  array<string, mixed>  $step
+     */
+    private static function labelFor(array $step, TargetState $state, string $fallback): string
+    {
+        $label = Str::scalar($step['label'] ?? $step['slug'] ?? null, $fallback);
+
+        if (! self::isChild($step)) {
+            return $label;
+        }
+
+        $siblings = [];
+
+        foreach (self::orderedSteps($state) as $other) {
+            if (($other['parent_id'] ?? null) === $step['parent_id'] && is_string($other['label'] ?? null)) {
+                $siblings[] = $other['label'];
+            }
+        }
+
+        if (count($siblings) < 2) {
+            return $label;
+        }
+
+        $shared = array_shift($siblings);
+
+        foreach ($siblings as $sibling) {
+            $length = min(strlen($shared), strlen($sibling));
+            $i = 0;
+
+            while ($i < $length && $shared[$i] === $sibling[$i]) {
+                $i++;
+            }
+
+            $shared = substr($shared, 0, $i);
+        }
+
+        $shared = preg_match('/^(.*\s)\S*$/u', $shared, $match) === 1 ? $match[1] : '';
+        $short = trim(substr($label, strlen($shared)));
+
+        return $short === '' || $shared === '' ? $label : $short;
+    }
+
+    /** Room for what a step wrote, under its line, past the glyph. */
+    private const BLOCK_INDENT = '    ';
+
+    /**
+     * What the step wrote for a reader, as the run page shows it under the
+     * step: a table as aligned columns with a dim header, a note as dim text
+     * wrapped to the terminal, its markdown marks dropped.
+     *
+     * @param  array<string, mixed>  $block
+     */
+    private function outputBlock(array $block, string $indent = ' '): void
+    {
+        $pad = $indent.self::BLOCK_INDENT;
+        $width = max(40, (new Terminal)->getWidth() - strlen($pad) - 1);
+
+        if (($block['kind'] ?? null) === 'markdown' && is_string($block['body'] ?? null)) {
+            $text = (string) preg_replace(['/\*\*(.+?)\*\*/s', '/`([^`]*)`/', '/^#+\s*/m', '/^\s*[-*]\s+/m'], ['$1', '$1', '', '· '], $block['body']);
+
+            foreach (Str::wrap($text, $width) as $line) {
+                $this->out()->formatted($line === '' ? '' : $pad.'<fg=gray>'.OutputFormatter::escape($line).'</>');
+            }
+
+            return;
+        }
+
+        if (($block['kind'] ?? null) !== 'table' || ! is_array($block['rows'] ?? null)) {
+            return;
+        }
+
+        $headers = array_values(array_map(static fn (mixed $cell): string => Str::scalar($cell, ''), is_array($block['headers'] ?? null) ? $block['headers'] : []));
+        $rows = [];
+
+        foreach ($block['rows'] as $row) {
+            if (is_array($row)) {
+                $rows[] = array_values(array_map(static fn (mixed $cell): string => Str::scalar($cell, ''), $row));
+            }
+        }
+
+        $widths = [];
+
+        foreach ([$headers, ...$rows] as $cells) {
+            foreach ($cells as $index => $cell) {
+                $widths[$index] = max($widths[$index] ?? 0, mb_strwidth($cell));
+            }
+        }
+
+        $line = static function (array $cells) use ($widths): string {
+            $out = [];
+
+            foreach ($widths as $index => $columnWidth) {
+                $cell = $cells[$index] ?? '';
+                $out[] = $index === array_key_last($widths) ? $cell : $cell.str_repeat(' ', $columnWidth - mb_strwidth($cell));
+            }
+
+            return rtrim(implode('  ', $out));
+        };
+
+        if ($headers !== []) {
+            $this->out()->formatted($pad.'<fg=gray>'.OutputFormatter::escape($line($headers)).'</>');
+        }
+
+        foreach ($rows as $row) {
+            $this->out()->formatted($pad.OutputFormatter::escape($line($row)));
+        }
+
+        if (is_string($block['caption'] ?? null) && $block['caption'] !== '') {
+            $this->out()->formatted($pad.'<fg=gray>'.OutputFormatter::escape($block['caption']).'</>');
         }
     }
 
@@ -248,7 +404,7 @@ trait FollowsAutomationRuns
             }
         }
 
-        usort($steps, static fn (array $a, array $b): int => ((int) ($a['position'] ?? 0)) <=> ((int) ($b['position'] ?? 0)));
+        usort($steps, static fn (array $a, array $b): int => [(float) ($a['position'] ?? 0), (int) ($a['id'] ?? 0)] <=> [(float) ($b['position'] ?? 0), (int) ($b['id'] ?? 0)]);
 
         return $steps;
     }
