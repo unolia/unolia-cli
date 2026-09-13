@@ -11,8 +11,9 @@ use Unolia\Cli\Api\ApiException;
 use Unolia\Cli\Api\Requests\Repositories\ListRepositoryActions;
 use Unolia\Cli\Api\Requests\Websites\ListWebsiteDeployments;
 use Unolia\Cli\Command\BaseCommand;
+use Unolia\Cli\Command\Concerns\FollowsAutomationRuns;
+use Unolia\Cli\Command\Concerns\ResolvesRuns;
 use Unolia\Cli\Command\Concerns\ResolvesTargets;
-use Unolia\Cli\Command\Concerns\Watches;
 use Unolia\Cli\Console\CliError;
 use Unolia\Cli\Console\ExitCode;
 use Unolia\Cli\Context\Need;
@@ -28,8 +29,9 @@ use Unolia\Cli\Watch\Target;
  */
 final class WatchCommand extends BaseCommand
 {
+    use FollowsAutomationRuns;
+    use ResolvesRuns;
     use ResolvesTargets;
-    use Watches;
 
     private const KINDS = ['deployment', 'ci', 'automation', 'record'];
 
@@ -68,6 +70,11 @@ final class WatchCommand extends BaseCommand
         $kind = $this->argumentString('kind');
         $id = $this->argumentString('id');
 
+        // An automation run reads as one task per step on a terminal.
+        if ($kind === 'automation' && $id !== null && $this->out()->face()->interactive && ! $this->structured()) {
+            return $this->followRunSteps($this->runUlid($id));
+        }
+
         $target = $kind === null
             ? $this->newestHere()
             : $this->targetFor($kind, $id);
@@ -102,7 +109,7 @@ final class WatchCommand extends BaseCommand
         return match ($kind) {
             'deployment' => $this->deployment((int) $id),
             'ci' => $this->action((int) $id),
-            'automation' => new AutomationRunTarget($this->api(), $id, $this->waitSeconds()),
+            'automation' => new AutomationRunTarget($this->api(), $this->runUlid($id), $this->waitSeconds()),
             default => new RecordTarget($this->api(), (int) $id),
         };
     }

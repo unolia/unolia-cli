@@ -8,6 +8,7 @@ use Unolia\Cli\Api\Client;
 use Unolia\Cli\Api\Requests\Automations\ShowAutomationRun;
 use Unolia\Cli\Console\ExitCode;
 use Unolia\Cli\Support\RelativeTime;
+use Unolia\Cli\Support\Str;
 
 /**
  * An automation run, step by step. A run that parks waiting for an answer is done for
@@ -50,7 +51,7 @@ final class AutomationRunTarget implements Target
                 'state' => $state->string('state'),
             ], sprintf(
                 'Run %s of %s is %s',
-                (string) $state->string('ulid'),
+                Str::shortId($state->string('ulid')),
                 (string) ($state->get('automation.name') ?? 'an automation'),
                 (string) $state->string('state', 'running'),
             ));
@@ -76,7 +77,7 @@ final class AutomationRunTarget implements Target
             yield new WatchEvent('run.awaiting_input', [
                 'run' => $state->string('ulid'),
                 'step' => $this->awaitingStep($state),
-            ], 'This run is waiting for an answer. Resume it with unolia automation resume '.(string) $state->string('ulid'));
+            ], 'This run is waiting for an answer. Resume it with unolia automation resume '.Str::shortId($state->string('ulid')));
         }
 
         if ($this->isDone($state) && $state->string('state') !== 'awaiting_input') {
@@ -109,7 +110,7 @@ final class AutomationRunTarget implements Target
 
         return sprintf(
             'Run %s %s%s',
-            (string) $state->string('ulid'),
+            Str::shortId($state->string('ulid')),
             (string) $state->string('state', 'finished'),
             $duration === null ? '' : ' in '.RelativeTime::duration($duration),
         );
