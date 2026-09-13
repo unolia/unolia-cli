@@ -7,7 +7,7 @@ USAGE
   unolia automation view <automation> [flags]
 
 ARGUMENTS
-  automation  Automation id or exact name
+  automation  Automation id, or any part of its name
 
 INHERITED FLAGS
   -t, --team <value>     Team slug or id

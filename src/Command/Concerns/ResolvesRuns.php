@@ -105,23 +105,63 @@ trait ResolvesRuns
         throw CliError::notFound('no run yet', 'unolia automation run <automation> starts one.');
     }
 
+    /**
+     * An automation from an id, or from any part of its name: "kernel" finds
+     * "Restart servers with pending kernel update". A name that matches
+     * whole wins over the rest. Several matches are a choice on a terminal
+     * and exit 2 with the candidates in a pipe.
+     */
     protected function automationId(string $reference): int
     {
+        $reference = trim($reference);
+
         if (ctype_digit($reference)) {
             return (int) $reference;
         }
 
-        $rows = $this->collection(new ListAutomations(['q' => $reference, 'per_page' => 20]));
-
-        foreach ($rows as $row) {
-            if (strcasecmp((string) ($row['name'] ?? ''), $reference) === 0 && is_numeric($row['id'] ?? null)) {
-                return (int) $row['id'];
-            }
+        if ($reference === '') {
+            throw CliError::usage('name the automation', 'Run unolia automation list to see them.');
         }
 
-        throw CliError::notFound(
-            sprintf('no automation called %s', $reference),
-            'Run unolia automation list to see them.',
+        $rows = $this->ask()->spin(
+            sprintf('Finding %s', $reference),
+            fn (): array => $this->collection(new ListAutomations(['q' => $reference, 'per_page' => 20])),
+        );
+
+        $matches = [];
+
+        foreach ($rows as $row) {
+            if (! is_numeric($row['id'] ?? null) || ! is_string($row['name'] ?? null)) {
+                continue;
+            }
+
+            if (strcasecmp($row['name'], $reference) === 0) {
+                return (int) $row['id'];
+            }
+
+            $recipe = Str::scalar(Arr::get($row, 'recipe.name'), '');
+            $matches[(int) $row['id']] = $row['name'].($recipe === '' || strcasecmp($recipe, $row['name']) === 0 ? '' : ' · '.$recipe);
+        }
+
+        if (count($matches) === 1) {
+            return (int) array_key_first($matches);
+        }
+
+        if ($matches === []) {
+            throw CliError::notFound(
+                sprintf('no automation matches %s', $reference),
+                'Run unolia automation list to see them.',
+            );
+        }
+
+        if ($this->ask()->interactive()) {
+            return (int) $this->ask()->select('Which automation?', $matches, 'automation');
+        }
+
+        throw CliError::usage(
+            sprintf('%s matches several automations', $reference),
+            'Use more of the name, or the id from unolia automation list.',
+            ['candidates' => array_map(static fn (int $id, string $label): string => sprintf('%d %s', $id, $label), array_keys($matches), $matches)],
         );
     }
 }

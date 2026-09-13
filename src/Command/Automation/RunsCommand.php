@@ -39,7 +39,7 @@ final class RunsCommand extends BaseCommand
 
     protected function define(): void
     {
-        $this->addOption('automation', null, InputOption::VALUE_REQUIRED, 'Only runs of this automation');
+        $this->addOption('automation', null, InputOption::VALUE_REQUIRED, 'Only runs of this automation, by id or any part of its name');
         $this->addOption('state', null, InputOption::VALUE_REQUIRED, 'Filter by state');
         $this->addOption('since', null, InputOption::VALUE_REQUIRED, 'Only runs since, such as 7d');
     }

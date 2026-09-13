@@ -7,7 +7,7 @@ USAGE
   unolia automation run <automation> [flags]
 
 ARGUMENTS
-  automation  Automation id or exact name
+  automation  Automation id, or any part of its name
 
 FLAGS
       --wait              Block until it finishes, also in a pipe
