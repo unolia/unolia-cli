@@ -14,6 +14,7 @@ use Unolia\Cli\Console\Renderers\TableRenderer;
 use Unolia\Cli\Console\Renderers\YamlRenderer;
 use Unolia\Cli\Console\Table\Cell;
 use Unolia\Cli\Console\Table\Column;
+use Unolia\Cli\Console\Table\Page;
 use Unolia\Cli\Console\Table\Table;
 use Unolia\Cli\Support\Str;
 
@@ -33,6 +34,9 @@ final class Out
 
     private readonly YamlRenderer $yaml;
 
+    /** Where the last list fetched stands in its pages, said under the next table. */
+    private ?Page $page = null;
+
     public function __construct(
         private readonly Face $face,
         private readonly OutputInterface $stdout,
@@ -49,6 +53,12 @@ final class Out
     public function face(): Face
     {
         return $this->face;
+    }
+
+    /** The page the next table draws from, or null when the rows are everything there is. */
+    public function paged(?Page $page): void
+    {
+        $this->page = $page;
     }
 
     /**
@@ -117,7 +127,8 @@ final class Out
             return;
         }
 
-        $text = (new StyledTableRenderer($this->face))->render($rows, $table);
+        $text = (new StyledTableRenderer($this->face))->render($rows, $table, $this->page);
+        $this->page = null;
 
         if ($this->face->interactive) {
             // A breath before and after the table, so it sits on neither the

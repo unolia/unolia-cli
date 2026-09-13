@@ -7,6 +7,7 @@ namespace Unolia\Cli\Console\Renderers;
 use Unolia\Cli\Console\Face;
 use Unolia\Cli\Console\Table\Align;
 use Unolia\Cli\Console\Table\Cell;
+use Unolia\Cli\Console\Table\Page;
 use Unolia\Cli\Console\Table\Table;
 
 /**
@@ -26,7 +27,7 @@ final class StyledTableRenderer
     /**
      * @param  list<array<string, mixed>>  $rows
      */
-    public function render(array $rows, Table $table): string
+    public function render(array $rows, Table $table, ?Page $page = null): string
     {
         $styled = $this->face->interactive;
         $links = $styled && $this->face->color;
@@ -74,7 +75,11 @@ final class StyledTableRenderer
             $lines[] = rtrim(implode('  ', $parts));
         }
 
-        $summary = $table->summary(count($matrix));
+        // The footer counts what is shown, or, when there are more pages, says
+        // how much there is and how to see the rest.
+        $summary = $page !== null && $page->more()
+            ? $page->note($table->summary($page->total))
+            : $table->summary(count($matrix));
 
         if ($summary !== null) {
             $lines[] = '';
