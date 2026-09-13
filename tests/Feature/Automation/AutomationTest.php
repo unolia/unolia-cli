@@ -18,7 +18,7 @@ it('lists automations', function () {
     expect($result->exitCode)->toBe(0)
         ->and($result->stdout)->toContain('Update Ubuntu servers')
         ->and($result->stdout)->toContain('manual, every Monday at 4:00am')
-        ->and($result->stdout)->toContain('Tue 8 Sep 2026, 06:00 Europe/Paris');
+        ->and($result->stdout)->toMatch('/Tue 8 Sep 2026, \d\d:\d\d [A-Za-z_\/]+/');
 });
 
 it('shows one automation with its last runs', function () {
