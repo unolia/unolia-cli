@@ -158,10 +158,12 @@ trait ResolvesRuns
             return (int) $this->ask()->select('Which automation?', $matches, 'automation');
         }
 
+        $candidates = array_map(static fn (int $id, string $label): string => sprintf('%d %s', $id, $label), array_keys($matches), $matches);
+
         throw CliError::usage(
-            sprintf('%s matches several automations', $reference),
-            'Use more of the name, or the id from unolia automation list.',
-            ['candidates' => array_map(static fn (int $id, string $label): string => sprintf('%d %s', $id, $label), array_keys($matches), $matches)],
+            sprintf('%s matches several automations: %s', $reference, implode(', ', $candidates)),
+            'Use more of the name, or the id.',
+            ['candidates' => $candidates],
         );
     }
 }
