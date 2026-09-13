@@ -50,7 +50,7 @@ final class WatchCommand extends BaseCommand
     protected function define(): void
     {
         $this->addArgument('kind', InputArgument::OPTIONAL, 'deployment, ci, automation or record');
-        $this->addArgument('id', InputArgument::OPTIONAL, 'The id of the thing to watch. For a deployment, the running or next one by default');
+        $this->addArgument('id', InputArgument::OPTIONAL, 'The id of the thing to watch. For a deployment, the running or next one by default. For an automation, the run going now or the last one');
         $this->addOption('last', null, InputOption::VALUE_NONE, 'Follow the latest deployment even when it has finished');
         $this->addWatchOptions();
     }
@@ -70,9 +70,10 @@ final class WatchCommand extends BaseCommand
         $kind = $this->argumentString('kind');
         $id = $this->argumentString('id');
 
-        // An automation run reads as one task per step on a terminal.
-        if ($kind === 'automation' && $id !== null && $this->out()->face()->interactive && ! $this->structured()) {
-            return $this->followRunSteps($this->runUlid($id));
+        // An automation run reads as a checklist on a terminal, and answers
+        // a question where the run stopped to ask it.
+        if ($kind === 'automation' && $this->out()->face()->interactive && ! $this->structured()) {
+            return $this->followRunSteps($id === null ? $this->pickRun() : $this->runUlid($id));
         }
 
         $target = $kind === null
@@ -102,6 +103,11 @@ final class WatchCommand extends BaseCommand
             return $this->deployment($this->pickDeployment($this->websiteId(), $this->optionBool('last')));
         }
 
+        // A run needs no id: the one going now, or the last one, is picked.
+        if ($kind === 'automation') {
+            return new AutomationRunTarget($this->api(), $id === null ? $this->pickRun() : $this->runUlid($id), $this->waitSeconds());
+        }
+
         if ($id === null) {
             throw CliError::missingInput(sprintf('the %s id', $kind));
         }
@@ -109,7 +115,6 @@ final class WatchCommand extends BaseCommand
         return match ($kind) {
             'deployment' => $this->deployment((int) $id),
             'ci' => $this->action((int) $id),
-            'automation' => new AutomationRunTarget($this->api(), $this->runUlid($id), $this->waitSeconds()),
             default => new RecordTarget($this->api(), (int) $id),
         };
     }

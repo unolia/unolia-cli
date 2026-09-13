@@ -1,0 +1,427 @@
+{
+  "data": [
+    {
+      "ulid": "01J9A2K7Q4X0N1R8S3T5V6W8Z9",
+      "automation": {
+        "id": 8,
+        "name": "Rotate SSH keys"
+      },
+      "trigger": {
+        "kind": "manual",
+        "event_class": null,
+        "subject": null,
+        "replay_of": null
+      },
+      "triggered_by": {
+        "id": 1,
+        "name": "eser"
+      },
+      "state": "running",
+      "summary": null,
+      "error_message": null,
+      "started_at": "2026-09-05T10:00:00Z",
+      "paused_at": null,
+      "pause_expires_at": null,
+      "completed_at": null,
+      "failed_at": null,
+      "duration_seconds": 250,
+      "steps": [
+        {
+          "id": 901,
+          "position": 1,
+          "slug": "select-servers",
+          "label": "Select servers",
+          "state": "completed",
+          "started_at": "2026-09-05T10:00:01Z",
+          "finished_at": "2026-09-05T10:00:04Z",
+          "error_message": null,
+          "attempts": 1,
+          "output_summary": "2 servers",
+          "output_blocks": [
+            {
+              "kind": "table",
+              "headers": [
+                "Server",
+                "Current kernel",
+                "Pending kernel"
+              ],
+              "rows": [
+                [
+                  "web-01",
+                  "6.8.0-136-generic",
+                  "6.8.0-139-generic"
+                ],
+                [
+                  "db-01",
+                  "6.8.0-139-generic",
+                  ""
+                ]
+              ],
+              "caption": null
+            }
+          ],
+          "parent_id": null
+        },
+        {
+          "id": 902,
+          "position": 2,
+          "slug": "apt-upgrade",
+          "label": "apt update, apt upgrade",
+          "state": "running",
+          "resources": [
+            {
+              "type": "managed_server",
+              "id": 61,
+              "name": "web-01",
+              "duration_seconds": 72
+            }
+          ],
+          "output_blocks": [],
+          "parent_id": null
+        },
+        {
+          "id": 9021,
+          "position": 2.01,
+          "parent_id": 902,
+          "slug": "apt-upgrade-server",
+          "label": "Upgrade packages on web-01",
+          "state": "running",
+          "started_at": "2026-09-05T10:00:05Z",
+          "finished_at": null,
+          "error_message": null,
+          "attempts": 1,
+          "output_summary": null,
+          "output_blocks": []
+        },
+        {
+          "id": 9022,
+          "position": 2.02,
+          "parent_id": 902,
+          "slug": "apt-upgrade-server",
+          "label": "Upgrade packages on db-01",
+          "state": "running",
+          "started_at": "2026-09-05T10:00:05Z",
+          "finished_at": null,
+          "error_message": null,
+          "attempts": 1,
+          "output_summary": null,
+          "output_blocks": []
+        }
+      ],
+      "resources": [
+        {
+          "role": "target",
+          "type": "managed_server",
+          "id": 61,
+          "name": "web-01"
+        }
+      ],
+      "url": "https://app.unolia.com/acme/automations/7/runs/01J9A2K7Q4X0N1R8S3T5V6W7Y8"
+    },
+    {
+      "ulid": "01J9A2K7Q4X0N1R8S3T5V6W7Y8",
+      "automation": {
+        "id": 7,
+        "name": "Update Ubuntu servers"
+      },
+      "trigger": {
+        "kind": "manual",
+        "event_class": null,
+        "subject": null,
+        "replay_of": null
+      },
+      "triggered_by": {
+        "id": 1,
+        "name": "eser"
+      },
+      "state": "awaiting_input",
+      "summary": null,
+      "error_message": null,
+      "started_at": "2026-09-05T10:00:00Z",
+      "paused_at": "2026-09-05T10:04:10Z",
+      "pause_expires_at": null,
+      "completed_at": null,
+      "failed_at": null,
+      "duration_seconds": 250,
+      "steps": [
+        {
+          "id": 901,
+          "position": 1,
+          "slug": "select-servers",
+          "label": "Select servers",
+          "state": "completed",
+          "started_at": "2026-09-05T10:00:01Z",
+          "finished_at": "2026-09-05T10:00:04Z",
+          "error_message": null,
+          "attempts": 1,
+          "output_summary": "2 servers",
+          "output_blocks": [
+            {
+              "kind": "table",
+              "headers": [
+                "Server",
+                "Current kernel",
+                "Pending kernel"
+              ],
+              "rows": [
+                [
+                  "web-01",
+                  "6.8.0-136-generic",
+                  "6.8.0-139-generic"
+                ],
+                [
+                  "db-01",
+                  "6.8.0-139-generic",
+                  ""
+                ]
+              ],
+              "caption": null
+            }
+          ],
+          "parent_id": null
+        },
+        {
+          "id": 902,
+          "position": 2,
+          "slug": "apt-upgrade",
+          "label": "apt update, apt upgrade",
+          "state": "completed",
+          "resources": [
+            {
+              "type": "managed_server",
+              "id": 61,
+              "name": "web-01",
+              "duration_seconds": 72
+            }
+          ],
+          "output_blocks": [
+            {
+              "kind": "markdown",
+              "body": "Packages upgraded on `web-01`: **linux-image-6.8.0-139-generic**, openssl."
+            }
+          ],
+          "parent_id": null
+        },
+        {
+          "id": 9021,
+          "position": 2.01,
+          "parent_id": 902,
+          "slug": "apt-upgrade-server",
+          "label": "Upgrade packages on web-01",
+          "state": "completed",
+          "started_at": "2026-09-05T10:00:05Z",
+          "finished_at": "2026-09-05T10:01:17Z",
+          "error_message": null,
+          "attempts": 1,
+          "output_summary": null,
+          "output_blocks": [
+            {
+              "kind": "markdown",
+              "body": "Upgraded 12 packages on `web-01`."
+            }
+          ]
+        },
+        {
+          "id": 9022,
+          "position": 2.02,
+          "parent_id": 902,
+          "slug": "apt-upgrade-server",
+          "label": "Upgrade packages on db-01",
+          "state": "failed",
+          "started_at": "2026-09-05T10:00:05Z",
+          "finished_at": "2026-09-05T10:00:40Z",
+          "error_message": "apt-get exited with 100",
+          "attempts": 1,
+          "output_summary": null,
+          "output_blocks": [
+            {
+              "kind": "markdown",
+              "body": "dpkg was interrupted, you must manually run `dpkg --configure -a`."
+            }
+          ]
+        },
+        {
+          "id": 903,
+          "position": 3,
+          "slug": "reboot-if-needed",
+          "label": "Reboot if the kernel changed",
+          "state": "awaiting_input",
+          "input_blocks": [
+            {
+              "field": "reboot",
+              "kind": "confirm",
+              "input_kind": "checkbox",
+              "label": "web-01 has a new kernel. Reboot now?",
+              "help": null,
+              "required": true,
+              "options": null,
+              "default": null
+            }
+          ],
+          "output_blocks": [],
+          "parent_id": null
+        }
+      ],
+      "resources": [
+        {
+          "role": "target",
+          "type": "managed_server",
+          "id": 61,
+          "name": "web-01"
+        }
+      ],
+      "url": "https://app.unolia.com/acme/automations/7/runs/01J9A2K7Q4X0N1R8S3T5V6W7Y8"
+    },
+    {
+      "ulid": "01J9A2K7Q4X0N1R8S3T5V6W7Y8",
+      "automation": {
+        "id": 7,
+        "name": "Update Ubuntu servers"
+      },
+      "trigger": {
+        "kind": "manual",
+        "event_class": null,
+        "subject": null,
+        "replay_of": null
+      },
+      "triggered_by": {
+        "id": 1,
+        "name": "eser"
+      },
+      "state": "completed",
+      "summary": null,
+      "error_message": null,
+      "started_at": "2026-09-05T10:00:00Z",
+      "paused_at": null,
+      "pause_expires_at": null,
+      "completed_at": "2026-09-05T10:06:00Z",
+      "failed_at": null,
+      "duration_seconds": 360,
+      "steps": [
+        {
+          "id": 901,
+          "position": 1,
+          "slug": "select-servers",
+          "label": "Select servers",
+          "state": "completed",
+          "started_at": "2026-09-05T10:00:01Z",
+          "finished_at": "2026-09-05T10:00:04Z",
+          "error_message": null,
+          "attempts": 1,
+          "output_summary": "2 servers",
+          "output_blocks": [
+            {
+              "kind": "table",
+              "headers": [
+                "Server",
+                "Current kernel",
+                "Pending kernel"
+              ],
+              "rows": [
+                [
+                  "web-01",
+                  "6.8.0-136-generic",
+                  "6.8.0-139-generic"
+                ],
+                [
+                  "db-01",
+                  "6.8.0-139-generic",
+                  ""
+                ]
+              ],
+              "caption": null
+            }
+          ],
+          "parent_id": null
+        },
+        {
+          "id": 902,
+          "position": 2,
+          "slug": "apt-upgrade",
+          "label": "apt update, apt upgrade",
+          "state": "completed",
+          "resources": [
+            {
+              "type": "managed_server",
+              "id": 61,
+              "name": "web-01",
+              "duration_seconds": 72
+            }
+          ],
+          "output_blocks": [
+            {
+              "kind": "markdown",
+              "body": "Packages upgraded on `web-01`: **linux-image-6.8.0-139-generic**, openssl."
+            }
+          ],
+          "parent_id": null
+        },
+        {
+          "id": 9021,
+          "position": 2.01,
+          "parent_id": 902,
+          "slug": "apt-upgrade-server",
+          "label": "Upgrade packages on web-01",
+          "state": "completed",
+          "started_at": "2026-09-05T10:00:05Z",
+          "finished_at": "2026-09-05T10:01:17Z",
+          "error_message": null,
+          "attempts": 1,
+          "output_summary": null,
+          "output_blocks": [
+            {
+              "kind": "markdown",
+              "body": "Upgraded 12 packages on `web-01`."
+            }
+          ]
+        },
+        {
+          "id": 9022,
+          "position": 2.02,
+          "parent_id": 902,
+          "slug": "apt-upgrade-server",
+          "label": "Upgrade packages on db-01",
+          "state": "failed",
+          "started_at": "2026-09-05T10:00:05Z",
+          "finished_at": "2026-09-05T10:00:40Z",
+          "error_message": "apt-get exited with 100",
+          "attempts": 1,
+          "output_summary": null,
+          "output_blocks": [
+            {
+              "kind": "markdown",
+              "body": "dpkg was interrupted, you must manually run `dpkg --configure -a`."
+            }
+          ]
+        },
+        {
+          "id": 903,
+          "position": 3,
+          "slug": "reboot-if-needed",
+          "label": "Reboot if the kernel changed",
+          "state": "completed",
+          "output_blocks": [],
+          "parent_id": null
+        }
+      ],
+      "resources": [
+        {
+          "role": "target",
+          "type": "managed_server",
+          "id": 61,
+          "name": "web-01"
+        }
+      ],
+      "url": "https://app.unolia.com/acme/automations/7/runs/01J9A2K7Q4X0N1R8S3T5V6W7Y8"
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "last_page": 1,
+    "per_page": 20,
+    "total": 3
+  },
+  "links": {
+    "next": null
+  }
+}

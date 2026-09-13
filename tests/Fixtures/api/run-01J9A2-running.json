@@ -35,7 +35,31 @@
         "finished_at": "2026-09-05T10:00:04Z",
         "error_message": null,
         "attempts": 1,
-        "output_summary": "2 servers"
+        "output_summary": "2 servers",
+        "output_blocks": [
+          {
+            "kind": "table",
+            "headers": [
+              "Server",
+              "Current kernel",
+              "Pending kernel"
+            ],
+            "rows": [
+              [
+                "web-01",
+                "6.8.0-136-generic",
+                "6.8.0-139-generic"
+              ],
+              [
+                "db-01",
+                "6.8.0-139-generic",
+                ""
+              ]
+            ],
+            "caption": null
+          }
+        ],
+        "parent_id": null
       },
       {
         "id": 902,
@@ -50,7 +74,37 @@
             "name": "web-01",
             "duration_seconds": 72
           }
-        ]
+        ],
+        "output_blocks": [],
+        "parent_id": null
+      },
+      {
+        "id": 9021,
+        "position": 2.01,
+        "parent_id": 902,
+        "slug": "apt-upgrade-server",
+        "label": "Upgrade packages on web-01",
+        "state": "running",
+        "started_at": "2026-09-05T10:00:05Z",
+        "finished_at": null,
+        "error_message": null,
+        "attempts": 1,
+        "output_summary": null,
+        "output_blocks": []
+      },
+      {
+        "id": 9022,
+        "position": 2.02,
+        "parent_id": 902,
+        "slug": "apt-upgrade-server",
+        "label": "Upgrade packages on db-01",
+        "state": "running",
+        "started_at": "2026-09-05T10:00:05Z",
+        "finished_at": null,
+        "error_message": null,
+        "attempts": 1,
+        "output_summary": null,
+        "output_blocks": []
       }
     ],
     "resources": [
