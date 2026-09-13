@@ -17,7 +17,8 @@ it('lists automations', function () {
 
     expect($result->exitCode)->toBe(0)
         ->and($result->stdout)->toContain('Update Ubuntu servers')
-        ->and($result->stdout)->toContain('0 4 * * 1');
+        ->and($result->stdout)->toContain('manual, every Monday at 4:00am')
+        ->and($result->stdout)->toContain('Tue 8 Sep 2026, 06:00 Europe/Paris');
 });
 
 it('shows one automation with its last runs', function () {
@@ -224,4 +225,16 @@ it('follows a log until the run settles, not until a poll is quiet', function ()
         ->and($result->stdout)->toContain('apt upgrade finished on web-01');
 
     $cli->api()->assertEverythingUsed();
+});
+
+it('says which run is already going when the automation refuses another', function () {
+    $result = automations()
+        ->withApi(api()->on('POST', 'v1/automations/7/runs', [
+            'error' => ['code' => 'run_rejected', 'message' => 'Max concurrent runs reached for this Automation.', 'status' => 409, 'details' => ['running' => [RUN]]],
+        ], 409))
+        ->run('automation', 'run', '7', '--yes');
+
+    expect($result->exitCode)->toBe(1)
+        ->and($result->stderr)->toContain('Max concurrent runs reached')
+        ->and($result->stderr)->toContain('unolia automation watch '.substr(RUN, -6).' follows it');
 });

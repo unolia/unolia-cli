@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace Unolia\Cli\Command\Concerns;
 
-use Unolia\Cli\Api\Poller;
 use Unolia\Cli\Console\CliError;
 use Unolia\Cli\Console\ExitCode;
 use Unolia\Cli\Console\StepLog;
 use Unolia\Cli\Support\RelativeTime;
 use Unolia\Cli\Support\Str;
 use Unolia\Cli\Watch\AutomationRunTarget;
+use Unolia\Cli\Watch\Patience;
 use Unolia\Cli\Watch\TargetState;
 
 /**
@@ -33,7 +33,8 @@ trait FollowsAutomationRuns
 
         $timeout = $this->duration('timeout', 900);
         $started = time();
-        $state = $target->fetch();
+        $interval = $this->duration('interval', 3);
+        $state = Patience::fetch($target, $poller, $interval);
 
         $this->out()->intro(sprintf(
             '%s · run %s',
@@ -53,8 +54,8 @@ trait FollowsAutomationRuns
                     break;
                 }
 
-                $this->waitABit($poller, $started, $timeout, $state);
-                $state = $target->fetch();
+                $this->waitABit($started, $timeout, $state);
+                $state = Patience::fetch($target, $poller, $interval);
 
                 continue;
             }
@@ -63,7 +64,7 @@ trait FollowsAutomationRuns
             $shown[] = $id;
             $label = Str::scalar($step['label'] ?? $step['slug'] ?? null, 'Step '.count($shown));
 
-            $outcome = $this->ask()->task($label, function (StepLog $log) use (&$state, $target, $poller, $id, $timeout, $started): string {
+            $outcome = $this->ask()->task($label, function (StepLog $log) use (&$state, $target, $poller, $interval, $id, $timeout, $started): string {
                 $seen = null;
 
                 while (true) {
@@ -86,8 +87,8 @@ trait FollowsAutomationRuns
                         $seen = $stepState;
                     }
 
-                    $this->waitABit($poller, $started, $timeout, $state);
-                    $state = $target->fetch();
+                    $this->waitABit($started, $timeout, $state);
+                    $state = Patience::fetch($target, $poller, $interval);
                 }
             });
 
@@ -98,8 +99,8 @@ trait FollowsAutomationRuns
 
         // The run's own last word, once every step has had its say.
         while (! $target->isDone($state)) {
-            $this->waitABit($poller, $started, $timeout, $state);
-            $state = $target->fetch();
+            $this->waitABit($started, $timeout, $state);
+            $state = Patience::fetch($target, $poller, $interval);
         }
 
         $summary = $target->summary($state);
@@ -115,14 +116,12 @@ trait FollowsAutomationRuns
         return $target->exitCode($state);
     }
 
-    /** The target long polls, so the wait is the server's; this only checks the clock and Ctrl+C. */
-    private function waitABit(Poller $poller, int $started, int $timeout, TargetState $state): void
+    /** The target long polls and Patience paces the reads; this only checks the clock. */
+    private function waitABit(int $started, int $timeout, TargetState $state): void
     {
         if (time() - $started >= $timeout) {
             throw CliError::timeout('the run is still going', 'unolia automation watch '.Str::shortId($state->string('ulid')).' keeps following it.');
         }
-
-        $poller->sleep(0);
     }
 
     /**

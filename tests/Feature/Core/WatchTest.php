@@ -111,3 +111,18 @@ it('watches a DNS record and exits 6 on timeout', function () {
     expect($result->exitCode)->toBe(0)
         ->and($result->stdout)->toContain('is verified');
 });
+
+it('waits out a rate limit while watching instead of giving up', function () {
+    $result = cli()
+        ->withConfig(['team' => 'acme', 'project' => 12, 'website' => 118])
+        ->withApi(api()
+            ->on('GET', 'v1/deployments/4812?wait=0', fixture('deployment-4812-running.json'))
+            ->on('GET', 'v1/deployments/4812/output?after=0', fixture('deployment-4812-output-0.json'))
+            ->on('GET', 'v1/deployments/4812?wait=20', ['error' => ['code' => 'rate_limited', 'message' => 'Too many requests', 'status' => 429]], 429)
+            ->on('GET', 'v1/deployments/4812?wait=20', fixture('deployment-4812-success.json'))
+            ->on('GET', 'v1/deployments/4812/output?after=1024', fixture('deployment-4812-output-1024.json')))
+        ->run('watch', 'deployment', '4812');
+
+    expect($result->exitCode)->toBe(0)
+        ->and($result->stdout)->toContain('Deployment 4812 success');
+});

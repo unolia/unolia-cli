@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Unolia\Cli\Command\Automation;
 
+use Lorisleiva\CronTranslator\CronTranslator;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Unolia\Cli\Api\Requests\Automations\ListAutomations;
@@ -75,7 +76,10 @@ final class ListCommand extends BaseCommand
             Column::make('recipe', 'Recipe')->cell(static fn (array $row): Cell => Cell::text(Str::scalar(Arr::get($row, 'recipe.slug')))->dim()),
             Column::make('triggers', 'Triggers')->cell(static fn (array $row): Cell => Cell::text(self::triggers($row))),
             Column::make('last_triggered_at', 'Last run')->cell(static fn (array $row): Cell => Cell::text(RelativeTime::ago(is_string($row['last_triggered_at'] ?? null) ? $row['last_triggered_at'] : null))->dim()),
-            Column::make('next_scheduled_at', 'Next run')->cell(static fn (array $row): Cell => Cell::text(RelativeTime::ago(is_string($row['next_scheduled_at'] ?? null) ? $row['next_scheduled_at'] : null, null, ''))->dim()),
+            Column::make('next_scheduled_at', 'Next run')->cell(static fn (array $row): Cell => Cell::text(RelativeTime::at(
+                is_string($row['next_scheduled_at'] ?? null) ? $row['next_scheduled_at'] : null,
+                is_string(Arr::get($row, 'triggers.timezone')) ? Arr::get($row, 'triggers.timezone') : null,
+            ))),
             Column::make('state')->cell(static fn (array $row): Cell => Status::word($row['state'] ?? null, 'ready')),
         )
             ->fields([
@@ -89,6 +93,16 @@ final class ListCommand extends BaseCommand
             ])
             ->sort(static fn (array $a, array $b): int => (int) ($b['id'] ?? 0) <=> (int) ($a['id'] ?? 0))
             ->footer(static fn (int $count): string => $count === 1 ? '1 automation' : $count.' automations');
+    }
+
+    /** "0 4 * * 1" as "every Monday at 4:00am"; the expression itself when it cannot be read. */
+    private static function cron(string $expression): string
+    {
+        try {
+            return lcfirst(CronTranslator::translate($expression));
+        } catch (\Throwable) {
+            return $expression;
+        }
     }
 
     /**
@@ -105,7 +119,7 @@ final class ListCommand extends BaseCommand
         $cron = Arr::get($row, 'triggers.cron');
 
         if (is_string($cron) && $cron !== '') {
-            $parts[] = $cron;
+            $parts[] = self::cron($cron);
         }
 
         $events = Arr::get($row, 'triggers.events');
