@@ -7,15 +7,15 @@ namespace Unolia\Cli\Command\Automation;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Unolia\Cli\Command\BaseCommand;
+use Unolia\Cli\Command\Concerns\FollowsAutomationRuns;
 use Unolia\Cli\Command\Concerns\ResolvesRuns;
-use Unolia\Cli\Command\Concerns\Watches;
 use Unolia\Cli\Console\ExitCode;
 use Unolia\Cli\Watch\AutomationRunTarget;
 
 final class WatchCommand extends BaseCommand
 {
+    use FollowsAutomationRuns;
     use ResolvesRuns;
-    use Watches;
 
     protected function canonical(): string
     {

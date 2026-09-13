@@ -70,6 +70,41 @@ it('starts a run', function () {
         ->and($result->stdout)->toContain('Run '.substr(RUN, -6).' started · unolia automation watch '.substr(RUN, -6));
 });
 
+it('shows a run as one task per step on a terminal', function () {
+    $result = automations()
+        ->answers(['Run this automation now?' => true])
+        ->withApi(api()
+            ->on('POST', 'v1/automations/7/runs', fixture('automation-run-create-201.json'), 201)
+            ->on('GET', 'v1/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-running.json'))
+            ->on('GET', 'v1/automation-runs/'.RUN.'?wait=20', fixture('run-01J9A2-completed.json')))
+        ->run('automation', 'run', '7');
+
+    $out = $result->stdout;
+
+    expect($result->exitCode)->toBe(0)
+        ->and($out)->toContain('Select servers')
+        ->and($out)->toContain('2 servers')
+        ->and($out)->toContain('apt update, apt upgrade')
+        ->and($out)->toContain('web-01 · 1m 12s')
+        ->and($out)->toContain('Reboot if the kernel changed')
+        ->and($out)->toContain('Run '.substr(RUN, -6).' completed')
+        ->and(strpos($out, 'Select servers'))->toBeLessThan(strpos($out, 'apt update'))
+        ->and(strpos($out, 'apt update'))->toBeLessThan(strpos($out, 'Reboot'));
+});
+
+it('stops the step list on the step waiting for an answer, on a terminal', function () {
+    $result = automations()
+        ->answers(['Run this automation now?' => true])
+        ->withApi(api()
+            ->on('POST', 'v1/automations/7/runs', fixture('automation-run-create-201.json'), 201)
+            ->on('GET', 'v1/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-awaiting-input.json')))
+        ->run('automation', 'run', '7');
+
+    expect($result->exitCode)->toBe(7)
+        ->and($result->stdout)->toContain('waiting for an answer')
+        ->and($result->stdout)->toContain('unolia automation resume');
+});
+
 it('exits 7 when a run parks waiting for an answer', function () {
     $result = automations()
         ->withApi(api()

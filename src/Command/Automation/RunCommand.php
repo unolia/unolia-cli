@@ -8,8 +8,8 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Unolia\Cli\Api\Requests\Automations\CreateAutomationRun;
 use Unolia\Cli\Command\BaseCommand;
+use Unolia\Cli\Command\Concerns\FollowsAutomationRuns;
 use Unolia\Cli\Command\Concerns\ResolvesRuns;
-use Unolia\Cli\Command\Concerns\Watches;
 use Unolia\Cli\Console\ExitCode;
 use Unolia\Cli\Support\Arr;
 use Unolia\Cli\Support\Str;
@@ -20,8 +20,8 @@ use Unolia\Cli\Watch\AutomationRunTarget;
  */
 final class RunCommand extends BaseCommand
 {
+    use FollowsAutomationRuns;
     use ResolvesRuns;
-    use Watches;
 
     protected function canonical(): string
     {
@@ -81,6 +81,12 @@ final class RunCommand extends BaseCommand
         }
 
         $short = Str::shortId($ulid);
+
+        // A terminal shows the run as one task per step; --no-progress hands
+        // the run back at once; a pipe waits only with --wait.
+        if ($this->out()->face()->interactive && ! $this->structured() && ! $this->optionBool('no-progress')) {
+            return $this->followRunSteps($ulid);
+        }
 
         return $this->followByDefault(
             new AutomationRunTarget($this->api(), $ulid, $this->waitSeconds()),
