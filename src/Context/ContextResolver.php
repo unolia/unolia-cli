@@ -230,20 +230,32 @@ final class ContextResolver
 
     /**
      * The websites the API says this git remote maps to, for prompts and error messages.
+     * Another remote than the origin of this directory is asked about once and not kept.
      *
      * @return array<string, mixed>
      */
-    public function remoteMatch(): array
+    public function remoteMatch(?string $remote = null): array
     {
+        if ($remote !== null) {
+            return $this->lookUp($remote);
+        }
+
         if ($this->remoteAsked) {
             return $this->remoteMatch ?? [];
         }
 
         $this->remoteAsked = true;
-        $remote = $this->git->remote();
 
+        return $this->remoteMatch = $this->lookUp($this->git->remote());
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function lookUp(?string $remote): array
+    {
         if ($remote === null) {
-            return $this->remoteMatch = [];
+            return [];
         }
 
         try {
@@ -256,12 +268,12 @@ final class ContextResolver
                 throw $exception->toCliError();
             }
 
-            return $this->remoteMatch = [];
+            return [];
         }
 
         $data = $response->json('data');
 
-        return $this->remoteMatch = is_array($data) ? $data : [];
+        return is_array($data) ? $data : [];
     }
 
     /**

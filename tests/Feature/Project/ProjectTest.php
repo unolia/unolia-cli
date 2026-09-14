@@ -37,6 +37,16 @@ it('shows what the git remote maps to', function () {
         ->and($result->stdout)->toContain('production');
 });
 
+it('asks about another remote than the origin with --remote', function () {
+    $result = cli()
+        ->withGitRemote('git@github.com:acme/unknown.git')
+        ->withApi(api()->on('GET', 'v2/resolve?remote=git@github.com:acme/marketing.git', fixture('resolve-exact.json')))
+        ->run('project', 'resolve', '--remote', 'git@github.com:acme/marketing.git');
+
+    expect($result->exitCode)->toBe(0)
+        ->and($result->stdout)->toContain('marketing.acme.com');
+});
+
 it('exits 4 when nothing matches', function () {
     $result = cli()
         ->withGitRemote('git@github.com:acme/unknown.git')
