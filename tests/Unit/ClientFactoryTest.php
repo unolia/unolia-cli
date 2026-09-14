@@ -33,6 +33,18 @@ it('keeps https for a local host but skips the certificate check', function () {
     }
 });
 
+it('checks the certificate of any host that is not a reserved local name', function () {
+    $factory = factoryWith();
+
+    foreach (['localhost.evil.com', 'localhost-dev.example.org', 'localhostfoo.com', 'test.example.com', 'app.unolia.com:8443'] as $host) {
+        expect($factory->make($host, 'tok')->config()->get('verify'))->toBeTrue($host)
+            ->and($factory->auth($host)->config()->get('verify'))->toBeTrue($host)
+            ->and($factory->oauth($host)->config()->get('verify'))->toBeTrue($host);
+    }
+
+    expect($factory->make('api.localhost', 'tok')->config()->get('verify'))->toBeFalse();
+});
+
 it('drops to http only when UNOLIA_INSECURE asks for it', function () {
     $factory = factoryWith(['UNOLIA_INSECURE' => '1']);
 

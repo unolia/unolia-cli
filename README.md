@@ -92,7 +92,7 @@ terminal. `unolia status` prints which source answered.
 | Variable | Meaning |
 | --- | --- |
 | `UNOLIA_TOKEN` | Personal or team token. Wins over `hosts.json`. `UNOLIA_API_TOKEN` still works with a warning. |
-| `UNOLIA_HOST` | Host, `app.unolia.com` by default. Always https. A `.test` or `localhost` host skips the certificate check. |
+| `UNOLIA_HOST` | Host, `app.unolia.com` by default. Always https, certificate checked. Only `localhost`, `*.localhost` and `*.test` skip the check, since they can only be this machine. |
 | `UNOLIA_INSECURE` | Talk plain http to the host. Only for a server that has no TLS at all. |
 | `UNOLIA_TEAM`, `UNOLIA_PROJECT`, `UNOLIA_WEBSITE` | Context without a config file. |
 | `UNOLIA_FORMAT` | `table`, `json`, `ndjson`, `csv` or `yaml`. |
