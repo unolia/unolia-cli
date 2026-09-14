@@ -262,9 +262,10 @@ final class ContextResolver
             $response = ($this->client)()->send(new Resolve(['remote' => $remote]));
         } catch (ApiException $exception) {
             // An API without the resolve endpoint has nothing to link. Anything
-            // else, a rejected token or a host that cannot be reached, is the
-            // real answer and must not read as "this directory is not linked".
-            if ($exception->status !== 404) {
+            // else, a rejected token, a team header this host does not know or
+            // a host that cannot be reached, is the real answer and must not
+            // read as "this directory is not linked".
+            if ($exception->status !== 404 || $exception->errorCode() === 'team_not_found') {
                 throw $exception->toCliError();
             }
 

@@ -29,6 +29,15 @@ it('turns a team_required envelope into a usage error with a hint', function () 
         ->and($error->hint)->toContain('--team');
 });
 
+it('turns a team_not_found envelope into a usage error naming the way out', function () {
+    $error = mapped(404, ['error' => ['code' => 'team_not_found', 'message' => 'No team named unolia is reachable with this token.']]);
+
+    expect($error->exitCode)->toBe(ExitCode::Usage)
+        ->and($error->errorCode)->toBe('team_not_found')
+        ->and($error->getMessage())->toContain('unolia')
+        ->and($error->hint)->toContain('unolia teams');
+});
+
 it('reads the 402 payload the API already sends', function () {
     $error = mapped(402, [
         'message' => 'Automations need the Studio plan.',

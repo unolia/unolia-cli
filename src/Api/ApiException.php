@@ -81,6 +81,15 @@ final class ApiException extends RuntimeException
                 $this->details(),
                 'Check the abilities of your token at https://app.unolia.com/user/api-tokens.',
             ),
+            // The team header named a team this token cannot reach: a slug
+            // from another host's config, most often. Not a missing record.
+            $this->status === 404 && $this->errorCode() === 'team_not_found' => new CliError(
+                'team_not_found',
+                $this->message('no team of that name is reachable with this token'),
+                ExitCode::Usage,
+                'unolia teams lists the ones you can reach. Pass --team <slug>, or run unolia team switch <slug> (--local for this directory).',
+                $this->details(),
+            ),
             $this->status === 404 => CliError::notFound($this->message('not found')),
             // A 422 that says the resource cannot do this is not something a
             // different flag would fix, so it reads as a remote failure rather

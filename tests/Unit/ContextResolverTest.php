@@ -92,6 +92,19 @@ it('survives an API that has no resolve endpoint yet', function () {
         ->and($result->stderr)->toContain('not linked to a website');
 });
 
+it('does not read a team the host does not know as an unlinked directory', function () {
+    $result = cli()
+        ->withGitRemote()
+        ->withConfig(['team' => 'unolia'])
+        ->withApi(api()->on('GET', 'v2/resolve', ['error' => ['code' => 'team_not_found', 'message' => 'No team named unolia is reachable with this token.']], 404))
+        ->run('website', 'view');
+
+    expect($result->exitCode)->toBe(2)
+        ->and($result->stderr)->toContain('No team named unolia')
+        ->and($result->stderr)->toContain('unolia teams')
+        ->and($result->stderr)->not->toContain('not linked');
+});
+
 it('never sends or prints a credential carried in the remote URL', function () {
     $result = cli()
         ->withGitRemote('https://x-access-token:ghp_SECRET@github.com/acme/marketing.git')
