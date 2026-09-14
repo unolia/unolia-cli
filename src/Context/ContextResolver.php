@@ -237,7 +237,7 @@ final class ContextResolver
     public function remoteMatch(?string $remote = null): array
     {
         if ($remote !== null) {
-            return $this->lookUp($remote);
+            return $this->lookUp(GitRemote::withoutCredentials($remote));
         }
 
         if ($this->remoteAsked) {
