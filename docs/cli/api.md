@@ -7,7 +7,7 @@ USAGE
   unolia api <endpoint> [flags]
 
 ARGUMENTS
-  endpoint  A path such as v1/websites, or a full URL on this host
+  endpoint  A path such as v2/websites, or a full URL on this host
 
 FLAGS
   -X, --method <value>     HTTP method, GET by default
@@ -34,13 +34,13 @@ INHERITED FLAGS
 
 EXAMPLES
   # Read a list
-  $ unolia api v1/websites
+  $ unolia api v2/websites
   # Filter the answer
-  $ unolia api v1/websites --jq '.data[].domain'
+  $ unolia api v2/websites --jq '.data[].domain'
   # Send a body
-  $ unolia api v1/websites/118/deployments -X POST -F dry_run=true
+  $ unolia api v2/websites/118/deployments -X POST -F dry_run=true
   # Send a file
-  $ unolia api v1/websites/118/deployments --input=body.json
+  $ unolia api v2/websites/118/deployments --input=body.json
 
 LEARN MORE
   https://unolia.com/docs/cli/api

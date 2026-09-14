@@ -25,7 +25,7 @@ INHERITED FLAGS
 
 EXAMPLES
   # Use it with curl
-  $ curl -H "Authorization: Bearer $(unolia auth token)" https://app.unolia.com/api/v1/teams
+  $ curl -H "Authorization: Bearer $(unolia auth token)" https://app.unolia.com/api/v2/teams
   # As JSON
   $ unolia auth token --json
 
