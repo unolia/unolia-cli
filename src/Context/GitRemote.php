@@ -22,9 +22,25 @@ class GitRemote
         return $this->cached('root', ['rev-parse', '--show-toplevel']);
     }
 
+    /** The origin URL, without any credential it carries. */
     public function remote(): ?string
     {
-        return $this->cached('remote', ['config', '--get', 'remote.origin.url']);
+        $remote = $this->cached('remote', ['config', '--get', 'remote.origin.url']);
+
+        return $remote === null ? null : self::withoutCredentials($remote);
+    }
+
+    /**
+     * A clone made with a token (`https://x-access-token:ghp_…@github.com/…`, a
+     * CI job token) keeps it in remote.origin.url. It is no part of where the
+     * code lives, so it is dropped before the URL is sent, printed or logged.
+     * The SSH form `git@host:path` names a user and no secret, and is left alone.
+     */
+    public static function withoutCredentials(string $url): string
+    {
+        $url = trim($url);
+
+        return preg_replace('#^([a-z][a-z0-9+.-]*://)[^/@]*@#i', '$1', $url) ?? $url;
     }
 
     public function branch(): ?string

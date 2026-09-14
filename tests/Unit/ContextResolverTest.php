@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Tests\Support\CliTester;
+use Unolia\Cli\Context\GitRemote;
 
 it('prefers the flag over the environment, the config and the settings', function () {
     $cli = cli()
@@ -89,4 +90,18 @@ it('survives an API that has no resolve endpoint yet', function () {
 
     expect($result->exitCode)->toBe(2)
         ->and($result->stderr)->toContain('not linked to a website');
+});
+
+it('never sends or prints a credential carried in the remote URL', function () {
+    $result = cli()
+        ->withGitRemote('https://x-access-token:ghp_SECRET@github.com/acme/marketing.git')
+        ->withApi(api()
+            ->on('GET', 'v2/resolve?remote=https://github.com/acme/marketing.git', fixture('resolve-none.json')))
+        ->run('website', 'view', '--json');
+
+    expect($result->exitCode)->toBe(2)
+        ->and($result->stderr)->toContain('https://github.com/acme/marketing.git')
+        ->and($result->stderr.$result->stdout)->not->toContain('ghp_SECRET');
+
+    expect(GitRemote::withoutCredentials('git@github.com:acme/marketing.git'))->toBe('git@github.com:acme/marketing.git');
 });
