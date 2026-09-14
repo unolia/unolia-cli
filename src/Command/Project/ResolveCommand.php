@@ -45,11 +45,12 @@ final class ResolveCommand extends BaseCommand
     protected function handle(InputInterface $input): ExitCode
     {
         $resolver = $this->runtime()->context();
-        $match = $resolver->remoteMatch();
+        $remote = $this->optionString('remote');
+        $match = $resolver->remoteMatch($remote);
 
         if ($match === []) {
             throw CliError::notFound(
-                'nothing on Unolia matches this directory',
+                $remote === null ? 'nothing on Unolia matches this directory' : sprintf('nothing on Unolia matches %s', $remote),
                 'Link it by hand with unolia init --website <id>.',
             );
         }
@@ -72,7 +73,11 @@ final class ResolveCommand extends BaseCommand
 
         $websites = [];
 
-        foreach ($resolver->remoteTeams() as $team) {
+        foreach ((array) ($match['teams'] ?? []) as $team) {
+            if (! is_array($team)) {
+                continue;
+            }
+
             foreach ((array) ($team['websites'] ?? []) as $website) {
                 if (is_array($website)) {
                     $website['team'] = Arr::get($team, 'team.slug');
