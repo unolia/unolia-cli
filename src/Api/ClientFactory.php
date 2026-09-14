@@ -10,9 +10,11 @@ use Unolia\Cli\Runtime;
  * Builds connectors. Commands that must talk to the API with another token, such as
  * `login` verifying what you just pasted, go through here so tests can still fake it.
  *
- * Every host is reached over https. A local host (`.test`, `localhost`) keeps https but
- * skips certificate verification, since Herd signs its own. Only UNOLIA_INSECURE drops
- * to plain http.
+ * Every host is reached over https and its certificate is checked, with one exception: the
+ * names that can only ever be this machine, `localhost`, `*.localhost` and `*.test` (RFC 6761
+ * reserves them, they never resolve on the internet), keep https but skip the check, since
+ * Herd signs its own. Nothing else is exempt: a host that merely starts with `localhost`
+ * is somebody's domain. Only UNOLIA_INSECURE drops to plain http.
  */
 class ClientFactory
 {
@@ -79,10 +81,13 @@ class ClientFactory
         return ! self::isLocal($host);
     }
 
+    /** A reserved local name: `localhost`, under `.localhost`, or under `.test`. Exact, never a prefix. */
     public static function isLocal(string $host): bool
     {
-        $bare = (string) preg_replace('/:\d+$/', '', $host);
+        $bare = strtolower((string) preg_replace('/:\d+$/', '', $host));
 
-        return str_ends_with($bare, '.test') || str_starts_with($bare, 'localhost');
+        return $bare === 'localhost'
+            || str_ends_with($bare, '.localhost')
+            || str_ends_with($bare, '.test');
     }
 }
