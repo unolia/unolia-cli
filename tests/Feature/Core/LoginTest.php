@@ -9,7 +9,8 @@ function tokenApi(): FakeApi
 {
     return api()
         ->on('GET', 'v2/current/token', fixture('current-token-user.json'))
-        ->on('GET', 'v2/current/authenticated', fixture('current-authenticated-user.json'));
+        ->on('GET', 'v2/current/authenticated', fixture('current-authenticated-user.json'))
+        ->on('GET', 'v2/teams', fixture('teams.json'))->optional();
 }
 
 /** The whole device flow up to the poll, which each test finishes its own way. */
@@ -17,7 +18,27 @@ function deviceApi(string $code = 'device-code.json'): FakeApi
 {
     return api()
         ->on('GET', 'v2/cli/oauth', fixture('cli-oauth.json'))
-        ->on('POST', 'oauth/device/code', fixture($code));
+        ->on('POST', 'oauth/device/code', fixture($code))
+        ->on('GET', 'v2/teams', fixture('teams.json'))->optional();
+}
+
+/** The PATCH that names the token; the teams listing follows it, so it is no longer the last call. */
+function renameCall(CliTester $cli): array
+{
+    foreach ($cli->api()->calls() as $call) {
+        if ($call['method'] === 'PATCH') {
+            return $call;
+        }
+    }
+
+    return [];
+}
+
+function settingsFile(CliTester $cli): array
+{
+    $path = $cli->home->home.'/.config/unolia/config.json';
+
+    return is_file($path) ? (json_decode((string) file_get_contents($path), true) ?? []) : [];
 }
 
 function hostsFile(CliTester $cli): array
@@ -40,6 +61,55 @@ it('logs in with a token option', function () {
         ->and($hosts['app.unolia.com']['scopes'])->toBe(['*'])
         ->and($hosts['app.unolia.com']['expires_at'])->toBe('2027-09-05T09:00:00Z')
         ->and($hosts['app.unolia.com'])->not->toHaveKey('refresh_token');
+});
+
+it('settles on the only team after logging in', function () {
+    $cli = CliTester::make()->withApi(api()
+        ->on('GET', 'v2/current/token', fixture('current-token-user.json'))
+        ->on('GET', 'v2/current/authenticated', fixture('current-authenticated-user.json'))
+        ->on('GET', 'v2/teams', ['data' => [['id' => 3, 'slug' => 'acme', 'name' => 'Acme']], 'meta' => ['last_page' => 1]]));
+
+    $result = $cli->run('login', '--token', 'utk_test_9f2c1b7a');
+
+    expect($result->exitCode)->toBe(0)
+        ->and($result->stdout)->toContain('Team: Acme')
+        ->and(settingsFile($cli)['default_team'])->toBe('acme');
+});
+
+it('asks which team when there are several and none is set', function () {
+    $cli = CliTester::make()
+        ->withApi(tokenApi())
+        ->answers(['Which team' => 'personal']);
+
+    $result = $cli->run('login', '--token', 'utk_test_9f2c1b7a');
+
+    expect($result->exitCode)->toBe(0)
+        ->and($result->stdout)->toContain('Team: Eser')
+        ->and(settingsFile($cli)['default_team'])->toBe('personal');
+});
+
+it('says how to pick a team in a pipe rather than choosing one', function () {
+    $cli = CliTester::make()->withApi(tokenApi());
+
+    $result = $cli->run('login', '--token', 'utk_test_9f2c1b7a');
+
+    expect($result->exitCode)->toBe(0)
+        ->and($result->stderr)->toContain('unolia team switch <slug>: acme, personal')
+        ->and(settingsFile($cli))->not->toHaveKey('default_team');
+});
+
+it('keeps a team the host knows and warns about one from another host', function () {
+    $kept = cli()->withApi(tokenApi())->run('login');
+
+    expect($kept->exitCode)->toBe(0)
+        ->and($kept->stdout)->toContain('Already logged in as eser');
+
+    $foreign = cli()->withConfig(['team' => 'unolia'])->withApi(tokenApi())->run('login');
+
+    expect($foreign->exitCode)->toBe(0)
+        ->and($foreign->stderr)->toContain('This directory names team unolia, which app.unolia.com does not have')
+        ->and($foreign->stderr)->toContain('unolia team switch <slug> --local')
+        ->and($foreign->stderr)->toContain('acme, personal');
 });
 
 it('writes hosts.json with mode 0600', function () {
@@ -107,7 +177,7 @@ it('signs in through the browser with a one time code', function () {
             ->on('GET', 'v2/current/token', fixture('current-token-device.json'))
             ->on('GET', 'v2/current/authenticated', fixture('current-authenticated-user.json'))
             ->on('PATCH', 'v2/current/token', fixture('token-renamed.json')))
-        ->interactive();
+        ->interactive()->answers(['Which team' => 'acme']);
 
     $result = $cli->run('login');
 
@@ -123,7 +193,7 @@ it('signs in through the browser with a one time code', function () {
     $calls = $cli->api()->calls();
     $authorization = $calls[1];
     $poll = $calls[2];
-    $rename = $calls[array_key_last($calls)];
+    $rename = renameCall($cli);
 
     expect($authorization['body']['client_id'])->toBe('9d2f7c1a-3b4e-4f5a-8c6d-0e1f2a3b4c5d')
         ->and($authorization['body']['scope'])->toBe('provider:read project:read website:read deployment:read domain:read issue:read env:read deploy-script:read')
@@ -153,13 +223,13 @@ it('asks for the scopes given and names the token', function () {
             ->on('GET', 'v2/current/token', fixture('current-token-scoped.json'))
             ->on('GET', 'v2/current/authenticated', fixture('current-authenticated-user.json'))
             ->on('PATCH', 'v2/current/token', fixture('token-renamed.json')))
-        ->interactive();
+        ->interactive()->answers(['Which team' => 'acme']);
 
     $result = $cli->run('login', '--scopes', 'project:read,deployment:write', '--name', 'laptop');
 
     expect($result->exitCode)->toBe(0)
         ->and($cli->api()->calls()[1]['body']['scope'])->toBe('project:read deployment:write')
-        ->and($cli->api()->lastCall()['body'])->toBe(['name' => 'laptop'])
+        ->and(renameCall($cli)['body'])->toBe(['name' => 'laptop'])
         ->and(hostsFile($cli)['app.unolia.com']['token_name'])->toBe('laptop')
         ->and(hostsFile($cli)['app.unolia.com']['scopes'])->toBe(['project:read', 'deployment:read', 'deployment:write']);
 });
@@ -208,7 +278,7 @@ it('prints the URL instead of opening a browser with --no-browser', function () 
             ->on('GET', 'v2/current/token', fixture('current-token-device.json'))
             ->on('GET', 'v2/current/authenticated', fixture('current-authenticated-user.json'))
             ->on('PATCH', 'v2/current/token', fixture('token-renamed.json')))
-        ->interactive();
+        ->interactive()->answers(['Which team' => 'acme']);
 
     $result = $cli->run('login', '--no-browser');
 
@@ -224,7 +294,7 @@ it('keeps going when the token cannot be renamed', function () {
             ->on('GET', 'v2/current/token', fixture('current-token-device.json'))
             ->on('GET', 'v2/current/authenticated', fixture('current-authenticated-user.json'))
             ->on('PATCH', 'v2/current/token', ['message' => 'boom'], 500))
-        ->interactive();
+        ->interactive()->answers(['Which team' => 'acme']);
 
     $result = $cli->run('login');
 
