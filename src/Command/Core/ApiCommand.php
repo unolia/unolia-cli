@@ -36,7 +36,7 @@ final class ApiCommand extends BaseCommand
 
     protected function define(): void
     {
-        $this->addArgument('endpoint', InputArgument::REQUIRED, 'A path such as v1/websites, or a full URL on this host');
+        $this->addArgument('endpoint', InputArgument::REQUIRED, 'A path such as v2/websites, or a full URL on this host');
         $this->addOption('method', 'X', InputOption::VALUE_REQUIRED, 'HTTP method, GET by default');
         $this->addOption('raw-field', 'f', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'A key=value string field');
         $this->addOption('field', 'F', InputOption::VALUE_REQUIRED | InputOption::VALUE_IS_ARRAY, 'A typed key=value field, @file and @- read a file or stdin');
@@ -49,10 +49,10 @@ final class ApiCommand extends BaseCommand
     public function examples(): array
     {
         return [
-            'Read a list' => 'unolia api v1/websites',
-            'Filter the answer' => 'unolia api v1/websites --jq \'.data[].domain\'',
-            'Send a body' => 'unolia api v1/websites/118/deployments -X POST -F dry_run=true',
-            'Send a file' => 'unolia api v1/websites/118/deployments --input=body.json',
+            'Read a list' => 'unolia api v2/websites',
+            'Filter the answer' => 'unolia api v2/websites --jq \'.data[].domain\'',
+            'Send a body' => 'unolia api v2/websites/118/deployments -X POST -F dry_run=true',
+            'Send a file' => 'unolia api v2/websites/118/deployments --input=body.json',
         ];
     }
 
@@ -154,13 +154,13 @@ final class ApiCommand extends BaseCommand
         $endpoint = ltrim($endpoint, '/');
 
         if ($endpoint === '') {
-            throw CliError::usage('the endpoint is empty', 'Try: unolia api v1/teams');
+            throw CliError::usage('the endpoint is empty', 'Try: unolia api v2/teams');
         }
 
         $path = match (true) {
             str_starts_with($endpoint, 'api/') => $endpoint,
-            str_starts_with($endpoint, 'v1/') || $endpoint === 'v1' => 'api/'.$endpoint,
-            default => 'api/v1/'.$endpoint,
+            preg_match('/^v\d+(\/|$)/', $endpoint) === 1 => 'api/'.$endpoint,
+            default => 'api/v2/'.$endpoint,
         };
 
         return [$path, $query];

@@ -9,7 +9,7 @@ use Saloon\Http\Request;
 use Unolia\Cli\Support\Arr;
 
 /**
- * Shared plumbing for every /api/v1 request: filters become query parameters, and a
+ * Shared plumbing for every /api/v2 request: filters become query parameters, and a
  * request that long polls with wait=N is given the matching socket timeout.
  */
 abstract class ApiRequest extends Request

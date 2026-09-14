@@ -50,6 +50,6 @@
     "first": null,
     "last": null,
     "prev": null,
-    "next": "https://app.unolia.com/api/v1/repositories?page=2"
+    "next": "https://app.unolia.com/api/v2/repositories?page=2"
   }
 }

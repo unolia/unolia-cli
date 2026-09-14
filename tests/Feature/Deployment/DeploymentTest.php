@@ -9,7 +9,7 @@ function deployments(): CliTester
 }
 
 it('lists the deployments of the linked website', function () {
-    $cli = deployments()->withApi(api()->on('GET', 'v1/deployments?website=118', fixture('deployments.json')));
+    $cli = deployments()->withApi(api()->on('GET', 'v2/deployments?website=118', fixture('deployments.json')));
 
     $result = $cli->run('deployment', 'list');
 
@@ -21,8 +21,8 @@ it('lists the deployments of the linked website', function () {
 it('scopes to the website the git remote maps to when nothing is linked', function () {
     $cli = cli()->withGitRemote()
         ->withApi(api()
-            ->on('GET', 'v1/resolve', fixture('resolve-exact.json'))
-            ->on('GET', 'v1/deployments?website=118', fixture('deployments.json')));
+            ->on('GET', 'v2/resolve', fixture('resolve-exact.json'))
+            ->on('GET', 'v2/deployments?website=118', fixture('deployments.json')));
 
     $result = $cli->run('deployment', 'list');
 
@@ -31,7 +31,7 @@ it('scopes to the website the git remote maps to when nothing is linked', functi
 });
 
 it('filters by status and branch', function () {
-    $cli = deployments()->withApi(api()->on('GET', 'v1/deployments?status=failed&branch=main', fixture('deployments.json')));
+    $cli = deployments()->withApi(api()->on('GET', 'v2/deployments?status=failed&branch=main', fixture('deployments.json')));
 
     $cli->run('deployment', 'list', '--status', 'failed', '--branch', 'main');
 
@@ -40,7 +40,7 @@ it('filters by status and branch', function () {
 
 it('shows one deployment', function () {
     $result = deployments()
-        ->withApi(api()->on('GET', 'v1/deployments/4812', fixture('deployment-4812-success.json')))
+        ->withApi(api()->on('GET', 'v2/deployments/4812', fixture('deployment-4812-success.json')))
         ->run('deployment', 'view', '4812');
 
     expect($result->exitCode)->toBe(0)
@@ -49,7 +49,7 @@ it('shows one deployment', function () {
 
 it('prints the log of a deployment', function () {
     $result = deployments()
-        ->withApi(api()->on('GET', 'v1/deployments/4812/output?after=0', fixture('deployment-4812-output-1024.json')))
+        ->withApi(api()->on('GET', 'v2/deployments/4812/output?after=0', fixture('deployment-4812-output-1024.json')))
         ->run('deployment', 'logs', '4812');
 
     expect($result->exitCode)->toBe(0)
@@ -64,10 +64,10 @@ it('refuses a deployment id that is not a number', function () {
 
 it('watches a deployment to the end', function () {
     $cli = deployments()->withApi(api()
-        ->on('GET', 'v1/deployments/4812?wait=0', fixture('deployment-4812-running.json'))
-        ->on('GET', 'v1/deployments/4812/output?after=0', fixture('deployment-4812-output-0.json'))
-        ->on('GET', 'v1/deployments/4812?wait=20', fixture('deployment-4812-success.json'))
-        ->on('GET', 'v1/deployments/4812/output?after=1024', fixture('deployment-4812-output-1024.json')));
+        ->on('GET', 'v2/deployments/4812?wait=0', fixture('deployment-4812-running.json'))
+        ->on('GET', 'v2/deployments/4812/output?after=0', fixture('deployment-4812-output-0.json'))
+        ->on('GET', 'v2/deployments/4812?wait=20', fixture('deployment-4812-success.json'))
+        ->on('GET', 'v2/deployments/4812/output?after=1024', fixture('deployment-4812-output-1024.json')));
 
     $result = $cli->run('deployment', 'watch', '4812');
 
@@ -78,8 +78,8 @@ it('watches a deployment to the end', function () {
 it('answers with the final deployment in the JSON face', function () {
     $result = deployments()
         ->withApi(api()
-            ->on('GET', 'v1/deployments/4812?wait=0', fixture('deployment-4812-success.json'))
-            ->on('GET', 'v1/deployments/4812/output?after=0', fixture('deployment-4812-output-1024.json')))
+            ->on('GET', 'v2/deployments/4812?wait=0', fixture('deployment-4812-success.json'))
+            ->on('GET', 'v2/deployments/4812/output?after=0', fixture('deployment-4812-output-1024.json')))
         ->run('deployment', 'watch', '4812', '--json');
 
     expect($result->json()['status'])->toBe('success');
@@ -90,7 +90,7 @@ it('says the output is still being fetched instead of printing nothing', functio
     $syncing['data'] = ['deployment_id' => 4812, 'status' => 'success', 'offset' => 0, 'next_offset' => 0, 'chunk' => '', 'complete' => false, 'syncing' => true];
 
     $result = deployments()
-        ->withApi(api()->on('GET', 'v1/deployments/4812/output?after=0', $syncing))
+        ->withApi(api()->on('GET', 'v2/deployments/4812/output?after=0', $syncing))
         ->run('deployment', 'logs', '4812');
 
     expect($result->exitCode)->toBe(0)

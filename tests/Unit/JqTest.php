@@ -33,7 +33,7 @@ it('filters the JSON a command printed', function () {
     }
 
     $result = cli()
-        ->withApi(api()->on('GET', 'v1/domains', fixture('domains.json')))
+        ->withApi(api()->on('GET', 'v2/domains', fixture('domains.json')))
         ->run('domain', 'list', '--json', '--jq', '.[0].domain');
 
     expect($result->exitCode)->toBe(0)

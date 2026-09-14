@@ -13,12 +13,12 @@ function repo(): CliTester
 
 function withRepository(FakeApi $api): FakeApi
 {
-    return $api->on('GET', 'v1/websites/118', fixture('website-118.json'));
+    return $api->on('GET', 'v2/websites/118', fixture('website-118.json'));
 }
 
 it('lists the runs of the current branch', function () {
     $cli = repo()->withApi(withRepository(api())
-        ->on('GET', 'v1/repositories/57/actions?branch=main', fixture('actions-branch-main.json')));
+        ->on('GET', 'v2/repositories/57/actions?branch=main', fixture('actions-branch-main.json')));
 
     $result = $cli->run('ci', 'list');
 
@@ -30,7 +30,7 @@ it('lists the runs of the current branch', function () {
 it('is reachable as bare ci', function () {
     $result = repo()
         ->withApi(withRepository(api())
-            ->on('GET', 'v1/repositories/57/actions?branch=main', fixture('actions-branch-main.json')))
+            ->on('GET', 'v2/repositories/57/actions?branch=main', fixture('actions-branch-main.json')))
         ->run('ci');
 
     expect($result->exitCode)->toBe(0);
@@ -38,7 +38,7 @@ it('is reachable as bare ci', function () {
 
 it('drops the branch filter with --all-branches', function () {
     $cli = repo()->withApi(withRepository(api())
-        ->on('GET', 'v1/repositories/57/actions', fixture('actions-branch-main.json')));
+        ->on('GET', 'v2/repositories/57/actions', fixture('actions-branch-main.json')));
 
     $cli->run('ci', 'list', '--all-branches');
 
@@ -47,8 +47,8 @@ it('drops the branch filter with --all-branches', function () {
 
 it('takes a repository by full name', function () {
     $cli = repo()->withApi(api()
-        ->on('GET', 'v1/repositories?q=acme/marketing', fixture('repositories.json'))
-        ->on('GET', 'v1/repositories/57/actions?branch=main', fixture('actions-branch-main.json')));
+        ->on('GET', 'v2/repositories?q=acme/marketing', fixture('repositories.json'))
+        ->on('GET', 'v2/repositories/57/actions?branch=main', fixture('actions-branch-main.json')));
 
     $result = $cli->run('ci', 'list', '--repo', 'acme/marketing');
 
@@ -57,7 +57,7 @@ it('takes a repository by full name', function () {
 
 it('shows one run and its jobs', function () {
     $result = repo()
-        ->withApi(api()->on('GET', 'v1/actions/9021', fixture('action-1187-completed.json')))
+        ->withApi(api()->on('GET', 'v2/actions/9021', fixture('action-1187-completed.json')))
         ->run('ci', 'view', '9021');
 
     expect($result->exitCode)->toBe(0)
@@ -68,8 +68,8 @@ it('shows one run and its jobs', function () {
 it('accepts a run number', function () {
     $result = repo()
         ->withApi(withRepository(api())
-            ->on('GET', 'v1/repositories/57/actions?run_number=1187', fixture('actions-branch-main.json'))
-            ->on('GET', 'v1/actions/9021', fixture('action-1187-completed.json')))
+            ->on('GET', 'v2/repositories/57/actions?run_number=1187', fixture('actions-branch-main.json'))
+            ->on('GET', 'v2/actions/9021', fixture('action-1187-completed.json')))
         ->run('ci', 'view', '#1187');
 
     expect($result->exitCode)->toBe(0);
@@ -77,8 +77,8 @@ it('accepts a run number', function () {
 
 it('watches a run to the end', function () {
     $cli = repo()->withApi(api()
-        ->on('GET', 'v1/actions/9021?wait=0', fixture('action-1187-in-progress.json'))
-        ->on('GET', 'v1/actions/9021?wait=20', fixture('action-1187-completed.json')));
+        ->on('GET', 'v2/actions/9021?wait=0', fixture('action-1187-in-progress.json'))
+        ->on('GET', 'v2/actions/9021?wait=20', fixture('action-1187-completed.json')));
 
     $result = $cli->run('ci', 'watch', '9021');
 
@@ -89,7 +89,7 @@ it('watches a run to the end', function () {
 
 it('exits 1 when the run failed', function () {
     $result = repo()
-        ->withApi(api()->on('GET', 'v1/actions/9021?wait=0', fixture('action-1187-failed.json')))
+        ->withApi(api()->on('GET', 'v2/actions/9021?wait=0', fixture('action-1187-failed.json')))
         ->run('ci', 'watch', '9021');
 
     expect($result->exitCode)->toBe(1);
@@ -98,8 +98,8 @@ it('exits 1 when the run failed', function () {
 it('streams jobs as events', function () {
     $result = repo()
         ->withApi(api()
-            ->on('GET', 'v1/actions/9021?wait=0', fixture('action-1187-in-progress.json'))
-            ->on('GET', 'v1/actions/9021?wait=20', fixture('action-1187-completed.json')))
+            ->on('GET', 'v2/actions/9021?wait=0', fixture('action-1187-in-progress.json'))
+            ->on('GET', 'v2/actions/9021?wait=20', fixture('action-1187-completed.json')))
         ->run('ci', 'watch', '9021', '--format', 'ndjson');
 
     $events = array_column($result->ndjson(), 'event');
@@ -112,8 +112,8 @@ it('streams jobs as events', function () {
 it('prints the log of a job', function () {
     $result = repo()
         ->withApi(api()
-            ->on('GET', 'v1/actions/9021', fixture('action-1187-completed.json'))
-            ->on('GET', 'v1/actions/9021/jobs/3311/log?after=0', fixture('action-1187-job-3311-log.json')))
+            ->on('GET', 'v2/actions/9021', fixture('action-1187-completed.json'))
+            ->on('GET', 'v2/actions/9021/jobs/3311/log?after=0', fixture('action-1187-job-3311-log.json')))
         ->run('ci', 'logs', '9021', '--job', 'lint');
 
     expect($result->exitCode)->toBe(0)
@@ -123,7 +123,7 @@ it('prints the log of a job', function () {
 it('re-runs the failed jobs after asking', function () {
     $cli = repo()
         ->answers(['Re-run the failed jobs' => true])
-        ->withApi(api()->on('POST', 'v1/actions/9021/rerun', fixture('action-rerun-202.json'), 202));
+        ->withApi(api()->on('POST', 'v2/actions/9021/rerun', fixture('action-rerun-202.json'), 202));
 
     $result = $cli->run('ci', 'rerun', '9021', '--failed', '--no-progress');
 
@@ -136,9 +136,9 @@ it('follows the new attempt in a task on a terminal', function () {
     $cli = repo()
         ->answers(['Re-run every job' => true])
         ->withApi(api()
-            ->on('POST', 'v1/actions/9021/rerun', fixture('action-rerun-202.json'), 202)
-            ->on('GET', 'v1/actions/9022?wait=0', fixture('action-1187-in-progress.json'))
-            ->on('GET', 'v1/actions/9022?wait=20', fixture('action-1187-completed.json')));
+            ->on('POST', 'v2/actions/9021/rerun', fixture('action-rerun-202.json'), 202)
+            ->on('GET', 'v2/actions/9022?wait=0', fixture('action-1187-in-progress.json'))
+            ->on('GET', 'v2/actions/9022?wait=20', fixture('action-1187-completed.json')));
 
     $result = $cli->run('ci', 'rerun', '9021');
 
@@ -149,7 +149,7 @@ it('follows the new attempt in a task on a terminal', function () {
 
 it('previews a rerun', function () {
     $result = repo()
-        ->withApi(api()->on('POST', 'v1/actions/9021/rerun', fixture('action-rerun-dry-run.json')))
+        ->withApi(api()->on('POST', 'v2/actions/9021/rerun', fixture('action-rerun-dry-run.json')))
         ->run('ci', 'rerun', '9021', '--dry-run', '--json');
 
     expect($result->json()['would_send'])->toBe('WorkflowRunRerunFailedJobs');
@@ -157,7 +157,7 @@ it('previews a rerun', function () {
 
 it('cancels a run with --yes', function () {
     $result = repo()
-        ->withApi(api()->on('POST', 'v1/actions/9021/cancel', fixture('action-rerun-202.json')))
+        ->withApi(api()->on('POST', 'v2/actions/9021/cancel', fixture('action-rerun-202.json')))
         ->run('ci', 'cancel', '9021', '--yes');
 
     expect($result->exitCode)->toBe(0)
@@ -167,7 +167,7 @@ it('cancels a run with --yes', function () {
 it('lists repositories', function () {
     $result = cli()
         ->withConfig(['team' => 'acme', 'project' => 12])
-        ->withApi(api()->on('GET', 'v1/repositories?project=12', fixture('repositories.json')))
+        ->withApi(api()->on('GET', 'v2/repositories?project=12', fixture('repositories.json')))
         ->run('repo', 'list');
 
     expect($result->exitCode)->toBe(0)
@@ -177,7 +177,7 @@ it('lists repositories', function () {
 it('puts linked repositories first and says when there is more', function () {
     $cli = cli()
         ->withConfig(['team' => 'acme', 'project' => 12])
-        ->withApi(api()->on('GET', 'v1/repositories?per_page=2', fixture('repositories-page.json')));
+        ->withApi(api()->on('GET', 'v2/repositories?per_page=2', fixture('repositories-page.json')));
 
     $result = $cli->run('repo', 'list', '--all-projects', '--limit', '2');
 
@@ -190,7 +190,7 @@ it('puts linked repositories first and says when there is more', function () {
 it('asks for a page', function () {
     $cli = cli()
         ->withConfig(['team' => 'acme', 'project' => 12])
-        ->withApi(api()->on('GET', 'v1/repositories?page=2', fixture('repositories.json')));
+        ->withApi(api()->on('GET', 'v2/repositories?page=2', fixture('repositories.json')));
 
     $cli->run('repo', 'list', '--all-projects', '--page', '2');
 
@@ -199,7 +199,7 @@ it('asks for a page', function () {
 
 it('shows the repository of this directory', function () {
     $result = repo()
-        ->withApi(withRepository(api())->on('GET', 'v1/repositories/57', fixture('repository-57.json')))
+        ->withApi(withRepository(api())->on('GET', 'v2/repositories/57', fixture('repository-57.json')))
         ->run('repo', 'view');
 
     expect($result->exitCode)->toBe(0)
@@ -214,7 +214,7 @@ it('refuses to re-run in a pipe without --yes', function () {
 });
 
 it('re-runs with --yes in a pipe', function () {
-    $cli = repo()->withApi(api()->on('POST', 'v1/actions/9021/rerun', fixture('action-rerun-202.json'), 202));
+    $cli = repo()->withApi(api()->on('POST', 'v2/actions/9021/rerun', fixture('action-rerun-202.json'), 202));
 
     $result = $cli->run('ci', 'rerun', '9021', '--yes');
 
@@ -228,8 +228,8 @@ it('says a job log is still being fetched instead of printing nothing', function
 
     $result = repo()
         ->withApi(api()
-            ->on('GET', 'v1/actions/9021', fixture('action-1187-completed.json'))
-            ->on('GET', 'v1/actions/9021/jobs/3311/log?after=0', $syncing))
+            ->on('GET', 'v2/actions/9021', fixture('action-1187-completed.json'))
+            ->on('GET', 'v2/actions/9021/jobs/3311/log?after=0', $syncing))
         ->run('ci', 'logs', '9021', '--job', 'lint');
 
     expect($result->exitCode)->toBe(0)

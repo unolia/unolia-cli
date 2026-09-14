@@ -18,7 +18,7 @@ class ClientFactory
 {
     public function __construct(protected readonly Runtime $runtime) {}
 
-    public function make(string $host, ?string $token, string $kind = 'unknown', string $basePath = 'api/v1/'): Client
+    public function make(string $host, ?string $token, string $kind = 'unknown', string $basePath = 'api/v2/'): Client
     {
         $client = new Client(
             host: $host,

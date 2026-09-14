@@ -7,9 +7,9 @@ use Tests\Support\FakeApi;
 function compareApi(): FakeApi
 {
     return api()
-        ->on('GET', 'v1/websites/118', fixture('website-118.json'))
-        ->on('GET', 'v1/servers/61', fixture('server-61.json'))
-        ->on('GET', 'v1/projects/12/versions', fixture('project-12-versions.json'));
+        ->on('GET', 'v2/websites/118', fixture('website-118.json'))
+        ->on('GET', 'v2/servers/61', fixture('server-61.json'))
+        ->on('GET', 'v2/projects/12/versions', fixture('project-12-versions.json'));
 }
 
 function compareCli(): CliTester
@@ -101,7 +101,7 @@ it('refuses a component it does not know', function () {
 it('compares the versions of a project side by side', function () {
     $result = cli()
         ->withConfig(['team' => 'acme', 'project' => 12])
-        ->withApi(api()->on('GET', 'v1/projects/12/versions', fixture('project-12-versions.json')))
+        ->withApi(api()->on('GET', 'v2/projects/12/versions', fixture('project-12-versions.json')))
         ->run('compare', 'versions');
 
     expect($result->exitCode)->toBe(0)
@@ -113,7 +113,7 @@ it('compares the versions of a project side by side', function () {
 it('reads the framework version from the website\'s own repository', function () {
     $result = compareCli()
         ->withComposer(['laravel/framework' => '12.28.1'])
-        ->withApi(compareApi()->on('GET', 'v1/projects/12/versions', fixture('project-12-versions-two-repos.json')))
+        ->withApi(compareApi()->on('GET', 'v2/projects/12/versions', fixture('project-12-versions-two-repos.json')))
         ->run('compare', 'local', '--json');
 
     $laravel = array_values(array_filter($result->json()['components'], fn (array $row): bool => $row['name'] === 'laravel'))[0];

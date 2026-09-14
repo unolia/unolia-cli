@@ -8,7 +8,7 @@ use Unolia\Cli\Console\ExitCode;
 
 function mapped(int $status, array $body = [], array $headers = []): CliError
 {
-    return (new ApiException($status, $body, 'GET', 'v1/websites', $headers))->toCliError();
+    return (new ApiException($status, $body, 'GET', 'v2/websites', $headers))->toCliError();
 }
 
 it('maps every documented status to its exit code', function () {
@@ -113,7 +113,7 @@ it('points at auth refresh when the token lacks a scope', function () {
         ->and($error->hint)->toBe('Run unolia auth refresh --scopes deployment:write')
         ->and($error->details['details']['required_scope'])->toBe('deployment:write');
 
-    $elsewhere = (new ApiException(403, $body, 'GET', 'v1/websites', [], '', 'unolia.test'))->toCliError();
+    $elsewhere = (new ApiException(403, $body, 'GET', 'v2/websites', [], '', 'unolia.test'))->toCliError();
 
     expect($elsewhere->hint)->toBe('Run unolia auth refresh --scopes deployment:write --host unolia.test');
 

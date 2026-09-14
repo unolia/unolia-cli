@@ -129,8 +129,8 @@ terminal. `unolia status` prints which source answered.
 `unolia help agents` prints the same block. `unolia api` reaches any endpoint the way `gh api` does:
 
 ```bash
-unolia api v1/websites --jq '.data[].domain'
-unolia api v1/websites/118/deployments -X POST -F dry_run=true
+unolia api v2/websites --jq '.data[].domain'
+unolia api v2/websites/118/deployments -X POST -F dry_run=true
 ```
 
 ## Connect your AI agents

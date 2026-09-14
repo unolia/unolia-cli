@@ -9,7 +9,7 @@ function site(): CliTester
 }
 
 it('lists the websites of the linked project', function () {
-    $cli = site()->withApi(api()->on('GET', 'v1/websites?project=12', fixture('websites.json')));
+    $cli = site()->withApi(api()->on('GET', 'v2/websites?project=12', fixture('websites.json')));
 
     $result = $cli->run('website', 'list');
 
@@ -19,7 +19,7 @@ it('lists the websites of the linked project', function () {
 });
 
 it('widens to every project with --all-projects', function () {
-    $cli = site()->withApi(api()->on('GET', 'v1/websites', fixture('websites.json')));
+    $cli = site()->withApi(api()->on('GET', 'v2/websites', fixture('websites.json')));
 
     $cli->run('website', 'list', '--all-projects');
 
@@ -28,7 +28,7 @@ it('widens to every project with --all-projects', function () {
 
 it('shows one website', function () {
     $result = site()
-        ->withApi(api()->on('GET', 'v1/websites/118', fixture('website-118.json')))
+        ->withApi(api()->on('GET', 'v2/websites/118', fixture('website-118.json')))
         ->run('website', 'view');
 
     expect($result->exitCode)->toBe(0)
@@ -38,8 +38,8 @@ it('shows one website', function () {
 
 it('resolves a website by domain', function () {
     $cli = site()->withApi(api()
-        ->on('GET', 'v1/websites?q=staging.acme.dev', fixture('websites.json'))
-        ->on('GET', 'v1/websites/121', fixture('website-118.json')));
+        ->on('GET', 'v2/websites?q=staging.acme.dev', fixture('websites.json'))
+        ->on('GET', 'v2/websites/121', fixture('website-118.json')));
 
     $result = $cli->run('website', 'view', 'staging.acme.dev', '--json');
 
@@ -48,7 +48,7 @@ it('resolves a website by domain', function () {
 
 it('lists the deployments of a website', function () {
     $result = site()
-        ->withApi(api()->on('GET', 'v1/websites/118/deployments', fixture('deployments.json')))
+        ->withApi(api()->on('GET', 'v2/websites/118/deployments', fixture('deployments.json')))
         ->run('website', 'deployments');
 
     expect($result->exitCode)->toBe(0)
@@ -59,8 +59,8 @@ it('lists the deployments of a website', function () {
 it('prints the log of the latest deployment', function () {
     $result = site()
         ->withApi(api()
-            ->on('GET', 'v1/websites/118/deployments?per_page=1', fixture('deployments.json'))
-            ->on('GET', 'v1/deployments/4812/output?after=0', fixture('deployment-4812-output-1024.json')))
+            ->on('GET', 'v2/websites/118/deployments?per_page=1', fixture('deployments.json'))
+            ->on('GET', 'v2/deployments/4812/output?after=0', fixture('deployment-4812-output-1024.json')))
         ->run('website', 'logs');
 
     expect($result->exitCode)->toBe(0)
@@ -69,7 +69,7 @@ it('prints the log of the latest deployment', function () {
 
 it('lists the domains of a website', function () {
     $result = site()
-        ->withApi(api()->on('GET', 'v1/websites/118/domains', fixture('website-118-domains.json')))
+        ->withApi(api()->on('GET', 'v2/websites/118/domains', fixture('website-118-domains.json')))
         ->run('website', 'domains', '--json');
 
     expect($result->json())->toHaveCount(2)
@@ -77,7 +77,7 @@ it('lists the domains of a website', function () {
 });
 
 it('shows the environment keys and not the values', function () {
-    $cli = site()->withApi(api()->on('GET', 'v1/websites/118/env?keys_only=1', fixture('website-118-env-keys.json')));
+    $cli = site()->withApi(api()->on('GET', 'v2/websites/118/env?keys_only=1', fixture('website-118-env-keys.json')));
 
     $result = $cli->run('website', 'env');
 
@@ -95,7 +95,7 @@ it('refuses to print live credentials into a pipe without --yes', function () {
 
 it('prints the values when asked out loud', function () {
     $result = site()
-        ->withApi(api()->on('GET', 'v1/websites/118/env', fixture('website-118-env.json')))
+        ->withApi(api()->on('GET', 'v2/websites/118/env', fixture('website-118-env.json')))
         ->run('website', 'env', '--values', '--yes');
 
     expect($result->exitCode)->toBe(0)

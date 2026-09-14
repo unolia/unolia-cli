@@ -32,12 +32,12 @@ function deviceCli(array $scopes = ['project:read', 'deployment:read'], string $
 function refreshApi(string $tokenFixture = 'current-token-scoped.json'): FakeApi
 {
     return api()
-        ->on('GET', 'v1/cli/oauth', fixture('cli-oauth.json'))
+        ->on('GET', 'v2/cli/oauth', fixture('cli-oauth.json'))
         ->on('POST', 'oauth/device/code', fixture('device-code.json'))
         ->on('POST', 'oauth/token', fixture('oauth-token-second.json'))
-        ->on('GET', 'v1/current/token', fixture($tokenFixture))
-        ->on('GET', 'v1/current/authenticated', fixture('current-authenticated-user.json'))
-        ->on('PATCH', 'v1/current/token', fixture('token-renamed.json'));
+        ->on('GET', 'v2/current/token', fixture($tokenFixture))
+        ->on('GET', 'v2/current/authenticated', fixture('current-authenticated-user.json'))
+        ->on('PATCH', 'v2/current/token', fixture('token-renamed.json'));
 }
 
 function storedEntry(CliTester $cli, string $host = 'app.unolia.com'): array
@@ -112,7 +112,7 @@ describe('auth refresh', function () {
             ->and($result->stderr)->toContain('env:read was not among the token scopes');
 
         $result = deviceCli(['project:read'])
-            ->withApi(api()->on('GET', 'v1/cli/oauth', fixture('cli-oauth.json')))
+            ->withApi(api()->on('GET', 'v2/cli/oauth', fixture('cli-oauth.json')))
             ->interactive()
             ->run('auth', 'refresh', '--remove-scopes', 'project:read');
 
@@ -121,7 +121,7 @@ describe('auth refresh', function () {
     });
 
     it('starts from the default scopes when the stored token is a pasted *, and refuses to remove from it', function () {
-        $cli = deviceCli(['*'])->withApi(api()->on('GET', 'v1/cli/oauth', fixture('cli-oauth.json')))->interactive();
+        $cli = deviceCli(['*'])->withApi(api()->on('GET', 'v2/cli/oauth', fixture('cli-oauth.json')))->interactive();
 
         $result = $cli->run('auth', 'refresh', '--remove-scopes', 'env:read');
 
@@ -182,13 +182,13 @@ describe('auth refresh', function () {
     it('asks the API for the scopes of a token stored without them', function () {
         $cli = cli()
             ->withApi(api()
-                ->on('GET', 'v1/current/token', fixture('current-token-team.json'))
-                ->on('GET', 'v1/cli/oauth', fixture('cli-oauth.json'))
+                ->on('GET', 'v2/current/token', fixture('current-token-team.json'))
+                ->on('GET', 'v2/cli/oauth', fixture('cli-oauth.json'))
                 ->on('POST', 'oauth/device/code', fixture('device-code.json'))
                 ->on('POST', 'oauth/token', fixture('oauth-token-second.json'))
-                ->on('GET', 'v1/current/token', fixture('current-token-scoped.json'))
-                ->on('GET', 'v1/current/authenticated', fixture('current-authenticated-user.json'))
-                ->on('PATCH', 'v1/current/token', fixture('token-renamed.json'))
+                ->on('GET', 'v2/current/token', fixture('current-token-scoped.json'))
+                ->on('GET', 'v2/current/authenticated', fixture('current-authenticated-user.json'))
+                ->on('PATCH', 'v2/current/token', fixture('token-renamed.json'))
                 ->on('DELETE', 'logout', []))
             ->interactive();
 
@@ -212,7 +212,7 @@ describe('auth refresh', function () {
             ->and($result->stderr)->toContain('needs a terminal');
 
         $result = deviceCli()
-            ->withApi(api()->on('GET', 'v1/cli/oauth', fixture('cli-oauth.json')))
+            ->withApi(api()->on('GET', 'v2/cli/oauth', fixture('cli-oauth.json')))
             ->run('auth', 'refresh', '--scopes', 'deployment:write', '--dry-run', '--json');
 
         expect($result->exitCode)->toBe(0)
@@ -223,7 +223,7 @@ describe('auth refresh', function () {
     it('passes the refusal and the expiry through with their exit codes', function () {
         $refused = deviceCli()
             ->withApi(api()
-                ->on('GET', 'v1/cli/oauth', fixture('cli-oauth.json'))
+                ->on('GET', 'v2/cli/oauth', fixture('cli-oauth.json'))
                 ->on('POST', 'oauth/device/code', fixture('device-code.json'))
                 ->on('POST', 'oauth/token', fixture('oauth-access-denied.json'), 400))
             ->interactive()
@@ -233,7 +233,7 @@ describe('auth refresh', function () {
 
         $expired = deviceCli()
             ->withApi(api()
-                ->on('GET', 'v1/cli/oauth', fixture('cli-oauth.json'))
+                ->on('GET', 'v2/cli/oauth', fixture('cli-oauth.json'))
                 ->on('POST', 'oauth/device/code', fixture('device-code.json'))
                 ->on('POST', 'oauth/token', fixture('oauth-expired.json'), 400))
             ->interactive()
@@ -305,7 +305,7 @@ describe('auth aliases', function () {
 
 describe('a rejected token', function () {
     it('is the plain unauthenticated error, with no refresh attempted', function () {
-        $cli = deviceCli()->withApi(api()->on('GET', 'v1/teams', fixture('error-401.json'), 401));
+        $cli = deviceCli()->withApi(api()->on('GET', 'v2/teams', fixture('error-401.json'), 401));
 
         $result = $cli->run('team', 'list');
 
@@ -319,7 +319,7 @@ describe('a rejected token', function () {
 describe('insufficient scope', function () {
     it('names the command that adds the missing scope', function () {
         $result = cli()
-            ->withApi(api()->on('POST', 'v1/websites/118/deployments', fixture('error-403-insufficient-scope.json'), 403))
+            ->withApi(api()->on('POST', 'v2/websites/118/deployments', fixture('error-403-insufficient-scope.json'), 403))
             ->withConfig(['team' => 'acme', 'project' => 12, 'website' => 118])
             ->run('deploy', '--yes');
 
@@ -333,7 +333,7 @@ describe('insufficient scope', function () {
         $result = CliTester::make()
             ->withToken(host: 'unolia.test')
             ->env(['UNOLIA_HOST' => 'unolia.test'])
-            ->withApi(api()->on('GET', 'v1/teams', fixture('error-403-insufficient-scope.json'), 403))
+            ->withApi(api()->on('GET', 'v2/teams', fixture('error-403-insufficient-scope.json'), 403))
             ->run('team', 'list', '--json');
 
         expect($result->exitCode)->toBe(5)

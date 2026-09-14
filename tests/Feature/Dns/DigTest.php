@@ -44,7 +44,7 @@ it('completes a relative name from the project zone', function () {
     $dns = new FakeDns(digAnswers());
 
     cli()->withConfig(['team' => 'acme', 'project' => 12])
-        ->withApi(api()->on('GET', 'v1/domains?project=12', fixture('domains-one.json')))
+        ->withApi(api()->on('GET', 'v2/domains?project=12', fixture('domains-one.json')))
         ->withService(Dns::class, $dns)
         ->run('dns', 'dig', 'www');
 
@@ -92,7 +92,7 @@ it('checks the records of a zone against a resolver', function () {
     $dns = new FakeDns([['name' => 'acme.com', 'type' => 'A', 'ttl' => 300, 'value' => '203.0.113.10']]);
 
     $result = cli()
-        ->withApi(api()->on('GET', 'v1/domains/acme.com/records', fixture('records.json')))
+        ->withApi(api()->on('GET', 'v2/domains/acme.com/records', fixture('records.json')))
         ->withService(Dns::class, $dns)
         ->run('dns', 'check', 'acme.com');
 
@@ -103,7 +103,7 @@ it('checks the records of a zone against a resolver', function () {
         ->and(count($dns->queries))->toBe(3);
 
     $json = cli()
-        ->withApi(api()->on('GET', 'v1/domains/acme.com/records', fixture('records.json')))
+        ->withApi(api()->on('GET', 'v2/domains/acme.com/records', fixture('records.json')))
         ->withService(Dns::class, new FakeDns([['name' => 'acme.com', 'type' => 'A', 'ttl' => 300, 'value' => '203.0.113.10']]))
         ->run('dns', 'check', 'acme.com', '--type', 'A', '--json');
 
@@ -126,7 +126,7 @@ it('compares SPF as TXT, does not double the priority, skips proxied values and 
     ];
 
     $result = cli()
-        ->withApi(api()->on('GET', 'v1/domains/acme.com/records', $records))
+        ->withApi(api()->on('GET', 'v2/domains/acme.com/records', $records))
         ->withService(Dns::class, new FakeDns($answers, byType: true))
         ->run('dns', 'check', 'acme.com', '--type', 'A,MX,TXT,SPF', '--json');
 
@@ -144,7 +144,7 @@ it('compares SPF as TXT, does not double the priority, skips proxied values and 
         ->and($byKey)->not->toHaveKey('acme.com SPF');
 
     $table = cli()
-        ->withApi(api()->on('GET', 'v1/domains/acme.com/records', $records))
+        ->withApi(api()->on('GET', 'v2/domains/acme.com/records', $records))
         ->withService(Dns::class, new FakeDns($answers, byType: true))
         ->run('dns', 'check', 'acme.com', '--type', 'TXT');
 

@@ -8,9 +8,9 @@ use Tests\Support\FakeHerd;
 function herdApi(): FakeApi
 {
     return api()
-        ->on('GET', 'v1/websites/118', fixture('website-118.json'))
-        ->on('GET', 'v1/servers/61', fixture('server-61.json'))
-        ->on('GET', 'v1/websites/118/domains', fixture('website-118-domains.json'));
+        ->on('GET', 'v2/websites/118', fixture('website-118.json'))
+        ->on('GET', 'v2/servers/61', fixture('server-61.json'))
+        ->on('GET', 'v2/websites/118/domains', fixture('website-118-domains.json'));
 }
 
 it('writes herd.yml from production and runs herd init', function () {
