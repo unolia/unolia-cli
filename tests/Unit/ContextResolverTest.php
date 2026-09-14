@@ -9,9 +9,9 @@ it('prefers the flag over the environment, the config and the settings', functio
         ->withConfig(['team' => 'from-config', 'website' => 118])
         ->env(['UNOLIA_TEAM' => 'from-env'])
         ->withApi(api()
-            ->on('GET', 'v1/current/token', fixture('current-token-user.json'))
-            ->on('GET', 'v1/current/authenticated', fixture('current-authenticated-user.json'))
-            ->on('GET', 'v1/websites/118', fixture('website-118.json')));
+            ->on('GET', 'v2/current/token', fixture('current-token-user.json'))
+            ->on('GET', 'v2/current/authenticated', fixture('current-authenticated-user.json'))
+            ->on('GET', 'v2/websites/118', fixture('website-118.json')));
 
     $result = $cli->run('status', '--team', 'from-flag', '--json');
 
@@ -24,8 +24,8 @@ it('falls back to the environment, then the config file', function () {
         ->withConfig(['team' => 'from-config'])
         ->env(['UNOLIA_TEAM' => 'from-env'])
         ->withApi(api()
-            ->on('GET', 'v1/current/token', fixture('current-token-user.json'))
-            ->on('GET', 'v1/current/authenticated', fixture('current-authenticated-user.json')))
+            ->on('GET', 'v2/current/token', fixture('current-token-user.json'))
+            ->on('GET', 'v2/current/authenticated', fixture('current-authenticated-user.json')))
         ->run('status', '--json');
 
     expect($withEnv->json()['team'])->toBe('from-env')
@@ -34,8 +34,8 @@ it('falls back to the environment, then the config file', function () {
     $withConfig = cli()
         ->withConfig(['team' => 'from-config'])
         ->withApi(api()
-            ->on('GET', 'v1/current/token', fixture('current-token-user.json'))
-            ->on('GET', 'v1/current/authenticated', fixture('current-authenticated-user.json')))
+            ->on('GET', 'v2/current/token', fixture('current-token-user.json'))
+            ->on('GET', 'v2/current/authenticated', fixture('current-authenticated-user.json')))
         ->run('status', '--json');
 
     expect($withConfig->json()['team'])->toBe('from-config')
@@ -46,8 +46,8 @@ it('resolves a website from the git remote when nothing is linked', function () 
     $result = cli()
         ->withGitRemote()
         ->withApi(api()
-            ->on('GET', 'v1/resolve', fixture('resolve-exact.json'))
-            ->on('GET', 'v1/websites/118', fixture('website-118.json')))
+            ->on('GET', 'v2/resolve', fixture('resolve-exact.json'))
+            ->on('GET', 'v2/websites/118', fixture('website-118.json')))
         ->run('website', 'view', '--json');
 
     expect($result->exitCode)->toBe(0)
@@ -56,8 +56,8 @@ it('resolves a website from the git remote when nothing is linked', function () 
 
 it('turns a domain into a website id', function () {
     $cli = cli()->withApi(api()
-        ->on('GET', 'v1/websites?q=staging.acme.dev', fixture('websites.json'))
-        ->on('GET', 'v1/websites/121', fixture('website-118.json')));
+        ->on('GET', 'v2/websites?q=staging.acme.dev', fixture('websites.json'))
+        ->on('GET', 'v2/websites/121', fixture('website-118.json')));
 
     $result = $cli->run('website', 'view', '--website', 'staging.acme.dev', '--json');
 
@@ -66,7 +66,7 @@ it('turns a domain into a website id', function () {
 
 it('exits 4 for a domain nothing matches', function () {
     $result = cli()
-        ->withApi(api()->on('GET', 'v1/websites?q=nope.example', ['data' => [], 'meta' => ['last_page' => 1]]))
+        ->withApi(api()->on('GET', 'v2/websites?q=nope.example', ['data' => [], 'meta' => ['last_page' => 1]]))
         ->run('website', 'view', '--website', 'nope.example');
 
     expect($result->exitCode)->toBe(4)
@@ -84,7 +84,7 @@ it('says this directory is not linked when there is nothing to go on', function 
 it('survives an API that has no resolve endpoint yet', function () {
     $result = cli()
         ->withGitRemote()
-        ->withApi(api()->on('GET', 'v1/resolve', fixture('error-404.json'), 404))
+        ->withApi(api()->on('GET', 'v2/resolve', fixture('error-404.json'), 404))
         ->run('website', 'view');
 
     expect($result->exitCode)->toBe(2)

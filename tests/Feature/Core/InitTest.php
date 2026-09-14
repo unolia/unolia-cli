@@ -6,8 +6,8 @@ it('links this directory from the git remote', function () {
     $cli = cli()
         ->withGitRemote()
         ->withApi(api()
-            ->on('GET', 'v1/resolve', fixture('resolve-exact.json'))
-            ->on('GET', 'v1/websites/118', fixture('website-118.json')));
+            ->on('GET', 'v2/resolve', fixture('resolve-exact.json'))
+            ->on('GET', 'v2/websites/118', fixture('website-118.json')));
 
     $result = $cli->run('init');
 
@@ -27,8 +27,8 @@ it('asks which website when several match', function () {
         ->withGitRemote()
         ->answers(['Which website' => '121'])
         ->withApi(api()
-            ->on('GET', 'v1/resolve', fixture('resolve-multiple.json'))
-            ->on('GET', 'v1/websites/121', fixture('website-118.json')));
+            ->on('GET', 'v2/resolve', fixture('resolve-multiple.json'))
+            ->on('GET', 'v2/websites/121', fixture('website-118.json')));
 
     $result = $cli->run('init');
 
@@ -41,7 +41,7 @@ it('asks which website when several match', function () {
 it('exits 2 with candidates when nothing can be chosen in a pipe', function () {
     $result = cli()
         ->withGitRemote()
-        ->withApi(api()->on('GET', 'v1/resolve', fixture('resolve-multiple.json')))
+        ->withApi(api()->on('GET', 'v2/resolve', fixture('resolve-multiple.json')))
         ->run('init');
 
     expect($result->exitCode)->toBe(2)
@@ -50,7 +50,7 @@ it('exits 2 with candidates when nothing can be chosen in a pipe', function () {
 });
 
 it('takes --website without a git remote', function () {
-    $cli = cli()->withApi(api()->on('GET', 'v1/websites/118', fixture('website-118.json')));
+    $cli = cli()->withApi(api()->on('GET', 'v2/websites/118', fixture('website-118.json')));
 
     $result = $cli->run('init', '--website', '118', '--environment', 'staging=121');
 
@@ -68,7 +68,7 @@ it('refuses to overwrite without --force', function () {
 });
 
 it('writes nothing under --dry-run', function () {
-    $cli = cli()->withApi(api()->on('GET', 'v1/websites/118', fixture('website-118.json')));
+    $cli = cli()->withApi(api()->on('GET', 'v2/websites/118', fixture('website-118.json')));
 
     $result = $cli->run('init', '--website', '118', '--dry-run', '--json');
 
@@ -81,8 +81,8 @@ it('adds local.json to gitignore', function () {
     $cli = cli()
         ->withGitRemote()
         ->withApi(api()
-            ->on('GET', 'v1/resolve', fixture('resolve-exact.json'))
-            ->on('GET', 'v1/websites/118', fixture('website-118.json')));
+            ->on('GET', 'v2/resolve', fixture('resolve-exact.json'))
+            ->on('GET', 'v2/websites/118', fixture('website-118.json')));
 
     $cli->home->write('.gitignore', "/vendor\n");
     mkdir($cli->home->path('.git'));
@@ -95,7 +95,7 @@ it('adds local.json to gitignore', function () {
 
 it('points at --team when the website id lives in another team', function () {
     $result = cli()
-        ->withApi(api()->on('GET', 'v1/websites/999', fixture('error-404.json'), 404))
+        ->withApi(api()->on('GET', 'v2/websites/999', fixture('error-404.json'), 404))
         ->run('init', '--website', '999', '--team', 'acme');
 
     expect($result->exitCode)->toBe(4)

@@ -14,7 +14,7 @@ function issues(): CliTester
 }
 
 it('lists the open issues of the linked project', function () {
-    $cli = issues()->withApi(api()->on('GET', 'v1/issues?project=12', fixture('issues.json')));
+    $cli = issues()->withApi(api()->on('GET', 'v2/issues?project=12', fixture('issues.json')));
 
     $result = $cli->run('issue', 'list');
 
@@ -26,14 +26,14 @@ it('lists the open issues of the linked project', function () {
 
 it('is reachable as issues', function () {
     $result = issues()
-        ->withApi(api()->on('GET', 'v1/issues?project=12', fixture('issues.json')))
+        ->withApi(api()->on('GET', 'v2/issues?project=12', fixture('issues.json')))
         ->run('issues', '--json');
 
     expect($result->json())->toHaveCount(1);
 });
 
 it('filters to what can be fixed', function () {
-    $cli = issues()->withApi(api()->on('GET', 'v1/issues?fixable=1', fixture('issues.json')));
+    $cli = issues()->withApi(api()->on('GET', 'v2/issues?fixable=1', fixture('issues.json')));
 
     $cli->run('issue', 'list', '--fixable');
 
@@ -43,8 +43,8 @@ it('filters to what can be fixed', function () {
 it('shows one issue from its short id, the tail of the uuid', function () {
     $result = issues()
         ->withApi(api()
-            ->on('GET', 'v1/issues?id_suffix=8d0e1f', fixture('issues.json'))
-            ->on('GET', 'v1/issues/'.ISSUE, fixture('issue-01J9P7.json')))
+            ->on('GET', 'v2/issues?id_suffix=8d0e1f', fixture('issues.json'))
+            ->on('GET', 'v2/issues/'.ISSUE, fixture('issue-01J9P7.json')))
         ->run('issue', 'view', '8D0E1F');
 
     expect($result->exitCode)->toBe(0)
@@ -55,7 +55,7 @@ it('shows one issue from its short id, the tail of the uuid', function () {
 
 it('says what a fix will ask for, and how to answer from a pipe', function () {
     $result = issues()
-        ->withApi(api()->on('GET', 'v1/issues/'.BIMI, fixture('issue-01J9P8-bimi.json')))
+        ->withApi(api()->on('GET', 'v2/issues/'.BIMI, fixture('issue-01J9P8-bimi.json')))
         ->run('issue', 'view', BIMI);
 
     expect($result->exitCode)->toBe(0)
@@ -69,11 +69,11 @@ it('asks what the fix needs on a terminal, previews with the answers, then appli
     $cli = issues()
         ->answers(['Logo URL' => 'https://acme.dev/logo.svg', 'Mark Certificate' => '', 'Apply this fix?' => true])
         ->withApi(api()
-            ->on('POST', 'v1/issues/'.BIMI.'/fix', fixture('issue-fix-bimi-asks.json'))
-            ->on('POST', 'v1/issues/'.BIMI.'/fix', fixture('issue-fix-bimi-dry-run.json'))
-            ->on('POST', 'v1/issues/'.BIMI.'/fix', fixture('issue-fix-bimi-applied.json'))
-            ->on('POST', 'v1/issues/'.BIMI.'/recheck', $fixed)
-            ->on('GET', 'v1/issues/'.BIMI, $fixed));
+            ->on('POST', 'v2/issues/'.BIMI.'/fix', fixture('issue-fix-bimi-asks.json'))
+            ->on('POST', 'v2/issues/'.BIMI.'/fix', fixture('issue-fix-bimi-dry-run.json'))
+            ->on('POST', 'v2/issues/'.BIMI.'/fix', fixture('issue-fix-bimi-applied.json'))
+            ->on('POST', 'v2/issues/'.BIMI.'/recheck', $fixed)
+            ->on('GET', 'v2/issues/'.BIMI, $fixed));
 
     $result = $cli->run('issue', 'fix', BIMI);
 
@@ -89,9 +89,9 @@ it('asks what the fix needs on a terminal, previews with the answers, then appli
 
 it('takes the answers from --input in a pipe', function () {
     $cli = issues()->withApi(api()
-        ->on('POST', 'v1/issues/'.BIMI.'/fix', fixture('issue-fix-bimi-asks.json'))
-        ->on('POST', 'v1/issues/'.BIMI.'/fix', fixture('issue-fix-bimi-dry-run.json'))
-        ->on('POST', 'v1/issues/'.BIMI.'/fix', fixture('issue-fix-bimi-applied.json')));
+        ->on('POST', 'v2/issues/'.BIMI.'/fix', fixture('issue-fix-bimi-asks.json'))
+        ->on('POST', 'v2/issues/'.BIMI.'/fix', fixture('issue-fix-bimi-dry-run.json'))
+        ->on('POST', 'v2/issues/'.BIMI.'/fix', fixture('issue-fix-bimi-applied.json')));
 
     $result = $cli->run('issue', 'fix', BIMI, '--yes', '--input', 'logo_url=https://acme.dev/logo.svg');
 
@@ -101,7 +101,7 @@ it('takes the answers from --input in a pipe', function () {
 
 it('lets a pipe discover what a fix asks with a dry run', function () {
     $plain = issues()
-        ->withApi(api()->on('POST', 'v1/issues/'.BIMI.'/fix', fixture('issue-fix-bimi-asks.json')))
+        ->withApi(api()->on('POST', 'v2/issues/'.BIMI.'/fix', fixture('issue-fix-bimi-asks.json')))
         ->run('issue', 'fix', BIMI, '--dry-run');
 
     expect($plain->exitCode)->toBe(0)
@@ -109,7 +109,7 @@ it('lets a pipe discover what a fix asks with a dry run', function () {
         ->and($plain->stdout)->toContain('Answer with --input logo_url=…');
 
     $json = issues()
-        ->withApi(api()->on('POST', 'v1/issues/'.BIMI.'/fix', fixture('issue-fix-bimi-asks.json')))
+        ->withApi(api()->on('POST', 'v2/issues/'.BIMI.'/fix', fixture('issue-fix-bimi-asks.json')))
         ->run('issue', 'fix', BIMI, '--dry-run', '--json');
 
     expect($json->json()['fixable'])->toBeFalse()
@@ -118,7 +118,7 @@ it('lets a pipe discover what a fix asks with a dry run', function () {
 
 it('exits 2 when a pipe fixes without the answers, --yes or not', function () {
     $result = issues()
-        ->withApi(api()->on('POST', 'v1/issues/'.BIMI.'/fix', fixture('issue-fix-bimi-asks.json')))
+        ->withApi(api()->on('POST', 'v2/issues/'.BIMI.'/fix', fixture('issue-fix-bimi-asks.json')))
         ->run('issue', 'fix', BIMI, '--yes');
 
     expect($result->exitCode)->toBe(2)
@@ -129,8 +129,8 @@ it('exits 2 when a pipe fixes without the answers, --yes or not', function () {
 it('passes on what the fixer refused about an answer', function () {
     $result = issues()
         ->withApi(api()
-            ->on('POST', 'v1/issues/'.BIMI.'/fix', fixture('issue-fix-bimi-asks.json'))
-            ->on('POST', 'v1/issues/'.BIMI.'/fix', fixture('issue-fix-bimi-422.json'), 422))
+            ->on('POST', 'v2/issues/'.BIMI.'/fix', fixture('issue-fix-bimi-asks.json'))
+            ->on('POST', 'v2/issues/'.BIMI.'/fix', fixture('issue-fix-bimi-422.json'), 422))
         ->run('issue', 'fix', BIMI, '--yes', '--input', 'logo_url=https://acme.dev/missing.svg');
 
     expect($result->exitCode)->toBe(2)
@@ -138,7 +138,7 @@ it('passes on what the fixer refused about an answer', function () {
 });
 
 it('previews a fix and changes nothing', function () {
-    $cli = issues()->withApi(api()->on('POST', 'v1/issues/'.ISSUE.'/fix', fixture('issue-fix-dry-run.json')));
+    $cli = issues()->withApi(api()->on('POST', 'v2/issues/'.ISSUE.'/fix', fixture('issue-fix-dry-run.json')));
 
     $result = $cli->run('issue', 'fix', ISSUE, '--dry-run');
 
@@ -150,8 +150,8 @@ it('previews a fix and changes nothing', function () {
 
 it('previews then applies with --yes', function () {
     $cli = issues()->withApi(api()
-        ->on('POST', 'v1/issues/'.ISSUE.'/fix', fixture('issue-fix-dry-run.json'))
-        ->on('POST', 'v1/issues/'.ISSUE.'/fix', fixture('issue-fix-applied.json')));
+        ->on('POST', 'v2/issues/'.ISSUE.'/fix', fixture('issue-fix-dry-run.json'))
+        ->on('POST', 'v2/issues/'.ISSUE.'/fix', fixture('issue-fix-applied.json')));
 
     $result = $cli->run('issue', 'fix', ISSUE, '--yes');
 
@@ -167,10 +167,10 @@ it('applies the fix then follows the recheck in a task on a terminal', function 
     $result = issues()
         ->answers(['Apply this fix?' => true])
         ->withApi(api()
-            ->on('POST', 'v1/issues/'.ISSUE.'/fix', fixture('issue-fix-dry-run.json'))
-            ->on('POST', 'v1/issues/'.ISSUE.'/fix', fixture('issue-fix-applied.json'))
-            ->on('POST', 'v1/issues/'.ISSUE.'/recheck', $fixed)
-            ->on('GET', 'v1/issues/'.ISSUE, $fixed))
+            ->on('POST', 'v2/issues/'.ISSUE.'/fix', fixture('issue-fix-dry-run.json'))
+            ->on('POST', 'v2/issues/'.ISSUE.'/fix', fixture('issue-fix-applied.json'))
+            ->on('POST', 'v2/issues/'.ISSUE.'/recheck', $fixed)
+            ->on('GET', 'v2/issues/'.ISSUE, $fixed))
         ->run('issue', 'fix', ISSUE);
 
     expect($result->exitCode)->toBe(0)
@@ -181,8 +181,8 @@ it('applies the fix then follows the recheck in a task on a terminal', function 
 it('exits 1 when the fix failed', function () {
     $result = issues()
         ->withApi(api()
-            ->on('POST', 'v1/issues/'.ISSUE.'/fix', fixture('issue-fix-dry-run.json'))
-            ->on('POST', 'v1/issues/'.ISSUE.'/fix', fixture('issue-fix-failed.json')))
+            ->on('POST', 'v2/issues/'.ISSUE.'/fix', fixture('issue-fix-dry-run.json'))
+            ->on('POST', 'v2/issues/'.ISSUE.'/fix', fixture('issue-fix-failed.json')))
         ->run('issue', 'fix', ISSUE, '--yes');
 
     expect($result->exitCode)->toBe(1);
@@ -190,7 +190,7 @@ it('exits 1 when the fix failed', function () {
 
 it('exits 2 when a pipe refuses to confirm the fix', function () {
     $result = issues()
-        ->withApi(api()->on('POST', 'v1/issues/'.ISSUE.'/fix', fixture('issue-fix-dry-run.json')))
+        ->withApi(api()->on('POST', 'v2/issues/'.ISSUE.'/fix', fixture('issue-fix-dry-run.json')))
         ->run('issue', 'fix', ISSUE);
 
     expect($result->exitCode)->toBe(2)
@@ -200,8 +200,8 @@ it('exits 2 when a pipe refuses to confirm the fix', function () {
 it('ignores an issue', function () {
     $result = issues()
         ->withApi(api()
-            ->on('GET', 'v1/issues/'.ISSUE, fixture('issue-01J9P7.json'))
-            ->on('POST', 'v1/issues/'.ISSUE.'/ignore', fixture('issue-01J9P7.json')))
+            ->on('GET', 'v2/issues/'.ISSUE, fixture('issue-01J9P7.json'))
+            ->on('POST', 'v2/issues/'.ISSUE.'/ignore', fixture('issue-01J9P7.json')))
         ->run('issue', 'ignore', ISSUE, '--yes');
 
     expect($result->exitCode)->toBe(0)
@@ -211,8 +211,8 @@ it('ignores an issue', function () {
 it('rechecks an issue and waits', function () {
     $result = issues()
         ->withApi(api()
-            ->on('POST', 'v1/issues/'.ISSUE.'/recheck', fixture('issue-01J9P7.json'))
-            ->on('GET', 'v1/issues/'.ISSUE, fixture('issue-01J9P7-fixed.json')))
+            ->on('POST', 'v2/issues/'.ISSUE.'/recheck', fixture('issue-01J9P7.json'))
+            ->on('GET', 'v2/issues/'.ISSUE, fixture('issue-01J9P7-fixed.json')))
         ->run('issue', 'recheck', ISSUE, '--wait');
 
     expect($result->exitCode)->toBe(0)

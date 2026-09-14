@@ -16,7 +16,7 @@ function factoryWith(array $env = []): ClientFactory
 it('talks https to the real host and checks the certificate', function () {
     $client = factoryWith()->make('app.unolia.com', 'tok');
 
-    expect($client->resolveBaseUrl())->toBe('https://app.unolia.com/api/v1/')
+    expect($client->resolveBaseUrl())->toBe('https://app.unolia.com/api/v2/')
         ->and($client->config()->get('verify'))->toBeTrue();
 });
 
@@ -24,7 +24,7 @@ it('keeps https for a local host but skips the certificate check', function () {
     $factory = factoryWith();
 
     foreach (['unolia.test', 'localhost', 'localhost:8000', 'app.unolia.test'] as $host) {
-        expect($factory->make($host, 'tok')->resolveBaseUrl())->toBe('https://'.$host.'/api/v1/', $host)
+        expect($factory->make($host, 'tok')->resolveBaseUrl())->toBe('https://'.$host.'/api/v2/', $host)
             ->and($factory->make($host, 'tok')->config()->get('verify'))->toBeFalse($host)
             ->and($factory->auth($host)->resolveBaseUrl())->toBe('https://'.$host.'/api/', $host)
             ->and($factory->auth($host)->config()->get('verify'))->toBeFalse($host)
@@ -36,12 +36,12 @@ it('keeps https for a local host but skips the certificate check', function () {
 it('drops to http only when UNOLIA_INSECURE asks for it', function () {
     $factory = factoryWith(['UNOLIA_INSECURE' => '1']);
 
-    expect($factory->make('unolia.test', 'tok')->resolveBaseUrl())->toBe('http://unolia.test/api/v1/')
+    expect($factory->make('unolia.test', 'tok')->resolveBaseUrl())->toBe('http://unolia.test/api/v2/')
         ->and($factory->auth('unolia.test')->resolveBaseUrl())->toBe('http://unolia.test/api/')
         ->and($factory->oauth('unolia.test')->resolveBaseUrl())->toBe('http://unolia.test/')
-        ->and($factory->make('app.unolia.com', 'tok')->resolveBaseUrl())->toBe('http://app.unolia.com/api/v1/');
+        ->and($factory->make('app.unolia.com', 'tok')->resolveBaseUrl())->toBe('http://app.unolia.com/api/v2/');
 
-    expect(factoryWith(['UNOLIA_INSECURE' => '0'])->make('unolia.test', 'tok')->resolveBaseUrl())->toBe('https://unolia.test/api/v1/');
+    expect(factoryWith(['UNOLIA_INSECURE' => '0'])->make('unolia.test', 'tok')->resolveBaseUrl())->toBe('https://unolia.test/api/v2/');
 });
 
 it('reports the same through the runtime', function () {

@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 it('lists projects', function () {
     $result = cli()
-        ->withApi(api()->on('GET', 'v1/projects', fixture('projects.json')))
+        ->withApi(api()->on('GET', 'v2/projects', fixture('projects.json')))
         ->run('project', 'list');
 
     expect($result->exitCode)->toBe(0)
@@ -16,8 +16,8 @@ it('shows one project with its environments', function () {
     $result = cli()
         ->withConfig(['team' => 'acme', 'project' => 12])
         ->withApi(api()
-            ->on('GET', 'v1/projects/12', fixture('project-12.json'))
-            ->on('GET', 'v1/projects/12/environments', fixture('project-12-environments.json')))
+            ->on('GET', 'v2/projects/12', fixture('project-12.json'))
+            ->on('GET', 'v2/projects/12/environments', fixture('project-12-environments.json')))
         ->run('project', 'view');
 
     expect($result->exitCode)->toBe(0)
@@ -28,7 +28,7 @@ it('shows one project with its environments', function () {
 it('shows what the git remote maps to', function () {
     $result = cli()
         ->withGitRemote()
-        ->withApi(api()->on('GET', 'v1/resolve', fixture('resolve-exact.json')))
+        ->withApi(api()->on('GET', 'v2/resolve', fixture('resolve-exact.json')))
         ->run('project', 'resolve');
 
     expect($result->exitCode)->toBe(0)
@@ -40,7 +40,7 @@ it('shows what the git remote maps to', function () {
 it('exits 4 when nothing matches', function () {
     $result = cli()
         ->withGitRemote('git@github.com:acme/unknown.git')
-        ->withApi(api()->on('GET', 'v1/resolve', fixture('resolve-none.json')))
+        ->withApi(api()->on('GET', 'v2/resolve', fixture('resolve-none.json')))
         ->run('project', 'resolve');
 
     expect($result->exitCode)->toBe(0);
@@ -50,8 +50,8 @@ it('switches project and drops a website from elsewhere', function () {
     $cli = cli()
         ->withConfig(['team' => 'acme', 'project' => 99, 'website' => 118, 'environments' => ['production' => 118]])
         ->withApi(api()
-            ->on('GET', 'v1/projects/13', ['data' => ['id' => 13, 'name' => 'Docs', 'team' => ['slug' => 'acme']]])
-            ->on('GET', 'v1/websites/118', fixture('website-118.json')));
+            ->on('GET', 'v2/projects/13', ['data' => ['id' => 13, 'name' => 'Docs', 'team' => ['slug' => 'acme']]])
+            ->on('GET', 'v2/websites/118', fixture('website-118.json')));
 
     $result = $cli->run('project', 'switch', '13');
 
@@ -64,8 +64,8 @@ it('keeps a website that belongs to the new project', function () {
     $cli = cli()
         ->withConfig(['team' => 'acme', 'project' => 99, 'website' => 118])
         ->withApi(api()
-            ->on('GET', 'v1/projects/12', fixture('project-12.json'))
-            ->on('GET', 'v1/websites/118', fixture('website-118.json')));
+            ->on('GET', 'v2/projects/12', fixture('project-12.json'))
+            ->on('GET', 'v2/websites/118', fixture('website-118.json')));
 
     $cli->run('project', 'switch', '12');
 

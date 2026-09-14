@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Tests\Support\CliTester;
 
 it('lists the zones of the linked project on the table face', function () {
-    $cli = cli()->withConfig(['team' => 'acme', 'project' => 12])->withApi(api()->on('GET', 'v1/domains?project=12', fixture('domains.json')));
+    $cli = cli()->withConfig(['team' => 'acme', 'project' => 12])->withApi(api()->on('GET', 'v2/domains?project=12', fixture('domains.json')));
 
     $result = $cli->run('domain', 'list');
 
@@ -20,13 +20,13 @@ it('lists the zones of the linked project on the table face', function () {
 });
 
 it('is reachable as domains and widens with --all-projects and --all-teams', function () {
-    $cli = cli()->withConfig(['team' => 'acme', 'project' => 12])->withApi(api()->on('GET', 'v1/domains', fixture('domains.json')));
+    $cli = cli()->withConfig(['team' => 'acme', 'project' => 12])->withApi(api()->on('GET', 'v2/domains', fixture('domains.json')));
 
     $cli->run('domains', '--all-projects');
 
     expect($cli->api()->lastCall()['query'])->not->toHaveKey('project');
 
-    $cli = cli()->withApi(api()->on('GET', 'v1/domains', fixture('domains.json')));
+    $cli = cli()->withApi(api()->on('GET', 'v2/domains', fixture('domains.json')));
     $result = $cli->run('domains', '--all-teams');
 
     expect($cli->api()->lastCall()['query'])->toMatchArray(['all_teams' => '1'])
@@ -35,7 +35,7 @@ it('is reachable as domains and widens with --all-projects and --all-teams', fun
 
 it('lists zones as JSON and picks fields', function () {
     $result = cli()
-        ->withApi(api()->on('GET', 'v1/domains', fixture('domains.json')))
+        ->withApi(api()->on('GET', 'v2/domains', fixture('domains.json')))
         ->run('domain', 'list', '--json');
 
     expect($result->exitCode)->toBe(0)
@@ -43,7 +43,7 @@ it('lists zones as JSON and picks fields', function () {
         ->and($result->json()[0]['domain'])->toBe('acme.com');
 
     $picked = cli()
-        ->withApi(api()->on('GET', 'v1/domains', fixture('domains.json')))
+        ->withApi(api()->on('GET', 'v2/domains', fixture('domains.json')))
         ->run('domain:list', '--json=domain');
 
     expect($picked->json()[0])->toBe(['domain' => 'acme.com']);
@@ -58,7 +58,7 @@ it('exits 3 without a token', function () {
 
 it('reports an empty list', function () {
     $result = cli()
-        ->withApi(api()->on('GET', 'v1/domains', ['data' => [], 'meta' => ['last_page' => 1]]))
+        ->withApi(api()->on('GET', 'v2/domains', ['data' => [], 'meta' => ['last_page' => 1]]))
         ->run('domain', 'list');
 
     expect($result->exitCode)->toBe(0)
@@ -68,9 +68,9 @@ it('reports an empty list', function () {
 it('shows one zone as a page, and the project zone by default', function () {
     $result = cli()
         ->withApi(api()
-            ->on('GET', 'v1/domains/acme.com', fixture('domain-example-com.json'))
-            ->on('GET', 'v1/domains/acme.com/records', fixture('records.json'))
-            ->on('GET', 'v1/issues', fixture('issues.json')))
+            ->on('GET', 'v2/domains/acme.com', fixture('domain-example-com.json'))
+            ->on('GET', 'v2/domains/acme.com/records', fixture('records.json'))
+            ->on('GET', 'v2/issues', fixture('issues.json')))
         ->run('domain', 'view', 'acme.com');
 
     expect($result->exitCode)->toBe(0)
@@ -83,10 +83,10 @@ it('shows one zone as a page, and the project zone by default', function () {
 
     $inferred = cli()->withConfig(['team' => 'acme', 'project' => 12])
         ->withApi(api()
-            ->on('GET', 'v1/domains?project=12', fixture('domains-one.json'))
-            ->on('GET', 'v1/domains/acme.com', fixture('domain-example-com.json'))
-            ->on('GET', 'v1/domains/acme.com/records', fixture('records.json'))
-            ->on('GET', 'v1/issues', fixture('issues.json')))
+            ->on('GET', 'v2/domains?project=12', fixture('domains-one.json'))
+            ->on('GET', 'v2/domains/acme.com', fixture('domain-example-com.json'))
+            ->on('GET', 'v2/domains/acme.com/records', fixture('records.json'))
+            ->on('GET', 'v2/issues', fixture('issues.json')))
         ->run('domain', 'view', '--json', 'nameservers');
 
     expect($inferred->json()['nameservers']['ok'])->toBeTrue();

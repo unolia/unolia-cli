@@ -10,7 +10,7 @@ function infra(): CliTester
 
 it('lists incidents', function () {
     $result = infra()
-        ->withApi(api()->on('GET', 'v1/incidents?project=12', fixture('incidents.json')))
+        ->withApi(api()->on('GET', 'v2/incidents?project=12', fixture('incidents.json')))
         ->run('incident', 'list');
 
     expect($result->exitCode)->toBe(0)
@@ -20,7 +20,7 @@ it('lists incidents', function () {
 
 it('shows one incident with its origin deployment', function () {
     $result = infra()
-        ->withApi(api()->on('GET', 'v1/incidents/77', fixture('incident-77.json')))
+        ->withApi(api()->on('GET', 'v2/incidents/77', fixture('incident-77.json')))
         ->run('incident', 'view', '77');
 
     expect($result->exitCode)->toBe(0)
@@ -29,7 +29,7 @@ it('shows one incident with its origin deployment', function () {
 
 it('lists the managed servers of a project', function () {
     $result = infra()
-        ->withApi(api()->on('GET', 'v1/servers?project=12', fixture('servers.json')))
+        ->withApi(api()->on('GET', 'v2/servers?project=12', fixture('servers.json')))
         ->run('server', 'list');
 
     expect($result->exitCode)->toBe(0)
@@ -39,7 +39,7 @@ it('lists the managed servers of a project', function () {
 
 it('shows one server and its websites', function () {
     $result = infra()
-        ->withApi(api()->on('GET', 'v1/servers/61', fixture('server-61.json')))
+        ->withApi(api()->on('GET', 'v2/servers/61', fixture('server-61.json')))
         ->run('server', 'view', '61');
 
     expect($result->exitCode)->toBe(0)
@@ -49,7 +49,7 @@ it('shows one server and its websites', function () {
 
 it('shows the environment map', function () {
     $result = infra()
-        ->withApi(api()->on('GET', 'v1/projects/12/environments', fixture('project-12-environments.json')))
+        ->withApi(api()->on('GET', 'v2/projects/12/environments', fixture('project-12-environments.json')))
         ->run('env', 'map');
 
     expect($result->exitCode)->toBe(0)
@@ -59,7 +59,7 @@ it('shows the environment map', function () {
 
 it('shows one environment', function () {
     $result = infra()
-        ->withApi(api()->on('GET', 'v1/environments/41', fixture('environment-41.json')))
+        ->withApi(api()->on('GET', 'v2/environments/41', fixture('environment-41.json')))
         ->run('env', 'view', '41');
 
     expect($result->exitCode)->toBe(0)
@@ -68,7 +68,7 @@ it('shows one environment', function () {
 
 it('lists providers', function () {
     $result = infra()
-        ->withApi(api()->on('GET', 'v1/providers', fixture('providers.json')))
+        ->withApi(api()->on('GET', 'v2/providers', fixture('providers.json')))
         ->run('provider', 'list');
 
     expect($result->exitCode)->toBe(0)
@@ -80,8 +80,8 @@ it('lists providers', function () {
 it('refuses to sync a broken provider and points at provider fix', function () {
     $result = infra()
         ->withApi(api()
-            ->on('GET', 'v1/providers/39', fixture('provider-39-invalid.json'))
-            ->on('POST', 'v1/providers/39/sync', fixture('error-409-provider-needs-attention.json'), 409))
+            ->on('GET', 'v2/providers/39', fixture('provider-39-invalid.json'))
+            ->on('POST', 'v2/providers/39/sync', fixture('error-409-provider-needs-attention.json'), 409))
         ->run('provider', 'sync', '39');
 
     expect($result->exitCode)->toBe(1)
@@ -91,14 +91,14 @@ it('refuses to sync a broken provider and points at provider fix', function () {
 
 it('provider fix prints the page that repairs the connection in a pipe', function () {
     $result = infra()
-        ->withApi(api()->on('GET', 'v1/providers/39', fixture('provider-39-invalid.json')))
+        ->withApi(api()->on('GET', 'v2/providers/39', fixture('provider-39-invalid.json')))
         ->run('provider', 'fix', '39');
 
     expect($result->exitCode)->toBe(0)
         ->and(trim($result->stdout))->toBe('https://app.unolia.com/acme/team/providers/39/refresh/namecheap');
 
     $json = infra()
-        ->withApi(api()->on('GET', 'v1/providers/39', fixture('provider-39-invalid.json')))
+        ->withApi(api()->on('GET', 'v2/providers/39', fixture('provider-39-invalid.json')))
         ->run('provider', 'fix', '39', '--json');
 
     expect($json->json()['status'])->toBe('invalid');
@@ -106,7 +106,7 @@ it('provider fix prints the page that repairs the connection in a pipe', functio
 
 it('shows one provider without its credentials', function () {
     $result = infra()
-        ->withApi(api()->on('GET', 'v1/providers/14', fixture('provider-14.json')))
+        ->withApi(api()->on('GET', 'v2/providers/14', fixture('provider-14.json')))
         ->run('provider', 'view', '14', '--json');
 
     expect($result->json())->not->toHaveKey('credentials')
@@ -115,7 +115,7 @@ it('shows one provider without its credentials', function () {
 
 it('previews a provider sync', function () {
     $result = infra()
-        ->withApi(api()->on('POST', 'v1/providers/14/sync', fixture('provider-sync-dry-run.json')))
+        ->withApi(api()->on('POST', 'v2/providers/14/sync', fixture('provider-sync-dry-run.json')))
         ->run('provider', 'sync', '14', '--dry-run', '--json');
 
     expect($result->json()['job'])->toBe('SynchronizeManagedHostingProvider');
@@ -124,9 +124,9 @@ it('previews a provider sync', function () {
 it('queues a provider sync and waits for it to land', function () {
     $result = infra()
         ->withApi(api()
-            ->on('GET', 'v1/providers/14', fixture('provider-14.json'))
-            ->on('POST', 'v1/providers/14/sync', fixture('provider-sync-202.json'))
-            ->on('GET', 'v1/providers/14', fixture('provider-14-synced.json')))
+            ->on('GET', 'v2/providers/14', fixture('provider-14.json'))
+            ->on('POST', 'v2/providers/14/sync', fixture('provider-sync-202.json'))
+            ->on('GET', 'v2/providers/14', fixture('provider-14-synced.json')))
         ->run('provider', 'sync', '14', '--wait');
 
     expect($result->exitCode)->toBe(0)
@@ -136,8 +136,8 @@ it('queues a provider sync and waits for it to land', function () {
 it('queues a provider sync and hands it back in a pipe', function () {
     $result = infra()
         ->withApi(api()
-            ->on('GET', 'v1/providers/14', fixture('provider-14.json'))
-            ->on('POST', 'v1/providers/14/sync', fixture('provider-sync-202.json')))
+            ->on('GET', 'v2/providers/14', fixture('provider-14.json'))
+            ->on('POST', 'v2/providers/14/sync', fixture('provider-sync-202.json')))
         ->run('provider', 'sync', '14');
 
     expect($result->exitCode)->toBe(0)

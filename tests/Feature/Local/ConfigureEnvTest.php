@@ -14,7 +14,7 @@ function envCli(): CliTester
 }
 
 it('adds the missing keys to .env.example', function () {
-    $cli = envCli()->withApi(api()->on('GET', 'v1/websites/118/env?keys_only=1', fixture('website-118-env-keys.json')));
+    $cli = envCli()->withApi(api()->on('GET', 'v2/websites/118/env?keys_only=1', fixture('website-118-env-keys.json')));
     $cli->home->write('.env.example', "APP_ENV=\nAPP_KEY=\n");
 
     $result = $cli->run('configure', 'env');
@@ -26,7 +26,7 @@ it('adds the missing keys to .env.example', function () {
 });
 
 it('creates the file when it does not exist', function () {
-    $cli = envCli()->withApi(api()->on('GET', 'v1/websites/118/env?keys_only=1', fixture('website-118-env-keys.json')));
+    $cli = envCli()->withApi(api()->on('GET', 'v2/websites/118/env?keys_only=1', fixture('website-118-env-keys.json')));
 
     $cli->run('configure', 'env');
 
@@ -34,7 +34,7 @@ it('creates the file when it does not exist', function () {
 });
 
 it('says nothing to do when the file is complete', function () {
-    $cli = envCli()->withApi(api()->on('GET', 'v1/websites/118/env?keys_only=1', fixture('website-118-env-keys.json')));
+    $cli = envCli()->withApi(api()->on('GET', 'v2/websites/118/env?keys_only=1', fixture('website-118-env-keys.json')));
     $cli->home->write('.env.example', "APP_ENV=\nAPP_KEY=\nDB_CONNECTION=\nDB_HOST=\nDB_PORT=\nMAIL_MAILER=\n");
 
     $result = $cli->run('configure', 'env');
@@ -43,7 +43,7 @@ it('says nothing to do when the file is complete', function () {
 });
 
 it('writes nothing under --dry-run', function () {
-    $cli = envCli()->withApi(api()->on('GET', 'v1/websites/118/env?keys_only=1', fixture('website-118-env-keys.json')));
+    $cli = envCli()->withApi(api()->on('GET', 'v2/websites/118/env?keys_only=1', fixture('website-118-env-keys.json')));
 
     $result = $cli->run('configure', 'env', '--dry-run', '--json');
 
@@ -52,7 +52,7 @@ it('writes nothing under --dry-run', function () {
 });
 
 it('reads another environment with --from', function () {
-    $cli = envCli()->withApi(api()->on('GET', 'v1/websites/121/env?keys_only=1', fixture('website-118-env-keys.json')));
+    $cli = envCli()->withApi(api()->on('GET', 'v2/websites/121/env?keys_only=1', fixture('website-118-env-keys.json')));
 
     $result = $cli->run('configure', 'env', '--from', 'staging');
 

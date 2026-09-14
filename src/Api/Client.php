@@ -16,7 +16,7 @@ use Unolia\Cli\Console\CliError;
 use Unolia\Cli\Version;
 
 /**
- * The connector for /api/v1. Error mapping, the team header and debug logging live here
+ * The connector for /api/v2. Error mapping, the team header and debug logging live here
  * so no command ever has to think about them.
  */
 final class Client extends Connector implements HasPagination
@@ -34,7 +34,7 @@ final class Client extends Connector implements HasPagination
         private readonly ?string $token = null,
         private readonly string $tokenKind = 'unknown',
         private readonly bool $insecure = false,
-        private readonly string $basePath = 'api/v1/',
+        private readonly string $basePath = 'api/v2/',
         private readonly bool $verify = true,
     ) {}
 
@@ -92,7 +92,7 @@ final class Client extends Connector implements HasPagination
             $response = Interrupt::during(fn (): Response => parent::send($request, $mockClient, $handleRetry));
         } catch (FatalRequestException $exception) {
             Interrupt::throwIfPending();
-            $this->log(sprintf('→ %s /v1/%s failed: %s', $method, ltrim($path, '/'), $exception->getMessage()));
+            $this->log(sprintf('→ %s /v2/%s failed: %s', $method, ltrim($path, '/'), $exception->getMessage()));
 
             throw ApiException::network($this->host, $exception->getMessage());
         }
@@ -100,7 +100,7 @@ final class Client extends Connector implements HasPagination
         Interrupt::throwIfPending();
 
         $this->log(sprintf(
-            '→ %s /v1/%s %d %dms',
+            '→ %s /v2/%s %d %dms',
             $method,
             ltrim($path, '/'),
             $response->status(),

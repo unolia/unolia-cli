@@ -10,7 +10,7 @@ use Saloon\Http\Request;
 use Saloon\Traits\Body\HasJsonBody;
 
 /**
- * PATCH /api/v1/current/token: give the token in use a name people recognise in the dashboard.
+ * PATCH /api/v2/current/token: give the token in use a name people recognise in the dashboard.
  */
 final class RenameToken extends Request implements HasBody
 {

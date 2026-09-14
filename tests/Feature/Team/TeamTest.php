@@ -5,7 +5,7 @@ declare(strict_types=1);
 it('lists the teams with the current one marked', function () {
     $result = cli()
         ->withConfig(['team' => 'acme'])
-        ->withApi(api()->on('GET', 'v1/teams', fixture('teams.json')))
+        ->withApi(api()->on('GET', 'v2/teams', fixture('teams.json')))
         ->run('team', 'list');
 
     expect($result->exitCode)->toBe(0)
@@ -15,14 +15,14 @@ it('lists the teams with the current one marked', function () {
 
 it('is reachable as teams, which v1 shipped', function () {
     $result = cli()
-        ->withApi(api()->on('GET', 'v1/teams', fixture('teams.json')))
+        ->withApi(api()->on('GET', 'v2/teams', fixture('teams.json')))
         ->run('teams', '--json');
 
     expect($result->json())->toHaveCount(2);
 });
 
 it('switches the default team', function () {
-    $cli = cli()->withApi(api()->on('GET', 'v1/teams', fixture('teams.json')));
+    $cli = cli()->withApi(api()->on('GET', 'v2/teams', fixture('teams.json')));
 
     $result = $cli->run('team', 'switch', 'acme');
 
@@ -35,7 +35,7 @@ it('switches the default team', function () {
 });
 
 it('switches by id or by name and stores the slug', function () {
-    $cli = cli()->withApi(api()->on('GET', 'v1/teams', fixture('teams.json')));
+    $cli = cli()->withApi(api()->on('GET', 'v2/teams', fixture('teams.json')));
 
     $result = $cli->run('team', 'switch', '3');
 
@@ -43,7 +43,7 @@ it('switches by id or by name and stores the slug', function () {
         ->and($result->stdout)->toContain('Now working in team acme')
         ->and(json_decode((string) file_get_contents($cli->home->home.'/.config/unolia/config.json'), true)['default_team'])->toBe('acme');
 
-    $byName = cli()->withApi(api()->on('GET', 'v1/teams', fixture('teams.json')))->run('team', 'switch', 'Eser');
+    $byName = cli()->withApi(api()->on('GET', 'v2/teams', fixture('teams.json')))->run('team', 'switch', 'Eser');
 
     expect($byName->stdout)->toContain('Now working in team personal');
 });
@@ -51,7 +51,7 @@ it('switches by id or by name and stores the slug', function () {
 it('switches only this directory with --local', function () {
     $cli = cli()
         ->withConfig(['project' => 12])
-        ->withApi(api()->on('GET', 'v1/teams', fixture('teams.json')));
+        ->withApi(api()->on('GET', 'v2/teams', fixture('teams.json')));
 
     $cli->run('team', 'switch', 'acme', '--local');
 
@@ -60,7 +60,7 @@ it('switches only this directory with --local', function () {
 
 it('exits 4 for a team it cannot reach', function () {
     $result = cli()
-        ->withApi(api()->on('GET', 'v1/teams', fixture('teams.json')))
+        ->withApi(api()->on('GET', 'v2/teams', fixture('teams.json')))
         ->run('team', 'switch', 'other');
 
     expect($result->exitCode)->toBe(4)

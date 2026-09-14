@@ -20,7 +20,7 @@ final class FakeClientFactory extends ClientFactory
         parent::__construct($runtime);
     }
 
-    public function make(string $host, ?string $token, string $kind = 'unknown', string $basePath = 'api/v1/'): Client
+    public function make(string $host, ?string $token, string $kind = 'unknown', string $basePath = 'api/v2/'): Client
     {
         return parent::make($host, $token, $kind, $basePath)->withMockClient($this->api->mockClient());
     }

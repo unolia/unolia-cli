@@ -8,15 +8,15 @@ use Tests\Support\FakeApi;
 function tokenApi(): FakeApi
 {
     return api()
-        ->on('GET', 'v1/current/token', fixture('current-token-user.json'))
-        ->on('GET', 'v1/current/authenticated', fixture('current-authenticated-user.json'));
+        ->on('GET', 'v2/current/token', fixture('current-token-user.json'))
+        ->on('GET', 'v2/current/authenticated', fixture('current-authenticated-user.json'));
 }
 
 /** The whole device flow up to the poll, which each test finishes its own way. */
 function deviceApi(string $code = 'device-code.json'): FakeApi
 {
     return api()
-        ->on('GET', 'v1/cli/oauth', fixture('cli-oauth.json'))
+        ->on('GET', 'v2/cli/oauth', fixture('cli-oauth.json'))
         ->on('POST', 'oauth/device/code', fixture($code));
 }
 
@@ -81,7 +81,7 @@ it('exits 2 without a token in the pipe face, and says where a token can come fr
 
 it('exits 3 when the token is rejected', function () {
     $result = CliTester::make()
-        ->withApi(api()->on('GET', 'v1/current/token', fixture('error-401.json'), 401))
+        ->withApi(api()->on('GET', 'v2/current/token', fixture('error-401.json'), 401))
         ->run('login', '--token', 'nope');
 
     expect($result->exitCode)->toBe(3)
@@ -104,9 +104,9 @@ it('signs in through the browser with a one time code', function () {
             ->on('POST', 'oauth/token', fixture('oauth-pending.json'), 400)
             ->on('POST', 'oauth/token', fixture('oauth-slow-down.json'), 400)
             ->on('POST', 'oauth/token', fixture('oauth-token.json'))
-            ->on('GET', 'v1/current/token', fixture('current-token-device.json'))
-            ->on('GET', 'v1/current/authenticated', fixture('current-authenticated-user.json'))
-            ->on('PATCH', 'v1/current/token', fixture('token-renamed.json')))
+            ->on('GET', 'v2/current/token', fixture('current-token-device.json'))
+            ->on('GET', 'v2/current/authenticated', fixture('current-authenticated-user.json'))
+            ->on('PATCH', 'v2/current/token', fixture('token-renamed.json')))
         ->interactive();
 
     $result = $cli->run('login');
@@ -150,9 +150,9 @@ it('asks for the scopes given and names the token', function () {
     $cli = CliTester::make()
         ->withApi(deviceApi()
             ->on('POST', 'oauth/token', fixture('oauth-token.json'))
-            ->on('GET', 'v1/current/token', fixture('current-token-scoped.json'))
-            ->on('GET', 'v1/current/authenticated', fixture('current-authenticated-user.json'))
-            ->on('PATCH', 'v1/current/token', fixture('token-renamed.json')))
+            ->on('GET', 'v2/current/token', fixture('current-token-scoped.json'))
+            ->on('GET', 'v2/current/authenticated', fixture('current-authenticated-user.json'))
+            ->on('PATCH', 'v2/current/token', fixture('token-renamed.json')))
         ->interactive();
 
     $result = $cli->run('login', '--scopes', 'project:read,deployment:write', '--name', 'laptop');
@@ -166,7 +166,7 @@ it('asks for the scopes given and names the token', function () {
 
 it('refuses a scope the host does not know', function () {
     $result = CliTester::make()
-        ->withApi(api()->on('GET', 'v1/cli/oauth', fixture('cli-oauth.json')))
+        ->withApi(api()->on('GET', 'v2/cli/oauth', fixture('cli-oauth.json')))
         ->interactive()
         ->run('login', '--scopes', 'project:read,coffee:brew');
 
@@ -192,7 +192,7 @@ it('exits 1 when the host offers no default scopes', function () {
     $discovery['data']['default_scopes'] = [];
 
     $result = CliTester::make()
-        ->withApi(api()->on('GET', 'v1/cli/oauth', $discovery))
+        ->withApi(api()->on('GET', 'v2/cli/oauth', $discovery))
         ->interactive()
         ->run('login');
 
@@ -205,9 +205,9 @@ it('prints the URL instead of opening a browser with --no-browser', function () 
     $cli = CliTester::make()
         ->withApi(deviceApi()
             ->on('POST', 'oauth/token', fixture('oauth-token.json'))
-            ->on('GET', 'v1/current/token', fixture('current-token-device.json'))
-            ->on('GET', 'v1/current/authenticated', fixture('current-authenticated-user.json'))
-            ->on('PATCH', 'v1/current/token', fixture('token-renamed.json')))
+            ->on('GET', 'v2/current/token', fixture('current-token-device.json'))
+            ->on('GET', 'v2/current/authenticated', fixture('current-authenticated-user.json'))
+            ->on('PATCH', 'v2/current/token', fixture('token-renamed.json')))
         ->interactive();
 
     $result = $cli->run('login', '--no-browser');
@@ -221,9 +221,9 @@ it('keeps going when the token cannot be renamed', function () {
     $cli = CliTester::make()
         ->withApi(deviceApi()
             ->on('POST', 'oauth/token', fixture('oauth-token.json'))
-            ->on('GET', 'v1/current/token', fixture('current-token-device.json'))
-            ->on('GET', 'v1/current/authenticated', fixture('current-authenticated-user.json'))
-            ->on('PATCH', 'v1/current/token', ['message' => 'boom'], 500))
+            ->on('GET', 'v2/current/token', fixture('current-token-device.json'))
+            ->on('GET', 'v2/current/authenticated', fixture('current-authenticated-user.json'))
+            ->on('PATCH', 'v2/current/token', ['message' => 'boom'], 500))
         ->interactive();
 
     $result = $cli->run('login');
@@ -270,7 +270,7 @@ it('exits 6 when expires_in runs out before an answer', function () {
 
 it('says when the host has no browser login', function () {
     $result = CliTester::make()
-        ->withApi(api()->on('GET', 'v1/cli/oauth', fixture('error-404.json'), 404))
+        ->withApi(api()->on('GET', 'v2/cli/oauth', fixture('error-404.json'), 404))
         ->interactive()
         ->run('login');
 
@@ -291,7 +291,7 @@ it('answers with a record in the JSON face', function () {
 
 it('does not throw the stored token away when the API fails for another reason', function () {
     $result = cli()
-        ->withApi(api()->on('GET', 'v1/current/token', ['message' => 'boom'], 500))
+        ->withApi(api()->on('GET', 'v2/current/token', ['message' => 'boom'], 500))
         ->run('login');
 
     expect($result->exitCode)->toBe(1)

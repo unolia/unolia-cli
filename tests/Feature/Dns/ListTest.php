@@ -10,8 +10,8 @@ function zoned(): CliTester
 
 it('lists the records of the project zone with bare dns, names relative to the zone', function () {
     $cli = zoned()->withApi(api()
-        ->on('GET', 'v1/domains?project=12', fixture('domains-one.json'))
-        ->on('GET', 'v1/domains/acme.com/records', fixture('records.json')));
+        ->on('GET', 'v2/domains?project=12', fixture('domains-one.json'))
+        ->on('GET', 'v2/domains/acme.com/records', fixture('records.json')));
 
     $result = $cli->run('dns');
 
@@ -28,14 +28,14 @@ it('lists the records of the project zone with bare dns, names relative to the z
 
 it('puts the apex first and keeps full values in the data faces', function () {
     $result = cli()
-        ->withApi(api()->on('GET', 'v1/domains/acme.com/records', fixture('records.json')))
+        ->withApi(api()->on('GET', 'v2/domains/acme.com/records', fixture('records.json')))
         ->run('dns', 'list', 'acme.com', '--json');
 
     expect($result->json())->toHaveCount(3)
         ->and($result->json()[0]['name'])->toBe('www.acme.com');
 
     $table = cli()
-        ->withApi(api()->on('GET', 'v1/domains/acme.com/records', fixture('records.json')))
+        ->withApi(api()->on('GET', 'v2/domains/acme.com/records', fixture('records.json')))
         ->run('dns', 'acme.com');
 
     $lines = array_values(array_filter(explode("\n", $table->stdout), fn (string $line): bool => str_starts_with($line, '#')));
@@ -45,7 +45,7 @@ it('puts the apex first and keeps full values in the data faces', function () {
 });
 
 it('filters by type and by name, on the server and again locally', function () {
-    $cli = cli()->withApi(api()->on('GET', 'v1/domains/acme.com/records', fixture('records.json')));
+    $cli = cli()->withApi(api()->on('GET', 'v2/domains/acme.com/records', fixture('records.json')));
 
     $result = $cli->run('dns', 'acme.com', '--type', 'mx', '--json');
 
@@ -53,7 +53,7 @@ it('filters by type and by name, on the server and again locally', function () {
         ->and($result->json())->toHaveCount(1)
         ->and($result->json()[0]['type'])->toBe('MX');
 
-    $cli = cli()->withApi(api()->on('GET', 'v1/domains/acme.com/records', fixture('records.json')));
+    $cli = cli()->withApi(api()->on('GET', 'v2/domains/acme.com/records', fixture('records.json')));
     $byName = $cli->run('dns', 'acme.com', '--name', 'www', '--json');
 
     expect($cli->api()->lastCall()['query'])->toMatchArray(['name' => 'www.acme.com'])
@@ -62,7 +62,7 @@ it('filters by type and by name, on the server and again locally', function () {
 
 it('is reachable as domain records', function () {
     $result = cli()
-        ->withApi(api()->on('GET', 'v1/domains/acme.com/records', fixture('records.json')))
+        ->withApi(api()->on('GET', 'v2/domains/acme.com/records', fixture('records.json')))
         ->run('domain', 'records', 'acme.com', '--json');
 
     expect($result->json())->toHaveCount(3);
@@ -70,7 +70,7 @@ it('is reachable as domain records', function () {
 
 it('asks which zone when the project has several, and exits 2 in a pipe', function () {
     $piped = zoned()
-        ->withApi(api()->on('GET', 'v1/domains?project=12', fixture('domains.json')))
+        ->withApi(api()->on('GET', 'v2/domains?project=12', fixture('domains.json')))
         ->run('dns');
 
     expect($piped->exitCode)->toBe(2)
@@ -80,9 +80,9 @@ it('asks which zone when the project has several, and exits 2 in a pipe', functi
     $asked = zoned()
         ->answers(['Which zone?' => 'acme.dev'])
         ->withApi(api()
-            ->on('GET', 'v1/domains?project=12', fixture('domains.json'))
-            ->on('GET', 'v1/domains/acme.dev', fixture('domain-example-com.json'))
-            ->on('GET', 'v1/domains/acme.dev/records', fixture('records-none.json')))
+            ->on('GET', 'v2/domains?project=12', fixture('domains.json'))
+            ->on('GET', 'v2/domains/acme.dev', fixture('domain-example-com.json'))
+            ->on('GET', 'v2/domains/acme.dev/records', fixture('records-none.json')))
         ->run('dns');
 
     expect($asked->exitCode)->toBe(0)
@@ -91,7 +91,7 @@ it('asks which zone when the project has several, and exits 2 in a pipe', functi
 
 it('says what to do when there is no zone at all', function () {
     $result = cli()
-        ->withApi(api()->on('GET', 'v1/domains', ['data' => [], 'meta' => ['last_page' => 1]]))
+        ->withApi(api()->on('GET', 'v2/domains', ['data' => [], 'meta' => ['last_page' => 1]]))
         ->run('dns');
 
     expect($result->exitCode)->toBe(2)
@@ -101,7 +101,7 @@ it('says what to do when there is no zone at all', function () {
 
 it('exports a zone file', function () {
     $result = cli()
-        ->withApi(api()->on('GET', 'v1/domains/acme.com/records', fixture('records.json')))
+        ->withApi(api()->on('GET', 'v2/domains/acme.com/records', fixture('records.json')))
         ->run('dns', 'export', 'acme.com');
 
     expect($result->exitCode)->toBe(0)
@@ -116,7 +116,7 @@ it('does not double a priority the provider already put in the value', function 
     $records['data'][1]['value'] = '10 mail.acme.com.';
 
     $result = cli()
-        ->withApi(api()->on('GET', 'v1/domains/acme.com/records', $records))
+        ->withApi(api()->on('GET', 'v2/domains/acme.com/records', $records))
         ->run('dns', 'acme.com');
 
     expect($result->stdout)->toContain('10 mail.acme.com.')

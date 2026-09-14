@@ -12,7 +12,7 @@ function automations(): CliTester
 
 it('lists automations', function () {
     $result = automations()
-        ->withApi(api()->on('GET', 'v1/automations', fixture('automations.json')))
+        ->withApi(api()->on('GET', 'v2/automations', fixture('automations.json')))
         ->run('automation', 'list');
 
     expect($result->exitCode)->toBe(0)
@@ -24,8 +24,8 @@ it('lists automations', function () {
 it('shows one automation with its last runs', function () {
     $result = automations()
         ->withApi(api()
-            ->on('GET', 'v1/automations/7', fixture('automation-7.json'))
-            ->on('GET', 'v1/automation-runs?automation=7', fixture('automation-runs.json')))
+            ->on('GET', 'v2/automations/7', fixture('automation-7.json'))
+            ->on('GET', 'v2/automation-runs?automation=7', fixture('automation-runs.json')))
         ->run('automation', 'view', '7');
 
     expect($result->exitCode)->toBe(0)
@@ -35,8 +35,8 @@ it('shows one automation with its last runs', function () {
 
 it('finds an automation from part of its name', function () {
     $cli = automations()->withApi(api()
-        ->on('GET', 'v1/automations?q=ubuntu', fixture('automations.json'))
-        ->on('POST', 'v1/automations/7/runs', fixture('automation-run-dry-run.json')));
+        ->on('GET', 'v2/automations?q=ubuntu', fixture('automations.json'))
+        ->on('POST', 'v2/automations/7/runs', fixture('automation-run-dry-run.json')));
 
     $result = $cli->run('automation', 'run', 'ubuntu', '--dry-run', '--json');
 
@@ -48,14 +48,14 @@ it('asks which automation when several match, and lists them in a pipe', functio
     $cli = automations()
         ->answers(['Which automation?' => '8'])
         ->withApi(api()
-            ->on('GET', 'v1/automations?q=servers', fixture('automations-two.json'))
-            ->on('GET', 'v1/automations/8', fixture('automation-7.json'))
-            ->on('GET', 'v1/automation-runs?automation=8&per_page=5', fixture('automation-runs.json')));
+            ->on('GET', 'v2/automations?q=servers', fixture('automations-two.json'))
+            ->on('GET', 'v2/automations/8', fixture('automation-7.json'))
+            ->on('GET', 'v2/automation-runs?automation=8&per_page=5', fixture('automation-runs.json')));
 
     expect($cli->run('automation', 'view', 'servers')->exitCode)->toBe(0);
 
     $piped = automations()
-        ->withApi(api()->on('GET', 'v1/automations?q=servers', fixture('automations-two.json')))
+        ->withApi(api()->on('GET', 'v2/automations?q=servers', fixture('automations-two.json')))
         ->run('automation', 'view', 'servers');
 
     expect($piped->exitCode)->toBe(2)
@@ -66,16 +66,16 @@ it('asks which automation when several match, and lists them in a pipe', functio
 it('finds an automation by name', function () {
     $result = automations()
         ->withApi(api()
-            ->on('GET', 'v1/automations?q=Update Ubuntu servers', fixture('automations.json'))
-            ->on('GET', 'v1/automations/7', fixture('automation-7.json'))
-            ->on('GET', 'v1/automation-runs?automation=7', fixture('automation-runs.json')))
+            ->on('GET', 'v2/automations?q=Update Ubuntu servers', fixture('automations.json'))
+            ->on('GET', 'v2/automations/7', fixture('automation-7.json'))
+            ->on('GET', 'v2/automation-runs?automation=7', fixture('automation-runs.json')))
         ->run('automation', 'view', 'Update Ubuntu servers');
 
     expect($result->exitCode)->toBe(0);
 });
 
 it('shows the plan under --dry-run and starts nothing', function () {
-    $cli = automations()->withApi(api()->on('POST', 'v1/automations/7/runs', fixture('automation-run-dry-run.json')));
+    $cli = automations()->withApi(api()->on('POST', 'v2/automations/7/runs', fixture('automation-run-dry-run.json')));
 
     $result = $cli->run('automation', 'run', '7', '--dry-run');
 
@@ -87,7 +87,7 @@ it('shows the plan under --dry-run and starts nothing', function () {
 
 it('refuses to start a run in a pipe without --yes', function () {
     $result = automations()
-        ->withApi(api()->on('POST', 'v1/automations/7/runs', fixture('automation-run-dry-run.json')))
+        ->withApi(api()->on('POST', 'v2/automations/7/runs', fixture('automation-run-dry-run.json')))
         ->run('automation', 'run', '7');
 
     expect($result->exitCode)->toBe(2)
@@ -97,8 +97,8 @@ it('refuses to start a run in a pipe without --yes', function () {
 it('starts a run', function () {
     $result = automations()
         ->withApi(api()
-            ->on('POST', 'v1/automations/7/runs', fixture('automation-run-dry-run.json'))
-            ->on('POST', 'v1/automations/7/runs', fixture('automation-run-create-201.json'), 201))
+            ->on('POST', 'v2/automations/7/runs', fixture('automation-run-dry-run.json'))
+            ->on('POST', 'v2/automations/7/runs', fixture('automation-run-create-201.json'), 201))
         ->run('automation', 'run', '7', '--yes');
 
     expect($result->exitCode)->toBe(0)
@@ -109,10 +109,10 @@ it('shows a run as one task per step on a terminal', function () {
     $result = automations()
         ->answers(['now?' => true])
         ->withApi(api()
-            ->on('POST', 'v1/automations/7/runs', fixture('automation-run-dry-run.json'))
-            ->on('POST', 'v1/automations/7/runs', fixture('automation-run-create-201.json'), 201)
-            ->on('GET', 'v1/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-running.json'))
-            ->on('GET', 'v1/automation-runs/'.RUN.'?wait=20', fixture('run-01J9A2-completed.json')))
+            ->on('POST', 'v2/automations/7/runs', fixture('automation-run-dry-run.json'))
+            ->on('POST', 'v2/automations/7/runs', fixture('automation-run-create-201.json'), 201)
+            ->on('GET', 'v2/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-running.json'))
+            ->on('GET', 'v2/automation-runs/'.RUN.'?wait=20', fixture('run-01J9A2-completed.json')))
         ->run('automation', 'run', '7');
 
     $out = $result->stdout;
@@ -149,10 +149,10 @@ it('asks the question where the run stopped and carries on, on a terminal', func
     $cli = automations()
         ->answers(['now?' => true, 'has a new kernel' => false])
         ->withApi(api()
-            ->on('POST', 'v1/automations/7/runs', fixture('automation-run-dry-run.json'))
-            ->on('POST', 'v1/automations/7/runs', fixture('automation-run-create-201.json'), 201)
-            ->on('GET', 'v1/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-awaiting-input.json'))
-            ->on('POST', 'v1/automation-runs/'.RUN.'/resume', fixture('run-01J9A2-completed.json')));
+            ->on('POST', 'v2/automations/7/runs', fixture('automation-run-dry-run.json'))
+            ->on('POST', 'v2/automations/7/runs', fixture('automation-run-create-201.json'), 201)
+            ->on('GET', 'v2/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-awaiting-input.json'))
+            ->on('POST', 'v2/automation-runs/'.RUN.'/resume', fixture('run-01J9A2-completed.json')));
 
     $result = $cli->run('automation', 'run', '7');
 
@@ -173,8 +173,8 @@ it('pre-ticks the default choices and sends the ids picked, not their names', fu
     $cli = automations()
         ->answers(['Pick the servers to reboot' => ['102', '2']])
         ->withApi(api()
-            ->on('GET', 'v1/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-awaiting-servers.json'))
-            ->on('POST', 'v1/automation-runs/'.RUN.'/resume', fixture('run-01J9A2-rebooted.json')));
+            ->on('GET', 'v2/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-awaiting-servers.json'))
+            ->on('POST', 'v2/automation-runs/'.RUN.'/resume', fixture('run-01J9A2-rebooted.json')));
 
     $result = $cli->run('automation', 'watch', RUN);
 
@@ -190,9 +190,9 @@ it('asks again when the API refuses the answer', function () {
     $cli = automations()
         ->answers(['Pick the servers to reboot' => ['3']])
         ->withApi(api()
-            ->on('GET', 'v1/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-awaiting-servers.json'))
-            ->on('POST', 'v1/automation-runs/'.RUN.'/resume', fixture('run-resume-422.json'), 422)
-            ->on('POST', 'v1/automation-runs/'.RUN.'/resume', fixture('run-01J9A2-rebooted.json')));
+            ->on('GET', 'v2/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-awaiting-servers.json'))
+            ->on('POST', 'v2/automation-runs/'.RUN.'/resume', fixture('run-resume-422.json'), 422)
+            ->on('POST', 'v2/automation-runs/'.RUN.'/resume', fixture('run-01J9A2-rebooted.json')));
 
     $result = $cli->run('automation', 'watch', RUN);
 
@@ -205,9 +205,9 @@ it('follows the one run going when none is named', function () {
     $cli = automations()
         ->answers(['has a new kernel' => true])
         ->withApi(api()
-            ->on('GET', 'v1/automation-runs?per_page=20', fixture('automation-runs-one-live.json'))
-            ->on('GET', 'v1/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-awaiting-input.json'))
-            ->on('POST', 'v1/automation-runs/'.RUN.'/resume', fixture('run-01J9A2-completed.json')));
+            ->on('GET', 'v2/automation-runs?per_page=20', fixture('automation-runs-one-live.json'))
+            ->on('GET', 'v2/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-awaiting-input.json'))
+            ->on('POST', 'v2/automation-runs/'.RUN.'/resume', fixture('run-01J9A2-completed.json')));
 
     $result = $cli->run('automation', 'watch');
 
@@ -219,8 +219,8 @@ it('reads the last run back when nothing is going', function () {
     $result = automations()
         ->answers([])
         ->withApi(api()
-            ->on('GET', 'v1/automation-runs?per_page=20', fixture('automation-runs.json'))
-            ->on('GET', 'v1/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-completed.json')))
+            ->on('GET', 'v2/automation-runs?per_page=20', fixture('automation-runs.json'))
+            ->on('GET', 'v2/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-completed.json')))
         ->run('automation', 'watch');
 
     expect($result->exitCode)->toBe(0)
@@ -232,13 +232,13 @@ it('asks which run when several are going, and lists them in a pipe', function (
     $cli = automations()
         ->answers(['Which run?' => RUN])
         ->withApi(api()
-            ->on('GET', 'v1/automation-runs?per_page=20', fixture('automation-runs-two-live.json'))
-            ->on('GET', 'v1/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-completed.json')));
+            ->on('GET', 'v2/automation-runs?per_page=20', fixture('automation-runs-two-live.json'))
+            ->on('GET', 'v2/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-completed.json')));
 
     expect($cli->run('automation', 'watch')->exitCode)->toBe(0);
 
     $piped = automations()
-        ->withApi(api()->on('GET', 'v1/automation-runs?per_page=20', fixture('automation-runs-two-live.json')))
+        ->withApi(api()->on('GET', 'v2/automation-runs?per_page=20', fixture('automation-runs-two-live.json')))
         ->run('automation', 'watch');
 
     expect($piped->exitCode)->toBe(2)
@@ -248,7 +248,7 @@ it('asks which run when several are going, and lists them in a pipe', function (
 
 it('does not take --yes for an answer', function () {
     $result = automations()
-        ->withApi(api()->on('GET', 'v1/automation-runs/'.RUN, fixture('run-01J9A2-awaiting-input.json')))
+        ->withApi(api()->on('GET', 'v2/automation-runs/'.RUN, fixture('run-01J9A2-awaiting-input.json')))
         ->run('automation', 'resume', RUN, '--yes');
 
     expect($result->exitCode)->toBe(2)
@@ -258,9 +258,9 @@ it('does not take --yes for an answer', function () {
 it('exits 7 when a run parks waiting for an answer', function () {
     $result = automations()
         ->withApi(api()
-            ->on('POST', 'v1/automations/7/runs', fixture('automation-run-dry-run.json'))
-            ->on('POST', 'v1/automations/7/runs', fixture('automation-run-create-201.json'), 201)
-            ->on('GET', 'v1/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-awaiting-input.json')))
+            ->on('POST', 'v2/automations/7/runs', fixture('automation-run-dry-run.json'))
+            ->on('POST', 'v2/automations/7/runs', fixture('automation-run-create-201.json'), 201)
+            ->on('GET', 'v2/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-awaiting-input.json')))
         ->run('automation', 'run', '7', '--wait', '--yes');
 
     expect($result->exitCode)->toBe(7)
@@ -270,8 +270,8 @@ it('exits 7 when a run parks waiting for an answer', function () {
 it('resolves a run from its short id, the tail of the ULID', function () {
     $result = automations()
         ->withApi(api()
-            ->on('GET', 'v1/automation-runs?ulid_suffix=V6W7Y8', fixture('automation-runs.json'))
-            ->on('GET', 'v1/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-completed.json')))
+            ->on('GET', 'v2/automation-runs?ulid_suffix=V6W7Y8', fixture('automation-runs.json'))
+            ->on('GET', 'v2/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-completed.json')))
         ->run('automation', 'watch', 'v6w7y8');
 
     expect($result->exitCode)->toBe(0)
@@ -287,8 +287,8 @@ it('refuses a prefix that is too short', function () {
 
 it('answers a parked run from a flag and hands it back', function () {
     $cli = automations()->withApi(api()
-        ->on('GET', 'v1/automation-runs/'.RUN, fixture('run-01J9A2-awaiting-input.json'))
-        ->on('POST', 'v1/automation-runs/'.RUN.'/resume', fixture('run-01J9A2-completed.json')));
+        ->on('GET', 'v2/automation-runs/'.RUN, fixture('run-01J9A2-awaiting-input.json'))
+        ->on('POST', 'v2/automation-runs/'.RUN.'/resume', fixture('run-01J9A2-completed.json')));
 
     $result = $cli->run('automation', 'resume', RUN, '--input', 'reboot=true');
 
@@ -299,9 +299,9 @@ it('answers a parked run from a flag and hands it back', function () {
 
 it('takes choices by label in a flag and waits with --wait', function () {
     $cli = automations()->withApi(api()
-        ->on('GET', 'v1/automation-runs/'.RUN, fixture('run-01J9A2-awaiting-servers.json'))
-        ->on('POST', 'v1/automation-runs/'.RUN.'/resume', fixture('run-01J9A2-rebooted.json'))
-        ->on('GET', 'v1/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-rebooted.json')));
+        ->on('GET', 'v2/automation-runs/'.RUN, fixture('run-01J9A2-awaiting-servers.json'))
+        ->on('POST', 'v2/automation-runs/'.RUN.'/resume', fixture('run-01J9A2-rebooted.json'))
+        ->on('GET', 'v2/automation-runs/'.RUN.'?wait=0', fixture('run-01J9A2-rebooted.json')));
 
     $result = $cli->run('automation', 'resume', RUN, '--input', 'selected_server_ids=web-01, 2', '--wait');
 
@@ -311,8 +311,8 @@ it('takes choices by label in a flag and waits with --wait', function () {
 
 it('sends an empty list when nothing is picked', function () {
     $cli = automations()->withApi(api()
-        ->on('GET', 'v1/automation-runs/'.RUN, fixture('run-01J9A2-awaiting-servers.json'))
-        ->on('POST', 'v1/automation-runs/'.RUN.'/resume', fixture('run-01J9A2-rebooted.json')));
+        ->on('GET', 'v2/automation-runs/'.RUN, fixture('run-01J9A2-awaiting-servers.json'))
+        ->on('POST', 'v2/automation-runs/'.RUN.'/resume', fixture('run-01J9A2-rebooted.json')));
 
     $cli->run('automation', 'resume', RUN, '--input', 'selected_server_ids=');
 
@@ -321,7 +321,7 @@ it('sends an empty list when nothing is picked', function () {
 
 it('lists the expected keys when a pipe resumes without inputs', function () {
     $result = automations()
-        ->withApi(api()->on('GET', 'v1/automation-runs/'.RUN, fixture('run-01J9A2-awaiting-input.json')))
+        ->withApi(api()->on('GET', 'v2/automation-runs/'.RUN, fixture('run-01J9A2-awaiting-input.json')))
         ->run('automation', 'resume', RUN);
 
     expect($result->exitCode)->toBe(2)
@@ -333,8 +333,8 @@ it('replays the steps down to the question, asks it, and follows the rest, on a 
     $cli = automations()
         ->answers(['has a new kernel' => true])
         ->withApi(api()
-            ->on('GET', 'v1/automation-runs/'.RUN, fixture('run-01J9A2-awaiting-input.json'))
-            ->on('POST', 'v1/automation-runs/'.RUN.'/resume', fixture('run-01J9A2-completed.json')));
+            ->on('GET', 'v2/automation-runs/'.RUN, fixture('run-01J9A2-awaiting-input.json'))
+            ->on('POST', 'v2/automation-runs/'.RUN.'/resume', fixture('run-01J9A2-completed.json')));
 
     $result = $cli->run('automation', 'resume', RUN);
 
@@ -348,7 +348,7 @@ it('replays the steps down to the question, asks it, and follows the rest, on a 
 });
 
 it('lists runs and filters by state', function () {
-    $cli = automations()->withApi(api()->on('GET', 'v1/automation-runs?state=completed', fixture('automation-runs.json')));
+    $cli = automations()->withApi(api()->on('GET', 'v2/automation-runs?state=completed', fixture('automation-runs.json')));
 
     $result = $cli->run('automation', 'runs', '--state', 'completed');
 
@@ -359,8 +359,8 @@ it('lists runs and filters by state', function () {
 it('prints the log of a run', function () {
     $result = automations()
         ->withApi(api()
-            ->on('GET', 'v1/automation-runs?ulid_suffix=V6W7Y8', fixture('automation-runs.json'))
-            ->on('GET', 'v1/automation-runs/'.RUN.'/logs', fixture('run-01J9A2-logs.json')))
+            ->on('GET', 'v2/automation-runs?ulid_suffix=V6W7Y8', fixture('automation-runs.json'))
+            ->on('GET', 'v2/automation-runs/'.RUN.'/logs', fixture('run-01J9A2-logs.json')))
         ->run('automation', 'logs', 'V6W7Y8');
 
     expect($result->exitCode)->toBe(0)
@@ -369,7 +369,7 @@ it('prints the log of a run', function () {
 
 it('replays a run', function () {
     $result = automations()
-        ->withApi(api()->on('POST', 'v1/automation-runs/'.RUN.'/replay', fixture('automation-run-create-201.json')))
+        ->withApi(api()->on('POST', 'v2/automation-runs/'.RUN.'/replay', fixture('automation-run-create-201.json')))
         ->run('automation', 'replay', RUN, '--yes');
 
     expect($result->exitCode)->toBe(0)
@@ -378,7 +378,7 @@ it('replays a run', function () {
 
 it('cancels a run with --yes', function () {
     $result = automations()
-        ->withApi(api()->on('POST', 'v1/automation-runs/'.RUN.'/cancel', fixture('run-01J9A2-completed.json')))
+        ->withApi(api()->on('POST', 'v2/automation-runs/'.RUN.'/cancel', fixture('run-01J9A2-completed.json')))
         ->run('automation', 'cancel', RUN, '--yes');
 
     expect($result->exitCode)->toBe(0)
@@ -389,13 +389,13 @@ it('follows a log until the run settles, not until a poll is quiet', function ()
     $empty = ['data' => [], 'meta' => ['next_after' => '01J9A2K7Q4X0N1R8S3T5V6W7Z2']];
 
     $cli = automations()->withApi(api()
-        ->on('GET', 'v1/automation-runs/'.RUN.'/logs?wait=20', fixture('run-01J9A2-logs.json'))
+        ->on('GET', 'v2/automation-runs/'.RUN.'/logs?wait=20', fixture('run-01J9A2-logs.json'))
         // A quiet page while a step is still running: keep following.
-        ->on('GET', 'v1/automation-runs/'.RUN.'/logs?after=01J9A2K7Q4X0N1R8S3T5V6W7Z2&wait=20', $empty)
-        ->on('GET', 'v1/automation-runs/'.RUN, fixture('run-01J9A2-running.json'))
+        ->on('GET', 'v2/automation-runs/'.RUN.'/logs?after=01J9A2K7Q4X0N1R8S3T5V6W7Z2&wait=20', $empty)
+        ->on('GET', 'v2/automation-runs/'.RUN, fixture('run-01J9A2-running.json'))
         // Another quiet page, and now the run is over: stop.
-        ->on('GET', 'v1/automation-runs/'.RUN.'/logs?after=01J9A2K7Q4X0N1R8S3T5V6W7Z2&wait=20', $empty)
-        ->on('GET', 'v1/automation-runs/'.RUN, fixture('run-01J9A2-completed.json')));
+        ->on('GET', 'v2/automation-runs/'.RUN.'/logs?after=01J9A2K7Q4X0N1R8S3T5V6W7Z2&wait=20', $empty)
+        ->on('GET', 'v2/automation-runs/'.RUN, fixture('run-01J9A2-completed.json')));
 
     $result = $cli->run('automation', 'logs', RUN, '--follow');
 
@@ -408,8 +408,8 @@ it('follows a log until the run settles, not until a poll is quiet', function ()
 it('says which run is already going when the automation refuses another', function () {
     $result = automations()
         ->withApi(api()
-            ->on('POST', 'v1/automations/7/runs', fixture('automation-run-dry-run.json'))
-            ->on('POST', 'v1/automations/7/runs', [
+            ->on('POST', 'v2/automations/7/runs', fixture('automation-run-dry-run.json'))
+            ->on('POST', 'v2/automations/7/runs', [
                 'error' => ['code' => 'run_rejected', 'message' => 'Max concurrent runs reached for this Automation.', 'status' => 409, 'details' => ['running' => [RUN]]],
             ], 409))
         ->run('automation', 'run', '7', '--yes');

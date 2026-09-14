@@ -5,10 +5,10 @@ declare(strict_types=1);
 it('watches a deployment by name', function () {
     $result = cli()
         ->withApi(api()
-            ->on('GET', 'v1/deployments/4812?wait=0', fixture('deployment-4812-running.json'))
-            ->on('GET', 'v1/deployments/4812/output?after=0', fixture('deployment-4812-output-0.json'))
-            ->on('GET', 'v1/deployments/4812?wait=20', fixture('deployment-4812-success.json'))
-            ->on('GET', 'v1/deployments/4812/output?after=1024', fixture('deployment-4812-output-1024.json')))
+            ->on('GET', 'v2/deployments/4812?wait=0', fixture('deployment-4812-running.json'))
+            ->on('GET', 'v2/deployments/4812/output?after=0', fixture('deployment-4812-output-0.json'))
+            ->on('GET', 'v2/deployments/4812?wait=20', fixture('deployment-4812-success.json'))
+            ->on('GET', 'v2/deployments/4812/output?after=1024', fixture('deployment-4812-output-1024.json')))
         ->run('watch', 'deployment', '4812');
 
     expect($result->exitCode)->toBe(0)
@@ -25,8 +25,8 @@ it('watches the newest thing this directory started', function () {
 
     $result = $cli
         ->withApi(api()
-            ->on('GET', 'v1/deployments/4812?wait=0', fixture('deployment-4812-success.json'))
-            ->on('GET', 'v1/deployments/4812/output?after=0', fixture('deployment-4812-output-1024.json')))
+            ->on('GET', 'v2/deployments/4812?wait=0', fixture('deployment-4812-success.json'))
+            ->on('GET', 'v2/deployments/4812/output?after=0', fixture('deployment-4812-output-1024.json')))
         ->run('watch');
 
     expect($result->exitCode)->toBe(0);
@@ -36,11 +36,11 @@ it('falls back to the newest deployment of the linked website', function () {
     $result = cli()
         ->withConfig(['team' => 'acme', 'website' => 118])
         ->withApi(api()
-            ->on('GET', 'v1/websites/118/deployments?per_page=1', fixture('deployments.json'))
-            ->on('GET', 'v1/websites/118', fixture('website-118.json'))
-            ->on('GET', 'v1/repositories/57/actions?per_page=1', ['data' => [], 'meta' => ['last_page' => 1]])
-            ->on('GET', 'v1/deployments/4812?wait=0', fixture('deployment-4812-success.json'))
-            ->on('GET', 'v1/deployments/4812/output?after=0', fixture('deployment-4812-output-1024.json')))
+            ->on('GET', 'v2/websites/118/deployments?per_page=1', fixture('deployments.json'))
+            ->on('GET', 'v2/websites/118', fixture('website-118.json'))
+            ->on('GET', 'v2/repositories/57/actions?per_page=1', ['data' => [], 'meta' => ['last_page' => 1]])
+            ->on('GET', 'v2/deployments/4812?wait=0', fixture('deployment-4812-success.json'))
+            ->on('GET', 'v2/deployments/4812/output?after=0', fixture('deployment-4812-output-1024.json')))
         ->run('watch');
 
     expect($result->exitCode)->toBe(0);
@@ -49,9 +49,9 @@ it('falls back to the newest deployment of the linked website', function () {
 it('follows the running deployment of the linked website when no id is given', function () {
     $result = cli()->withConfig(['team' => 'acme', 'project' => 12, 'website' => 118])
         ->withApi(api()
-            ->on('GET', 'v1/websites/118/deployments?per_page=1', fixture('deployments-running.json'))
-            ->on('GET', 'v1/deployments/4812?wait=0', fixture('deployment-4812-success.json'))
-            ->on('GET', 'v1/deployments/4812/output?after=0', fixture('deployment-4812-output-1024.json')))
+            ->on('GET', 'v2/websites/118/deployments?per_page=1', fixture('deployments-running.json'))
+            ->on('GET', 'v2/deployments/4812?wait=0', fixture('deployment-4812-success.json'))
+            ->on('GET', 'v2/deployments/4812/output?after=0', fixture('deployment-4812-output-1024.json')))
         ->run('watch', 'deployment');
 
     expect($result->exitCode)->toBe(0)
@@ -61,12 +61,12 @@ it('follows the running deployment of the linked website when no id is given', f
 it('waits for the next deployment when the latest one has finished', function () {
     $result = cli()->withConfig(['team' => 'acme', 'project' => 12, 'website' => 118])
         ->withApi(api()
-            ->on('GET', 'v1/websites/118/deployments?per_page=1', fixture('deployments.json'))
-            ->on('GET', 'v1/websites/118', fixture('website-118.json'))
-            ->on('GET', 'v1/websites/118/deployments?per_page=1', fixture('deployments.json'))
-            ->on('GET', 'v1/websites/118/deployments?per_page=1', fixture('deployments-next.json'))
-            ->on('GET', 'v1/deployments/4813?wait=0', fixture('deployment-4812-success.json'))
-            ->on('GET', 'v1/deployments/4813/output?after=0', fixture('deployment-4812-output-1024.json')))
+            ->on('GET', 'v2/websites/118/deployments?per_page=1', fixture('deployments.json'))
+            ->on('GET', 'v2/websites/118', fixture('website-118.json'))
+            ->on('GET', 'v2/websites/118/deployments?per_page=1', fixture('deployments.json'))
+            ->on('GET', 'v2/websites/118/deployments?per_page=1', fixture('deployments-next.json'))
+            ->on('GET', 'v2/deployments/4813?wait=0', fixture('deployment-4812-success.json'))
+            ->on('GET', 'v2/deployments/4813/output?after=0', fixture('deployment-4812-output-1024.json')))
         ->run('watch', 'deployment');
 
     expect($result->exitCode)->toBe(0)
@@ -77,9 +77,9 @@ it('waits for the next deployment when the latest one has finished', function ()
 it('replays the latest finished deployment with --last', function () {
     $result = cli()->withConfig(['team' => 'acme', 'project' => 12, 'website' => 118])
         ->withApi(api()
-            ->on('GET', 'v1/websites/118/deployments?per_page=1', fixture('deployments.json'))
-            ->on('GET', 'v1/deployments/4812?wait=0', fixture('deployment-4812-success.json'))
-            ->on('GET', 'v1/deployments/4812/output?after=0', fixture('deployment-4812-output-1024.json')))
+            ->on('GET', 'v2/websites/118/deployments?per_page=1', fixture('deployments.json'))
+            ->on('GET', 'v2/deployments/4812?wait=0', fixture('deployment-4812-success.json'))
+            ->on('GET', 'v2/deployments/4812/output?after=0', fixture('deployment-4812-output-1024.json')))
         ->run('deployment', 'watch', '--last');
 
     expect($result->stderr)->toBe('')
@@ -105,7 +105,7 @@ it('refuses a kind it does not know', function () {
 it('watches a DNS record and exits 6 on timeout', function () {
     $result = cli()
         ->withApi(api()
-            ->on('GET', 'v1/records/88231', fixture('record-88231-verified.json')))
+            ->on('GET', 'v2/records/88231', fixture('record-88231-verified.json')))
         ->run('watch', 'record', '88231');
 
     expect($result->exitCode)->toBe(0)
@@ -116,11 +116,11 @@ it('waits out a rate limit while watching instead of giving up', function () {
     $result = cli()
         ->withConfig(['team' => 'acme', 'project' => 12, 'website' => 118])
         ->withApi(api()
-            ->on('GET', 'v1/deployments/4812?wait=0', fixture('deployment-4812-running.json'))
-            ->on('GET', 'v1/deployments/4812/output?after=0', fixture('deployment-4812-output-0.json'))
-            ->on('GET', 'v1/deployments/4812?wait=20', ['error' => ['code' => 'rate_limited', 'message' => 'Too many requests', 'status' => 429]], 429)
-            ->on('GET', 'v1/deployments/4812?wait=20', fixture('deployment-4812-success.json'))
-            ->on('GET', 'v1/deployments/4812/output?after=1024', fixture('deployment-4812-output-1024.json')))
+            ->on('GET', 'v2/deployments/4812?wait=0', fixture('deployment-4812-running.json'))
+            ->on('GET', 'v2/deployments/4812/output?after=0', fixture('deployment-4812-output-0.json'))
+            ->on('GET', 'v2/deployments/4812?wait=20', ['error' => ['code' => 'rate_limited', 'message' => 'Too many requests', 'status' => 429]], 429)
+            ->on('GET', 'v2/deployments/4812?wait=20', fixture('deployment-4812-success.json'))
+            ->on('GET', 'v2/deployments/4812/output?after=1024', fixture('deployment-4812-output-1024.json')))
         ->run('watch', 'deployment', '4812');
 
     expect($result->exitCode)->toBe(0)

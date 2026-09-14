@@ -15,7 +15,7 @@ function linked(): CliTester
 
 it('deploys the linked website with --yes in a pipe', function () {
     $cli = linked()->withApi(api()
-        ->on('POST', 'v1/websites/118/deployments', fixture('deployment-create-201.json'), 201));
+        ->on('POST', 'v2/websites/118/deployments', fixture('deployment-create-201.json'), 201));
 
     $result = $cli->run('deploy', '--yes');
 
@@ -26,7 +26,7 @@ it('deploys the linked website with --yes in a pipe', function () {
 });
 
 it('refuses to deploy in a pipe without --yes', function () {
-    $cli = linked()->withApi(api()->on('POST', 'v1/websites/118/deployments', fixture('deployment-dry-run.json')));
+    $cli = linked()->withApi(api()->on('POST', 'v2/websites/118/deployments', fixture('deployment-dry-run.json')));
 
     $result = $cli->run('deploy');
 
@@ -47,12 +47,12 @@ it('asks before deploying on a terminal, then follows the deployment in a task',
     $cli = linked()
         ->answers(['Deploy marketing.acme.com' => true])
         ->withApi(api()
-            ->on('POST', 'v1/websites/118/deployments', fixture('deployment-dry-run.json'))
-            ->on('POST', 'v1/websites/118/deployments', fixture('deployment-create-201.json'), 201)
-            ->on('GET', 'v1/deployments/4813?wait=0', fixture('deployment-4812-running.json'))
-            ->on('GET', 'v1/deployments/4813/output?after=0', fixture('deployment-4812-output-0.json'))
-            ->on('GET', 'v1/deployments/4813?wait=20', fixture('deployment-4812-success.json'))
-            ->on('GET', 'v1/deployments/4813/output?after=1024', fixture('deployment-4812-output-1024.json')));
+            ->on('POST', 'v2/websites/118/deployments', fixture('deployment-dry-run.json'))
+            ->on('POST', 'v2/websites/118/deployments', fixture('deployment-create-201.json'), 201)
+            ->on('GET', 'v2/deployments/4813?wait=0', fixture('deployment-4812-running.json'))
+            ->on('GET', 'v2/deployments/4813/output?after=0', fixture('deployment-4812-output-0.json'))
+            ->on('GET', 'v2/deployments/4813?wait=20', fixture('deployment-4812-success.json'))
+            ->on('GET', 'v2/deployments/4813/output?after=1024', fixture('deployment-4812-output-1024.json')));
 
     $result = $cli->run('deploy');
 
@@ -66,8 +66,8 @@ it('hands the id back at once with --no-progress on a terminal', function () {
     $cli = linked()
         ->answers(['Deploy marketing.acme.com' => true])
         ->withApi(api()
-            ->on('POST', 'v1/websites/118/deployments', fixture('deployment-dry-run.json'))
-            ->on('POST', 'v1/websites/118/deployments', fixture('deployment-create-201.json'), 201));
+            ->on('POST', 'v2/websites/118/deployments', fixture('deployment-dry-run.json'))
+            ->on('POST', 'v2/websites/118/deployments', fixture('deployment-create-201.json'), 201));
 
     $result = $cli->run('deploy', '--no-progress');
 
@@ -79,7 +79,7 @@ it('hands the id back at once with --no-progress on a terminal', function () {
 it('stops when the confirmation is refused', function () {
     $result = linked()
         ->answers(['Deploy marketing.acme.com' => false])
-        ->withApi(api()->on('POST', 'v1/websites/118/deployments', fixture('deployment-dry-run.json')))
+        ->withApi(api()->on('POST', 'v2/websites/118/deployments', fixture('deployment-dry-run.json')))
         ->run('deploy');
 
     expect($result->exitCode)->toBe(2)
@@ -88,7 +88,7 @@ it('stops when the confirmation is refused', function () {
 
 it('previews with --dry-run and changes nothing', function () {
     $cli = linked()->withApi(api()
-        ->on('POST', 'v1/websites/118/deployments', fixture('deployment-dry-run.json')));
+        ->on('POST', 'v2/websites/118/deployments', fixture('deployment-dry-run.json')));
 
     $result = $cli->run('deploy', '--dry-run');
 
@@ -113,7 +113,7 @@ it('says where this checkout stands against the live site in --dry-run', functio
             'rev-list --count HEAD..3f9c2e1a7b4c5d6e8f9012345678901234567890' => '0',
             'rev-list --count a1b2c3d4e5f60718293a4b5c6d7e8f9012345678..HEAD' => '2',
         ])
-        ->withApi(api()->on('POST', 'v1/websites/118/deployments', fixture('deployment-dry-run.json')));
+        ->withApi(api()->on('POST', 'v2/websites/118/deployments', fixture('deployment-dry-run.json')));
 
     $result = $cli->run('deploy', '--dry-run');
 
@@ -125,11 +125,11 @@ it('names a running deployment in --dry-run and in the question', function () {
     $preview = fixture('deployment-dry-run.json');
     $preview['data']['in_progress'] = ['id' => 4813, 'status' => 'running', 'commit' => ['hash' => 'a1b2c3d4e5f60718293a4b5c6d7e8f9012345678', 'short' => 'a1b2c3d', 'branch' => 'main', 'author' => 'eser', 'message' => 'Add the pricing page'], 'started_at' => '2026-09-05T09:31:00Z', 'ended_at' => null, 'url' => null];
 
-    $result = linked()->withApi(api()->on('POST', 'v1/websites/118/deployments', $preview))->run('deploy', '--dry-run');
+    $result = linked()->withApi(api()->on('POST', 'v2/websites/118/deployments', $preview))->run('deploy', '--dry-run');
 
     expect($result->stdout)->toMatch('/Deploying +a1b2c3d Add the pricing page · eser · .* \(running\)/');
 
-    $refused = linked()->withApi(api()->on('POST', 'v1/websites/118/deployments', $preview))->run('deploy');
+    $refused = linked()->withApi(api()->on('POST', 'v2/websites/118/deployments', $preview))->run('deploy');
 
     expect($refused->exitCode)->toBe(2)
         ->and($refused->stderr)->toContain('A deployment of marketing.acme.com is already running at a1b2c3d. Start another one?');
@@ -137,7 +137,7 @@ it('names a running deployment in --dry-run and in the question', function () {
 
 it('exits 1 when the provider cannot deploy', function () {
     $result = linked()
-        ->withApi(api()->on('POST', 'v1/websites/118/deployments', fixture('deployment-dry-run-unsupported.json')))
+        ->withApi(api()->on('POST', 'v2/websites/118/deployments', fixture('deployment-dry-run-unsupported.json')))
         ->run('deploy', '--dry-run');
 
     expect($result->exitCode)->toBe(1);
@@ -145,7 +145,7 @@ it('exits 1 when the provider cannot deploy', function () {
 
 it('deploys an environment by name', function () {
     $cli = linked()->withApi(api()
-        ->on('POST', 'v1/websites/121/deployments', fixture('deployment-create-201.json'), 201));
+        ->on('POST', 'v2/websites/121/deployments', fixture('deployment-create-201.json'), 201));
 
     $result = $cli->run('deploy', 'staging', '--yes');
 
@@ -163,11 +163,11 @@ it('lists the environments it knows when the name is wrong', function () {
 it('waits and streams events with --wait --format ndjson', function () {
     $result = linked()
         ->withApi(api()
-            ->on('POST', 'v1/websites/118/deployments', fixture('deployment-create-201.json'), 201)
-            ->on('GET', 'v1/deployments/4813?wait=0', fixture('deployment-4812-running.json'))
-            ->on('GET', 'v1/deployments/4813/output?after=0', fixture('deployment-4812-output-0.json'))
-            ->on('GET', 'v1/deployments/4813?wait=20', fixture('deployment-4812-success.json'))
-            ->on('GET', 'v1/deployments/4813/output?after=1024', fixture('deployment-4812-output-1024.json')))
+            ->on('POST', 'v2/websites/118/deployments', fixture('deployment-create-201.json'), 201)
+            ->on('GET', 'v2/deployments/4813?wait=0', fixture('deployment-4812-running.json'))
+            ->on('GET', 'v2/deployments/4813/output?after=0', fixture('deployment-4812-output-0.json'))
+            ->on('GET', 'v2/deployments/4813?wait=20', fixture('deployment-4812-success.json'))
+            ->on('GET', 'v2/deployments/4813/output?after=1024', fixture('deployment-4812-output-1024.json')))
         ->run('deploy', '--wait', '--yes', '--format', 'ndjson');
 
     $events = array_column($result->ndjson(), 'event');
@@ -181,9 +181,9 @@ it('waits and streams events with --wait --format ndjson', function () {
 it('exits 1 when the deployment fails', function () {
     $result = linked()
         ->withApi(api()
-            ->on('POST', 'v1/websites/118/deployments', fixture('deployment-create-201.json'), 201)
-            ->on('GET', 'v1/deployments/4813?wait=0', fixture('deployment-4812-failed.json'))
-            ->on('GET', 'v1/deployments/4813/output?after=0', fixture('deployment-4812-output-1024.json')))
+            ->on('POST', 'v2/websites/118/deployments', fixture('deployment-create-201.json'), 201)
+            ->on('GET', 'v2/deployments/4813?wait=0', fixture('deployment-4812-failed.json'))
+            ->on('GET', 'v2/deployments/4813/output?after=0', fixture('deployment-4812-output-1024.json')))
         ->run('deploy', '--wait', '--yes');
 
     expect($result->exitCode)->toBe(1);
@@ -199,7 +199,7 @@ it('exits 2 when nothing links this directory', function () {
 it('is reachable as website deploy and site deploy', function () {
     foreach ([['website', 'deploy', '--yes'], ['site', 'deploy', '--yes']] as $argv) {
         $result = linked()
-            ->withApi(api()->on('POST', 'v1/websites/118/deployments', fixture('deployment-create-201.json'), 201))
+            ->withApi(api()->on('POST', 'v2/websites/118/deployments', fixture('deployment-create-201.json'), 201))
             ->run(...$argv);
 
         expect($result->exitCode)->toBe(0);
@@ -214,11 +214,11 @@ it('joins an output line that a byte cursor cut in two', function () {
 
     $result = linked()
         ->withApi(api()
-            ->on('POST', 'v1/websites/118/deployments', fixture('deployment-create-201.json'), 201)
-            ->on('GET', 'v1/deployments/4813?wait=0', fixture('deployment-4812-running.json'))
-            ->on('GET', 'v1/deployments/4813/output?after=0', $first)
-            ->on('GET', 'v1/deployments/4813?wait=20', fixture('deployment-4812-success.json'))
-            ->on('GET', 'v1/deployments/4813/output?after=1024', $second))
+            ->on('POST', 'v2/websites/118/deployments', fixture('deployment-create-201.json'), 201)
+            ->on('GET', 'v2/deployments/4813?wait=0', fixture('deployment-4812-running.json'))
+            ->on('GET', 'v2/deployments/4813/output?after=0', $first)
+            ->on('GET', 'v2/deployments/4813?wait=20', fixture('deployment-4812-success.json'))
+            ->on('GET', 'v2/deployments/4813/output?after=1024', $second))
         ->run('deploy', '--wait', '--yes', '--format', 'ndjson');
 
     // The stream ends with the final deployment record, which carries no event.

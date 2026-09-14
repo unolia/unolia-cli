@@ -48,7 +48,7 @@ final class DeviceFlow
         }
 
         if ($response->failed()) {
-            throw ApiException::fromResponse($response, 'GET', 'api/v1/cli/oauth', $host);
+            throw ApiException::fromResponse($response, 'GET', 'api/v2/cli/oauth', $host);
         }
 
         $data = $response->json('data');

@@ -9,10 +9,10 @@ it('shows where this directory points', function () {
         ->withConfig(['team' => 'acme', 'project' => 12, 'website' => 118])
         ->withGitRemote()
         ->withApi(api()
-            ->on('GET', 'v1/current/token', fixture('current-token-user.json'))
-            ->on('GET', 'v1/current/authenticated', fixture('current-authenticated-user.json'))
-            ->on('GET', 'v1/projects/12', fixture('project-12.json'))
-            ->on('GET', 'v1/websites/118', fixture('website-118.json')))
+            ->on('GET', 'v2/current/token', fixture('current-token-user.json'))
+            ->on('GET', 'v2/current/authenticated', fixture('current-authenticated-user.json'))
+            ->on('GET', 'v2/projects/12', fixture('project-12.json'))
+            ->on('GET', 'v2/websites/118', fixture('website-118.json')))
         ->run('status');
 
     expect($result->exitCode)->toBe(0)
@@ -36,10 +36,10 @@ it('answers with an object and its sources in the JSON face', function () {
     $result = cli()
         ->withConfig(['team' => 'acme', 'project' => 12, 'website' => 118])
         ->withApi(api()
-            ->on('GET', 'v1/current/token', fixture('current-token-user.json'))
-            ->on('GET', 'v1/current/authenticated', fixture('current-authenticated-user.json'))
-            ->on('GET', 'v1/projects/12', fixture('project-12.json'))
-            ->on('GET', 'v1/websites/118', fixture('website-118.json')))
+            ->on('GET', 'v2/current/token', fixture('current-token-user.json'))
+            ->on('GET', 'v2/current/authenticated', fixture('current-authenticated-user.json'))
+            ->on('GET', 'v2/projects/12', fixture('project-12.json'))
+            ->on('GET', 'v2/websites/118', fixture('website-118.json')))
         ->run('status', '--json');
 
     expect($result->json()['website'])->toBe(118)
@@ -53,8 +53,8 @@ it('counts the scopes when there are many of them', function () {
 
     $result = cli()
         ->withApi(api()
-            ->on('GET', 'v1/current/token', $token)
-            ->on('GET', 'v1/current/authenticated', fixture('current-authenticated-user.json')))
+            ->on('GET', 'v2/current/token', $token)
+            ->on('GET', 'v2/current/authenticated', fixture('current-authenticated-user.json')))
         ->run('status');
 
     expect($result->stdout)->toContain('eser (user token, 6 scopes, expires 2027-09-05)');
@@ -66,8 +66,8 @@ it('warns during the last two weeks of a token', function () {
 
     $soon = cli()
         ->withApi(api()
-            ->on('GET', 'v1/current/token', $token)
-            ->on('GET', 'v1/current/authenticated', fixture('current-authenticated-user.json')))
+            ->on('GET', 'v2/current/token', $token)
+            ->on('GET', 'v2/current/authenticated', fixture('current-authenticated-user.json')))
         ->run('status');
 
     expect($soon->exitCode)->toBe(0)
@@ -75,8 +75,8 @@ it('warns during the last two weeks of a token', function () {
 
     $later = cli()
         ->withApi(api()
-            ->on('GET', 'v1/current/token', fixture('current-token-user.json'))
-            ->on('GET', 'v1/current/authenticated', fixture('current-authenticated-user.json')))
+            ->on('GET', 'v2/current/token', fixture('current-token-user.json'))
+            ->on('GET', 'v2/current/authenticated', fixture('current-authenticated-user.json')))
         ->run('status');
 
     expect($later->stderr)->not->toContain('expires in');
@@ -84,7 +84,7 @@ it('warns during the last two weeks of a token', function () {
 
 it('exits 3 when the token is no longer valid', function () {
     $result = cli()
-        ->withApi(api()->on('GET', 'v1/current/token', fixture('error-401.json'), 401))
+        ->withApi(api()->on('GET', 'v2/current/token', fixture('error-401.json'), 401))
         ->run('status');
 
     expect($result->exitCode)->toBe(3);
