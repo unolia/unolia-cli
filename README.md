@@ -179,6 +179,10 @@ curl -sSL -o box.phar https://github.com/box-project/box/releases/download/4.7.0
 php -d phar.readonly=0 box.phar compile
 ```
 
+To release, push a tag such as `v2.0.1`. The Build PHAR workflow compiles the phar and opens a draft
+release with it attached. Write the notes on the draft, then publish it. Releases are immutable once
+published, so the phar has to be there before.
+
 `docs/cli` is generated from the same metadata the help renderer uses. Run `php bin/unolia
 docs:generate` after changing a command, and CI fails when the two drift apart.
 
