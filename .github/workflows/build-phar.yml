@@ -1,7 +1,10 @@
 name: Build PHAR
+# Pushing a tag builds the phar and opens a draft release with it attached.
+# The release is published by hand from the draft: immutable releases refuse
+# assets once published, and a draft release never triggers a workflow.
 on:
-  release:
-    types: [ created ]
+  push:
+    tags: [ "v*" ]
 
 permissions: {}
 
@@ -12,7 +15,6 @@ env:
 jobs:
   build-phar:
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
     permissions:
       contents: write
 
@@ -67,9 +69,11 @@ jobs:
           sha256sum unolia.phar > unolia.phar.sha256
           cat unolia.phar.sha256
 
-      - name: Upload phar to release
+      - name: Draft the release with the phar
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v2.4.1
         with:
+          draft: true
+          generate_release_notes: true
           files: |
             build/unolia.phar
             build/unolia.phar.sha256
