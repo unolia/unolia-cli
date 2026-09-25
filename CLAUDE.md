@@ -84,3 +84,10 @@ Run `php bin/unolia <command> --help` for anything you touched and read it as a 
 
 Work on a branch, open a pull request, do not merge with failing checks. Never push to `main`
 directly. Do not push branches unless the owner asks.
+
+## Releases
+
+Releases are immutable on GitHub: assets cannot be added once published, and a deleted release's tag
+cannot be reused. Push a `v*` tag, the Build PHAR workflow opens a draft release with the phar, put the
+notes on the draft, and let the owner publish. Never create a published release directly. Draft the
+notes in chat for the owner to read first. The full steps are in `.claude/skills/release/SKILL.md`.
