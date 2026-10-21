@@ -71,12 +71,26 @@ jobs:
         if: matrix.php == '8.4' && matrix.os == 'ubuntu-latest'
         run: php bin/unolia docs:generate --check
 
-      - name: Test cpx execution
-        if: matrix.php == '8.4' && matrix.os == 'ubuntu-latest'
-        run: |
-          composer global require cpx/cpx --no-interaction --prefer-dist
-          export PATH="$COMPOSER_HOME/vendor/bin:$PATH"
-          cpx unolia/unolia-cli:dev-${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}} --version
+  cpx:
+    name: CPX package installation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@f3e473d116dcccaddc5834248c87452386958240 # v2.37.2
+        with:
+          php-version: "8.4"
+          extensions: mbstring, zip
+          tools: composer:v2
+          coverage: none
+
+      - name: Install and run the checked-out package through CPX
+        run: bash .github/scripts/test-cpx.sh
 
   static-analysis:
     runs-on: ubuntu-latest
