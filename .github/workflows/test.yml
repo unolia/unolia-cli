@@ -76,7 +76,7 @@ jobs:
         run: |
           composer global require cpx/cpx --no-interaction --prefer-dist
           export PATH="$COMPOSER_HOME/vendor/bin:$PATH"
-          cpx unolia/unolia-cli:dev-${GITHUB_HEAD_REF:-${GITHUB_REF_NAME}} --version
+          cpx . --version
 
   static-analysis:
     runs-on: ubuntu-latest
